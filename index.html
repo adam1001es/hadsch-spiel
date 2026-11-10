@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+  <meta name="theme-color" content="#0d1a2b" />
+  <title>Hadsch-Pfad</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Amiri&family=Figtree:wght@400;600&family=Marcellus&display=swap" />
+  <link rel="stylesheet" href="./src/style.css" />
+</head>
+<body>
+  <canvas id="c"></canvas>
+
+  <header id="hud">
+    <div class="hud-row">
+      <div>
+        <div id="day" class="eyebrow"></div>
+        <div id="title" class="title"></div>
+      </div>
+      <div id="dots"></div>
+    </div>
+    <div id="counter"></div>
+  </header>
+
+  <div id="toast" hidden></div>
+
+  <section id="panel">
+    <div class="panel-body">
+      <div id="info"></div>
+      <div id="actions"></div>
+    </div>
+    <button id="hold" type="button" hidden>Gehen</button>
+  </section>
+
+  <div id="fade"></div>
+
+  <section id="start" class="screen">
+    <div class="card">
+      <div class="ar big">لَبَّيْكَ اللَّهُمَّ لَبَّيْكَ</div>
+      <h1>Hadsch-Pfad</h1>
+      <p>Die Stationen der Pilgerfahrt in 3D. Halte „Gehen“ gedrückt, wische zum Umschauen.</p>
+      <p id="disclaimer" class="small"></p>
+      <button id="startBtn" class="primary" type="button">Bismillah – Beginnen</button>
+      <div id="jump"></div>
+    </div>
+  </section>
+
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>

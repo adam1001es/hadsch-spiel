@@ -1,0 +1,57 @@
+:root {
+  --ink: #14251f;
+  --ivory: #f5f1e6;
+  --panel: rgba(245, 241, 230, 0.94);
+  --gold: #a97c2c;
+  --green: #1d5642;
+  --green-hi: #2b7558;
+  --muted: #5d6b63;
+  --line: rgba(20, 37, 31, 0.14);
+  --f-display: 'Marcellus', Georgia, serif;
+  --f-body: 'Figtree', system-ui, sans-serif;
+  --f-ar: 'Amiri', 'Geeza Pro', 'Noto Naskh Arabic', serif;
+  --sl: max(16px, env(safe-area-inset-left, 0px));
+  --sr: max(16px, env(safe-area-inset-right, 0px));
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; overflow: hidden; background: #0d1a2b; color: var(--ink); font: 15px/1.45 var(--f-body); -webkit-user-select: none; user-select: none; }
+#c { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+[hidden] { display: none !important; }
+
+#hud { position: fixed; top: 0; left: 0; right: 0; padding: calc(env(safe-area-inset-top, 0px) + 10px) var(--sr) 0 var(--sl); color: var(--ivory); pointer-events: none; text-shadow: 0 1px 6px rgba(0,0,0,.55); }
+.hud-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.eyebrow { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; opacity: .85; }
+.title { font: 22px/1.15 var(--f-display); }
+#dots { display: flex; gap: 5px; padding-top: 4px; flex-wrap: wrap; justify-content: flex-end; max-width: 50%; }
+#dots i { width: 8px; height: 8px; transform: rotate(45deg); border: 1px solid rgba(245,241,230,.7); }
+#dots i.done { background: var(--ivory); }
+#dots i.now { background: #e6c46e; border-color: #e6c46e; }
+#counter { margin-top: 10px; font: 30px/1 var(--f-display); font-variant-numeric: tabular-nums; }
+
+#toast { position: fixed; top: calc(env(safe-area-inset-top, 0px) + 110px); left: 50%; transform: translateX(-50%); background: rgba(20,37,31,.88); color: var(--ivory); padding: 8px 16px; border-radius: 999px; font-weight: 600; pointer-events: none; white-space: nowrap; }
+
+#panel { position: fixed; left: 0; right: 0; bottom: 0; display: flex; gap: 12px; align-items: flex-end; padding: 14px var(--sr) calc(env(safe-area-inset-bottom, 0px) + 14px) var(--sl); background: var(--panel); border-top: 1px solid var(--gold); max-height: 46%; }
+.panel-body { flex: 1; min-width: 0; overflow-y: auto; max-height: 40vh; }
+#info p { margin: 0 0 6px; }
+.ar { font: 22px/1.7 var(--f-ar); direction: rtl; text-align: right; color: var(--green); }
+.ar.big { font-size: 30px; text-align: center; }
+.tr { font-style: italic; color: var(--muted); }
+#actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+button { font: 600 15px var(--f-body); border-radius: 10px; padding: 10px 14px; border: 1px solid var(--green); background: transparent; color: var(--green); cursor: pointer; }
+button.primary { background: var(--green); color: var(--ivory); }
+button.sunnah { border-color: var(--gold); color: #7a5716; }
+button.sunnah::after { content: ' · Sunnah'; font-weight: 400; font-size: 12px; }
+button:focus-visible { outline: 3px solid #e6c46e; outline-offset: 2px; }
+#hold { flex: none; width: 88px; height: 88px; border-radius: 50%; background: var(--green); color: var(--ivory); border: 3px solid #e6c46e; touch-action: none; }
+#hold.on { background: var(--green-hi); transform: scale(.96); }
+
+#fade { position: fixed; inset: 0; background: #000; opacity: 0; pointer-events: none; transition: opacity .45s; }
+#fade.on { opacity: 1; }
+
+.screen { position: fixed; inset: 0; display: grid; place-items: end center; padding: 16px var(--sr) calc(env(safe-area-inset-bottom, 0px) + 16px) var(--sl); background: linear-gradient(to top, rgba(8,16,26,.85), transparent 70%); }
+.card { width: 100%; max-width: 520px; background: var(--panel); border-radius: 16px; padding: 20px; display: grid; gap: 10px; }
+.card h1 { margin: 0; font: 34px/1.1 var(--f-display); text-align: center; }
+.card p { margin: 0; text-align: center; }
+.small { font-size: 12px; color: var(--muted); }
+#jump { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+#jump button { font-size: 12px; padding: 6px 10px; }
