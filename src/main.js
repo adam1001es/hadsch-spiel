@@ -12,7 +12,7 @@ const peopleReady = preloadPeople(); // 3D-Pilgerinnen im Hintergrund laden
 
 const engine = createEngine(document.getElementById('c'));
 const sky = createSky(engine);
-setCrowdCamera(engine.camera, { near: 28, cap: engine.isMobile ? 130 : 200 }); // 3D-Pilgerinnen nur in der Nähe
+setCrowdCamera(engine.camera, { near: 26, cap: engine.isMobile ? 90 : 160 }); // 3D-Pilgerinnen/Pilger nur in der Nähe (je Gruppe)
 const ui = createUI();
 const input = createInput(engine.renderer.domElement, ui.el.hold, ui.el.stick);
 const ctx = { engine, sky, ui, input, content, progress: { sunnah: new Set(), done: new Set() } };
