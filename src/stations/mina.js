@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { TEXT } from '../content/hajj.js';
 import { heightFn, buildTerrain } from '../world/terrain.js';
-import { tents, lamps, sign } from '../world/props.js';
+import { tents, lamps, sign, bus } from '../world/props.js';
 import { createCrowd } from '../world/crowd.js';
 import { createPlayer } from '../core/player.js';
 import { createFlow, createMarker, goTo, promptAt, holdAction, pray, viewLine, clearView, isFemale } from '../core/kit.js';
@@ -59,7 +59,8 @@ export function create(ctx, st) {
   const px = new Float32Array(N), pz = new Float32Array(N), pv = new Float32Array(N);
   for (let i = 0; i < N; i++) { px[i] = (Math.random() - 0.5) * 6; pz[i] = (Math.random() - 0.5) * 280; pv[i] = (Math.random() < 0.5 ? -1 : 1) * (0.8 + Math.random() * 0.6); }
 
-  const colliders = [...blocks, { type: 'inside', x: 0, z: 0, r: 160 }];
+  const coach = bus(world, 6.2, 121, 0); // Reisebus am Ende der Hauptstraße
+  const colliders = [...blocks, coach.collider, { type: 'inside', x: 0, z: 0, r: 160 }];
   const player = createPlayer(ctx, { x: 0, z: 30, heading: Math.PI, color: d10 ? 0xf3f1ea : 0x3d6b9a, speed: 3.4, fastSpeed: 5.4, colliders });
   player.fig.skinM.color.setHex(0xb07a4f);
 

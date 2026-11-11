@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { TEXT, TALBIYAH } from '../content/hajj.js';
 import { heightFn, buildTerrain } from '../world/terrain.js';
-import { palms, mosque, sign } from '../world/props.js';
+import { palms, mosque, sign, bus } from '../world/props.js';
 import { createCrowd } from '../world/crowd.js';
 import { createPlayer } from '../core/player.js';
 import { createFlow, createMarker, goTo, promptAt, holdAction, sunnah, isFemale } from '../core/kit.js';
@@ -25,12 +25,8 @@ export function create(ctx, st) {
   const wb = new THREE.Mesh(new THREE.BoxGeometry(14, 4, 9), wm); wb.position.y = 2; wb.castShadow = wb.receiveShadow = true; wash.add(wb);
   const door = new THREE.Mesh(new THREE.PlaneGeometry(2.2, 2.8), new THREE.MeshStandardMaterial({ color: 0x5b4632 })); door.position.set(0, 1.4, 4.52); wash.add(door);
   sign(world, -30, -1.2, 0, ['مغاسل', 'Waschräume · Ghusl'], { w: 5, h: 1.3, y: 4.6 });
-  // Bus
-  const bus = new THREE.Group(); bus.position.set(34, 0, 22); bus.rotation.y = -0.3; world.add(bus);
-  const bm = new THREE.MeshStandardMaterial({ color: 0xf3f3f0, roughness: 0.4, metalness: 0.2 });
-  const bb = new THREE.Mesh(new THREE.BoxGeometry(3, 3.2, 12), bm); bb.position.y = 1.9; bb.castShadow = true; bus.add(bb);
-  const glass = new THREE.Mesh(new THREE.BoxGeometry(3.05, 1.1, 10.5), new THREE.MeshStandardMaterial({ color: 0x223040, roughness: 0.15, metalness: 0.6 })); glass.position.set(0, 2.6, 0.3); bus.add(glass);
-  for (const [x, z] of [[-1.5, -4], [1.5, -4], [-1.5, 4], [1.5, 4]]) { const wh = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.55, 0.4, 16), new THREE.MeshStandardMaterial({ color: 0x1b1b1b })); wh.rotation.z = Math.PI / 2; wh.position.set(x, 0.55, z); bus.add(wh); }
+  // Reisebus (3D-Modell)
+  bus(world, 34, 22, -0.3);
   const plist = [];
   for (let i = 0; i < 70; i++) { const a = Math.random() * Math.PI * 2, r = 55 + Math.random() * 70; plist.push([Math.cos(a) * r, 0, Math.sin(a) * r, Math.random() * 6, 0.8 + Math.random() * 0.5]); }
   for (let i = 0; i < 12; i++) plist.push([(i - 5.5) * 9, 0, -22, Math.random() * 6, 0.9]); // Palmenreihe vor der Moschee

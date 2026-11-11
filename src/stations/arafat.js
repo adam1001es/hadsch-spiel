@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { TEXT, ARAFAT_DHIKR, RABBANA } from '../content/hajj.js';
 import { heightFn, buildTerrain } from '../world/terrain.js';
-import { tents, trees, sign, rock } from '../world/props.js';
+import { tents, trees, sign, rock, bus } from '../world/props.js';
 import { createCrowd } from '../world/crowd.js';
 import { createPlayer } from '../core/player.js';
 import { createFlow, createMarker, goTo, promptAt, pray, duaFacing, pointGoal } from '../core/kit.js';
@@ -50,10 +50,11 @@ export function create(ctx, st) {
   }
   crowd.commit(); world.add(umb);
 
+  const coach = bus(world, 6.2, BOUND + 16, 0); // Reisebus hinter der Grenze
   let boundActive = true, boundHint = 0;
   const colliders = [
     { type: 'inside', x: 0, z: -40, r: 240 },
-    { type: 'circle', x: HILL.x, z: HILL.z, r: 40 },
+    { type: 'circle', x: HILL.x, z: HILL.z, r: 40 }, coach.collider,
     { type: 'fn', fn(p) { if (boundActive && insideArafat && p.z > BOUND - 1) { p.z = BOUND - 1; if (boundHint <= 0) { ui.hint(T.stay); boundHint = 3; } } } },
   ];
   let insideArafat = false;

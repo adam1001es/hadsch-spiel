@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { pbr } from './assets.js';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 
 // Wiederverwendbare Bauteile für die Außen-Stationen. Viele gleiche Objekte → InstancedMesh.
@@ -143,4 +144,17 @@ export function mosque(world, { x = 0, z = 0, ry = 0, w = 40, d = 30, h = 9, min
     const cap = new THREE.Mesh(new THREE.ConeGeometry(1.2, 4, 12), new THREE.MeshStandardMaterial({ color: 0xd8b04f, metalness: 0.8, roughness: 0.35 })); cap.position.set(mx, mH + 2, d / 2 - 3); grp.add(cap);
   }
   return grp;
+}
+
+// Reisebus: 3D-Modell „indonesian bus Ecoline“ (agungkuncoro13021986, CC BY 4.0), vereinfacht. Länge 12,2 m entlang z, Front bei +z.
+// Wird einmal geladen und pro Station geklont. Gibt die Gruppe zurück; collider() liefert die Kollisionsbox.
+let busLoad = null;
+export function bus(world, x, z, ry = 0) {
+  const grp = new THREE.Group(); grp.position.set(x, 0, z); grp.rotation.y = ry; world.add(grp);
+  busLoad ||= new GLTFLoader().loadAsync('./assets/models/bus.glb').then((g) => g.scene).catch(() => null);
+  busLoad.then((sc) => {
+    if (!sc || !grp.parent) return;
+    const m = sc.clone(true); m.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } }); grp.add(m);
+  });
+  return { group: grp, collider: { type: 'box', x, z, hw: 1.55, hd: 6.2, rot: ry } };
 }
