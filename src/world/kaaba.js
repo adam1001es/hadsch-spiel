@@ -1,6 +1,6 @@
 import * as THREE from 'three';
-import { goldDoor, hizam } from './textures.js';
-import { pbr } from './assets.js';
+import { goldDoor } from './textures.js';
+import { pbr, texture } from './assets.js';
 
 // Ausrichtung im Spiel: Schwarzer Stein an Ecke (-x,+z), Tür auf der +z-Seite, Hijr Ismail an der +x-Seite.
 export const KAABA = { w: 12, d: 10.5, h: 13.1, blackStoneAngle: (5 * Math.PI) / 4 };
@@ -21,14 +21,24 @@ export function buildKaaba(world) {
   const base = new THREE.Mesh(new THREE.CylinderGeometry(1, 1.06, y0, 4, 1).rotateY(Math.PI / 4).scale(w * 0.72, 1, d * 0.72), marbleMat);
   base.position.y = y0 / 2; base.receiveShadow = true; world.add(base);
 
-  // Hizam: goldbesticktes Band auf ca. 2/3 Höhe (Kalligrafie nur stilisiert)
-  const bandH = 0.95, bandY = y0 + h * 0.68;
-  const goldThread = { metalness: 1, roughness: 1 };
-  for (const [len, rot, px, pz] of [[w, 0, 0, d / 2], [w, Math.PI, 0, -d / 2], [d, Math.PI / 2, w / 2, 0], [d, -Math.PI / 2, -w / 2, 0]]) {
-    const t = hizam(len);
-    const band = new THREE.Mesh(new THREE.PlaneGeometry(len + 0.04, bandH), new THREE.MeshStandardMaterial({ map: t.map, metalnessMap: t.metal, roughnessMap: t.metal, ...goldThread }));
+  // Hizam: goldbesticktes Band auf ca. 2/3 Höhe – echte Kalligrafie (Texturen aus dem CC-BY-Modell
+  // „Holy Kaaba – Mecca – Low Poly“ von haidarzafermoayad, vergrößert und geschärft; Quellen: public/assets/textures/README.md).
+  // *_mr.jpg = Maske: G = Rauheit, B = Metall → Goldfäden glänzen metallisch, der Stoff bleibt matt.
+  const embroidered = (name, repeat = [1, 1], extra = {}) => new THREE.MeshStandardMaterial({
+    map: texture(`${name}.${extra.png ? 'png' : 'jpg'}`, { repeat }),
+    metalnessMap: texture(`${name}_mr.jpg`, { repeat, color: false }), roughnessMap: texture(`${name}_mr.jpg`, { repeat, color: false }),
+    metalness: 1, roughness: 1, ...(extra.png ? { transparent: false, alphaTest: 0.45 } : {}),
+  });
+  const bandH = 1.0, bandY = y0 + h * 0.68;
+  const hizamA = embroidered('hizam_a'), hizamB = embroidered('hizam_b'), panels = embroidered('kiswa_panels', [1, 1], { png: true });
+  for (const [len, rot, px, pz, mat] of [[w, 0, 0, d / 2, hizamA], [w, Math.PI, 0, -d / 2, hizamA], [d, Math.PI / 2, w / 2, 0, hizamB], [d, -Math.PI / 2, -w / 2, 0, hizamB]]) {
+    const band = new THREE.Mesh(new THREE.PlaneGeometry(len + 0.04, bandH), mat);
     band.position.set(px * 1.004, bandY, pz * 1.004); band.rotation.y = rot;
     world.add(band);
+    // Schriftfelder und Medaillons unter dem Band (Hintergrund durchsichtig → Webstoff bleibt sichtbar)
+    const pl = new THREE.Mesh(new THREE.PlaneGeometry(len * 0.92, len * 0.92 * (194 / 2006)), panels);
+    pl.position.set(px * 1.005, bandY - bandH / 2 - 0.35 - len * 0.92 * (194 / 2006) / 2, pz * 1.005); pl.rotation.y = rot;
+    world.add(pl);
   }
 
   // Tür (Bab al-Kaaba): massives Gold, ca. 2 m über dem Boden
@@ -37,6 +47,9 @@ export function buildKaaba(world) {
   const doorMat = new THREE.MeshStandardMaterial({ map: dt.map, bumpMap: dt.bump, bumpScale: 2.5, metalness: 1, roughness: 0.3 });
   const door = new THREE.Mesh(new THREE.BoxGeometry(2.4, 4.0, 0.18), [goldMat, goldMat, goldMat, goldMat, doorMat, goldMat]);
   door.position.set(-w / 2 + 3.2, y0 + 2.2 + 2.0, d / 2 + 0.07); world.add(door);
+  // Sitara: bestickter Vorhang vor der Tür (Textur aus demselben CC-BY-Modell)
+  const sitara = new THREE.Mesh(new THREE.PlaneGeometry(3.3, 3.3 * (1464 / 808)), embroidered('sitara'));
+  sitara.position.set(-w / 2 + 3.2, y0 + 1.5 + 3.3 * (1464 / 808) / 2, d / 2 + 0.17); world.add(sitara);
 
   // Schwarzer Stein in silberner Fassung, ca. 1,5 m hoch an der Ostecke
   const silver = new THREE.MeshStandardMaterial({ color: 0xe6e8ea, metalness: 1, roughness: 0.2 });
