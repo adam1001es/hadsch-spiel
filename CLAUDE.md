@@ -9,6 +9,7 @@ Der Nutzer testet ausschließlich am iPhone über GitHub Pages. Er programmiert 
 - `vite.config.js` nutzt `base: './'`, damit Pages unter `/<repo>/` funktioniert.
 
 ## Arbeitsweise
+- **Vor jeder Station `docs/SPIEL.md` lesen**: Dort stehen Ort, Ablauf, Mechanik und Texte jeder Station.
 - Immer nur **eine Station pro Aufgabe** bauen oder verbessern, dann committen und pushen.
 - Vor jedem Commit `npm run build` ausführen; der Build muss fehlerfrei sein.
 - Nach dem Push dem Nutzer kurz auf Deutsch sagen, was sich geändert hat und was er testen soll.
