@@ -4,7 +4,7 @@ import { pbr } from '../world/assets.js';
 import { rock, sign } from '../world/props.js';
 import { createCrowd } from '../world/crowd.js';
 import { createPlayer } from '../core/player.js';
-import { createFlow, createMarker, goTo, promptAt, holdAction, duaFacing, pointGoal, sunnah } from '../core/kit.js';
+import { createFlow, createMarker, goTo, promptAt, holdAction, duaFacing, pointGoal, sunnah, viewLine, clearView } from '../core/kit.js';
 
 const T = TEXT.sai;
 // Gang entlang z: Safa bei z = −L/2, Marwa bei z = +L/2. Spur Richtung Marwa: x > 0 (links der Mitte, in Laufrichtung).
@@ -154,13 +154,12 @@ export function create(ctx, st) {
       }
 
       // Mitpilger
+      const v = viewLine(ctx);
       for (let i = 0; i < N; i++) {
         const g = cz[i] > G0 && cz[i] < G1 && men[i] ? 1.8 : 1;
         cz[i] += cv[i] * g * dt;
         if (cz[i] > L / 2 - 3) { cz[i] = -L / 2 + 3; } else if (cz[i] < -L / 2 + 3) { cz[i] = L / 2 - 3; }
-        let x = cx[i], z = cz[i];
-        const dx = x - p.x, dz = z - p.z, dd = Math.hypot(dx, dz);
-        if (dd < 1) { x = p.x + (dx / (dd || 1)) * 1; }
+        const [x, z] = clearView(v, cx[i], cz[i]);
         crowd.set(i, x, Math.abs(Math.sin(time * 6 + i)) * 0.04, z, cv[i] > 0 ? 0 : Math.PI);
       }
       crowd.commit();

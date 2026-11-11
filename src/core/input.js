@@ -27,7 +27,7 @@ export function createInput(canvas, holdBtn, stickEl) {
   }
 
   canvas.addEventListener('pointerdown', (e) => {
-    const left = e.clientX < window.innerWidth * 0.45;
+    const left = e.clientX < window.innerWidth * 0.45 && e.pointerType !== 'mouse'; // Joystick nur bei Touch
     if (left && s.stick && !stick) {
       stick = { id: e.pointerId, x: e.clientX, y: e.clientY };
       showStick(e.clientX, e.clientY);

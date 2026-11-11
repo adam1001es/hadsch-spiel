@@ -11,8 +11,13 @@ export function createUI() {
   let toastTimer = null, hintTimer = null, promptFn = null, promptKey = '';
 
   // Höhe des unteren Panels als CSS-Variable, damit Joystick und Aktionsknopf darüber sitzen
-  const layout = () => document.documentElement.style.setProperty('--panelH', el.panel.offsetHeight + 'px');
+  const hud = document.getElementById('hud');
+  const layout = () => {
+    document.documentElement.style.setProperty('--panelH', el.panel.offsetHeight + 'px');
+    document.documentElement.style.setProperty('--hudH', hud.offsetHeight + 'px');
+  };
   new ResizeObserver(layout).observe(el.panel);
+  new ResizeObserver(layout).observe(hud);
   window.addEventListener('resize', layout);
 
   el.prompt.addEventListener('click', () => { const f = promptFn; if (f) f(); });
@@ -33,7 +38,7 @@ export function createUI() {
       }
     },
     info(html) { el.info.innerHTML = html; layout(); },
-    counter(text) { el.counter.textContent = text || ''; },
+    counter(text) { const t = text || ''; if (el.counter.textContent !== t) el.counter.textContent = t; },
     // items: [{ label, onClick, kind: 'primary' | 'sunnah' | '' }]
     actions(items = []) {
       el.actions.innerHTML = '';

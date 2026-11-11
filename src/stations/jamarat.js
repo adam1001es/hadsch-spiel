@@ -4,7 +4,7 @@ import { pbr } from '../world/assets.js';
 import { sign } from '../world/props.js';
 import { createCrowd } from '../world/crowd.js';
 import { createPlayer } from '../core/player.js';
-import { createFlow, createMarker, goTo, duaFacing, pointGoal, sunnah } from '../core/kit.js';
+import { createFlow, createMarker, goTo, duaFacing, pointGoal, sunnah, viewLine, clearView } from '../core/kit.js';
 
 const T = TEXT.jamarat;
 // Jede Dschamra: lange ovale Wand (Stadion-Form, ca. 26 m) in einem Becken mit niedrigem Rand. Wand entlang x.
@@ -41,6 +41,13 @@ export function create(ctx, st) {
   for (let z = zMin + 10; z < zMax; z += 18) for (const x of [-34, -22, 22, 34]) {
     const c = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 0.8, 12, 16), concrete); c.position.set(x, 6, z); c.castShadow = true; world.add(c);
   }
+  // Beleuchtung unter der Decke: Leuchtfelder + Füll-Licht (die echte Brücke ist hell erleuchtet)
+  const lampMat = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xfff3dc, emissiveIntensity: 1.6 });
+  for (let z = zMin + 6; z < zMax; z += 8) for (const x of [-28, -12, 12, 28]) {
+    const lp = new THREE.Mesh(new THREE.PlaneGeometry(4, 1.2), lampMat); lp.rotation.x = Math.PI / 2; lp.position.set(x, 11.98, z); world.add(lp);
+  }
+  const fill = new THREE.HemisphereLight(0xfff6e8, 0x8a8170, 1.6); world.add(fill);
+  for (const k of list) { const pl = new THREE.PointLight(0xfff0d8, 220, 45, 1.4); pl.position.set(0, 11, POS[k] + 9); world.add(pl); }
   // Geländer an den Seiten
   for (const x of [-40, 40]) { const r = new THREE.Mesh(new THREE.BoxGeometry(0.3, 1.1, len), new THREE.MeshStandardMaterial({ color: 0xb8bcc0, metalness: 0.6, roughness: 0.4 })); r.position.set(x, 0.55, zc); world.add(r); }
   // Boden unter der Brücke (Tal), damit der Blick nach außen nicht ins Leere geht
@@ -220,7 +227,8 @@ export function create(ctx, st) {
         s.m.position.copy(s.p);
       }
       // Pilger am Rand werfen
-      for (let i = 0; i < N; i++) { const c = cs[i]; crowd.set(i, c[0], Math.abs(Math.sin(time * 2 + c[3])) * 0.03, c[1], c[2]); }
+      const v = viewLine(ctx);
+      for (let i = 0; i < N; i++) { const c = cs[i]; const [x, z] = clearView(v, c[0], c[1]); crowd.set(i, x, Math.abs(Math.sin(time * 2 + c[3])) * 0.03, z, c[2]); }
       crowd.commit();
     },
     dispose() { flow.dispose(); },

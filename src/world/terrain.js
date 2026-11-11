@@ -23,7 +23,7 @@ export function heightFn({ r0 = 250, r1 = 550, amp = 150, sx = 1, sz = 1 } = {})
 export function buildTerrain(world, h, size = 1600, seg = 160) {
   const geo = new THREE.PlaneGeometry(size, size, seg, seg); geo.rotateX(-Math.PI / 2);
   const p = geo.attributes.position, col = new Float32Array(p.count * 3);
-  const sand = new THREE.Color(0xffffff), rock = new THREE.Color(0x5a4a3e), c = new THREE.Color();
+  const sand = new THREE.Color(0xffffff), rock = new THREE.Color(0x7d6656), c = new THREE.Color();
   for (let i = 0; i < p.count; i++) {
     const x = p.getX(i), z = p.getZ(i), y = h(x, z);
     p.setY(i, y);

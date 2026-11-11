@@ -18,7 +18,7 @@ html, body { height: 100%; margin: 0; overflow: hidden; background: #0d1a2b; col
 #c { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
 [hidden] { display: none !important; }
 
-#hud { position: fixed; top: 0; left: 0; right: 0; padding: calc(env(safe-area-inset-top, 0px) + 10px) calc(var(--sr) + 56px) 0 var(--sl); color: var(--ivory); pointer-events: none; text-shadow: 0 1px 6px rgba(0,0,0,.55); }
+#hud { position: fixed; top: 0; left: 0; right: 0; padding: calc(env(safe-area-inset-top, 0px) + 10px) calc(var(--sr) + 56px) 10px var(--sl); color: var(--ivory); pointer-events: none; background: linear-gradient(rgba(8,16,26,.45), rgba(8,16,26,0)); text-shadow: 0 1px 6px rgba(0,0,0,.55); }
 .hud-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
 .eyebrow { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; opacity: .85; }
 .title { font: 22px/1.15 var(--f-display); }
@@ -28,7 +28,7 @@ html, body { height: 100%; margin: 0; overflow: hidden; background: #0d1a2b; col
 #dots i.now { background: #e6c46e; border-color: #e6c46e; }
 #counter { margin-top: 10px; font: 30px/1 var(--f-display); font-variant-numeric: tabular-nums; }
 
-#toast { position: fixed; top: calc(env(safe-area-inset-top, 0px) + 110px); left: 50%; transform: translateX(-50%); background: rgba(20,37,31,.88); color: var(--ivory); padding: 8px 16px; border-radius: 999px; font-weight: 600; pointer-events: none; white-space: nowrap; }
+#toast { position: fixed; z-index: 8; top: calc(var(--hudH, 110px) + 52px); left: 50%; transform: translateX(-50%); background: rgba(20,37,31,.88); color: var(--ivory); padding: 8px 16px; border-radius: 999px; font-weight: 600; pointer-events: none; white-space: nowrap; }
 
 #panel { position: fixed; left: 0; right: 0; bottom: 0; display: flex; gap: 12px; align-items: flex-end; padding: 14px var(--sr) calc(env(safe-area-inset-bottom, 0px) + 14px) var(--sl); background: var(--panel); border-top: 1px solid var(--gold); max-height: 46%; }
 .panel-body { flex: 1; min-width: 0; overflow-y: auto; max-height: 40vh; }
@@ -72,7 +72,7 @@ button:focus-visible { outline: 3px solid #e6c46e; outline-offset: 2px; }
 @media (hover: hover) and (pointer: fine) { #stick:not(.on) { display: none; } }
 
 /* Ziel-Anzeige oben: Pfeil zeigt die Richtung zum nächsten Ziel */
-#goal { position: fixed; z-index: 6; top: calc(env(safe-area-inset-top, 0px) + 112px); left: var(--sl); display: flex; align-items: center; gap: 8px; max-width: min(70vw, 420px); padding: 6px 12px 6px 8px; border-radius: 999px; background: rgba(20,37,31,.8); color: var(--ivory); font-weight: 600; font-size: 14px; pointer-events: none; }
+#goal { position: fixed; z-index: 6; top: calc(var(--hudH, 110px) + 8px); left: var(--sl); display: flex; align-items: center; gap: 8px; max-width: min(70vw, 420px); padding: 6px 12px 6px 8px; border-radius: 999px; background: rgba(20,37,31,.8); color: var(--ivory); font-weight: 600; font-size: 14px; pointer-events: none; }
 #goalArrow { display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: #e6c46e; color: #14251f; font-size: 14px; transition: transform .15s linear; }
 #hint { position: fixed; z-index: 6; left: 50%; top: 50%; transform: translate(-50%, -50%); max-width: min(86vw, 420px); padding: 10px 16px; border-radius: 12px; background: rgba(20,37,31,.86); color: var(--ivory); text-align: center; pointer-events: none; }
 

@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { pbr } from './assets.js';
+import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 
 // Wiederverwendbare Bauteile für die Außen-Stationen. Viele gleiche Objekte → InstancedMesh.
 const dummy = new THREE.Object3D();
@@ -22,9 +23,27 @@ export function tents(world, list, { glow = null } = {}) {
 }
 
 // Dattelpalmen / Bäume: Stamm + Kronenblätter
+// Ein Palmwedel: schmales, gebogenes Blatt (nach außen und unten hängend)
+function frond(len = 3.2, w = 0.55, seg = 8) {
+  const g = new THREE.PlaneGeometry(w, len, 2, seg);
+  const p = g.attributes.position;
+  for (let i = 0; i < p.count; i++) {
+    const y = p.getY(i) + len / 2, t = y / len;           // 0 am Stamm … 1 an der Spitze
+    const x = p.getX(i) * (1 - t * 0.85) * (0.6 + Math.sin(t * Math.PI) * 0.8);
+    p.setXYZ(i, x, Math.sin(t * 1.9) * len * 0.42 - t * t * len * 0.55, y * 0.95);
+  }
+  g.computeVertexNormals();
+  return g;
+}
 export function palms(world, list) {
   const trunk = new THREE.CylinderGeometry(0.18, 0.28, 7, 8); trunk.translate(0, 3.5, 0);
-  const leaves = new THREE.ConeGeometry(2.6, 2.2, 9, 1, true); leaves.translate(0, 7.4, 0);
+  const parts = [];
+  for (let i = 0; i < 11; i++) {
+    const f = frond(2.6 + (i % 3) * 0.4);
+    f.rotateX(-0.15 - (i % 2) * 0.25); f.rotateY((i / 11) * Math.PI * 2); f.translate(0, 7, 0);
+    parts.push(f);
+  }
+  const leaves = mergeGeometries(parts);
   instanced(world, trunk, new THREE.MeshStandardMaterial({ color: 0x7a5f44, roughness: 1 }), list);
   instanced(world, leaves, new THREE.MeshStandardMaterial({ color: 0x4f6b35, roughness: 0.9, side: THREE.DoubleSide }), list);
 }

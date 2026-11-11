@@ -87,7 +87,7 @@ export function holdAction(ctx, player, { label, steps = [{ pose: 'dua', sec: 3 
 }
 
 // Ein Gebet mit n Rak'at als Haltungsfolge (Stehen → Ruku' → Stehen → 2× Sujud), am Ende Sitzen.
-export function rakatSteps(n, perPose = 0.7) {
+export function rakatSteps(n, perPose = 0.5) {
   const s = [];
   for (let i = 0; i < n; i++) s.push({ pose: 'stand', sec: perPose * 1.4 }, { pose: 'ruku', sec: perPose }, { pose: 'stand', sec: perPose * 0.6 }, { pose: 'sujud', sec: perPose }, { pose: 'sit', sec: perPose * 0.5 }, { pose: 'sujud', sec: perPose });
   s.push({ pose: 'sit', sec: perPose * 1.5 });
@@ -169,4 +169,19 @@ export function duaFacing(ctx, flow, { label = 'Halten: Dua', sec = 6, tx, tz, t
     cancel() { done = true; ui.hold(null); player.freeze(false); },
   };
   return flow.run(act);
+}
+
+// Hält Mitpilger aus dem Bereich um den Spieler und aus der Sichtlinie Kamera → Spieler heraus.
+// Pro Frame einmal view = viewLine(ctx) holen, dann für jede Figur clearView(view, x, z) → [x, z].
+export function viewLine(ctx) {
+  const p = ctx.player.pos, c = ctx.engine.camera.position, cx = c.x - p.x, cz = c.z - p.z;
+  return { px: p.x, pz: p.z, cx, cz, l2: cx * cx + cz * cz || 1 };
+}
+export function clearView(v, x, z) {
+  const dx = x - v.px, dz = z - v.pz, dd = Math.hypot(dx, dz);
+  if (dd < 1.1) return [v.px + (dx / (dd || 1)) * 1.1, v.pz + (dz / (dd || 1)) * 1.1];
+  const t = Math.max(0, Math.min(1, (dx * v.cx + dz * v.cz) / v.l2));
+  const qx = x - (v.px + v.cx * t), qz = z - (v.pz + v.cz * t), qd = Math.hypot(qx, qz);
+  if (t > 0.03 && qd < 0.9) return [x + (qx / (qd || 1)) * (0.9 - qd), z + (qz / (qd || 1)) * (0.9 - qd)];
+  return [x, z];
 }

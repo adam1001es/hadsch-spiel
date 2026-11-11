@@ -4,7 +4,7 @@ import { heightFn, buildTerrain } from '../world/terrain.js';
 import { tents, lamps, sign } from '../world/props.js';
 import { createCrowd } from '../world/crowd.js';
 import { createPlayer } from '../core/player.js';
-import { createFlow, createMarker, goTo, promptAt, holdAction, pray } from '../core/kit.js';
+import { createFlow, createMarker, goTo, promptAt, holdAction, pray, viewLine, clearView } from '../core/kit.js';
 
 // Mina: Zeltstadt im Tal. phase 'd8' (8. Dhul-Hiddscha) oder 'd10' (Opfer & Rasur).
 // Zelte im Raster 10 m, alle 5 Zelte eine Straße (8 m). Das eigene Zelt liegt an einer Straße.
@@ -134,13 +134,12 @@ export function create(ctx, st) {
       marker.update(dt);
       for (const m of glow) m.emissiveIntensity = sky.art * 1.4;
       for (const m of tentGlow) m.emissiveIntensity = sky.art * 0.3;
-      const p = player.pos;
+      const v = viewLine(ctx);
       for (let i = 0; i < N; i++) {
         pz[i] += pv[i] * dt;
         if (pz[i] > 140) pz[i] = -140; else if (pz[i] < -140) pz[i] = 140;
-        let x = px[i]; const dx = x - p.x, dz = pz[i] - p.z;
-        if (Math.hypot(dx, dz) < 1) x = p.x + Math.sign(dx || 1) * 1;
-        crowd.set(i, x, Math.abs(Math.sin(time * 5 + i)) * 0.04, pz[i], pv[i] > 0 ? 0 : Math.PI);
+        const [x, z] = clearView(v, px[i], pz[i]);
+        crowd.set(i, x, Math.abs(Math.sin(time * 5 + i)) * 0.04, z, pv[i] > 0 ? 0 : Math.PI);
       }
       crowd.commit();
     },
