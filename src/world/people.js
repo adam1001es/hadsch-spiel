@@ -49,10 +49,17 @@ export const hairGeo = (seg = 10, dy = 0) => { const g = new THREE.SphereGeometr
 export const beardGeo = (seg = 8, dy = 0) => { const g = new THREE.SphereGeometry(0.075, seg, 4, 0, Math.PI * 2, Math.PI * 0.35, Math.PI * 0.65); g.scale(1, 0.95, 0.72); g.translate(0, 1.56 - dy, 0.045); return g; };
 // Gesicht (bei Frauen schaut es aus dem Kopftuch hervor)
 export const faceGeo = (seg = 10, dy = 0) => { const g = new THREE.SphereGeometry(0.068, seg, 8); g.scale(0.82, 1.08, 0.5); g.translate(0, 1.595 - dy, 0.095); return g; };
-// Kopftuch (Khimar): bedeckt Kopf, Hals und Schultern; lang = Mukena/Tschador-artig bis zur Hüfte
-export const khimarGeo = (seg = 14, dy = 0, long = false) => lathe(long
-  ? [[0, 1.75], [0.07, 1.74], [0.122, 1.68], [0.136, 1.6], [0.14, 1.52], [0.24, 1.4], [0.31, 1.22], [0.335, 0.98], [0.34, 0.86], [0, 0.86]]
-  : [[0, 1.75], [0.07, 1.74], [0.122, 1.68], [0.136, 1.6], [0.14, 1.52], [0.22, 1.42], [0.272, 1.3], [0.274, 1.2], [0, 1.2]], seg, { dy, flat: 0.74 });
+// Kopftuch (Khimar): Haube mit Gesichtsöffnung vorn + Umhang über Hals und Schultern; lang = bis zur Hüfte.
+// Beide Teile sind LatheGeometry (gleiche Attribute), damit mergeGeometries sicher funktioniert.
+export function khimarGeo(seg = 14, dy = 0, long = false) {
+  const GAP = 0.62; // halbe Breite der Gesichtsöffnung (Winkel, vorne = +z)
+  const hood = lathe([[0.001, 1.75], [0.07, 1.74], [0.122, 1.68], [0.138, 1.6], [0.132, 1.53]], seg, { dy, flat: 0.8, phiStart: GAP, phiLength: Math.PI * 2 - 2 * GAP });
+  const cape = lathe(long
+    ? [[0.11, 1.56], [0.15, 1.5], [0.24, 1.4], [0.31, 1.22], [0.335, 0.98], [0.34, 0.86], [0, 0.86]]
+    : [[0.11, 1.56], [0.15, 1.5], [0.22, 1.42], [0.272, 1.3], [0.274, 1.2], [0, 1.2]], seg, { dy, flat: 0.74 });
+  const g = mergeGeometries([hood, cape]);
+  return g || cape; // Sicherheitsnetz: falls das Zusammenfügen scheitert, wenigstens den Umhang
+}
 // Kappe (Kufi / Songkok)
 export const kufiGeo = (seg = 12, dy = 0) => { const g = new THREE.CylinderGeometry(0.098, 0.104, 0.075, seg); g.translate(0, 1.69 - dy, 0.0); return g; };
 // Ghutra: Tuch über Kopf und Nacken, vorne offen fürs Gesicht

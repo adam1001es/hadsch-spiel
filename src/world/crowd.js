@@ -62,7 +62,7 @@ export function createCrowd(world, n, { men = 0.6, ihram = true, idtiba = false 
     head: () => headGeo(7), hair: () => hairGeo(7), beard: () => beardGeo(6), face: () => faceGeo(6),
     khimar: () => khimarGeo(9), khimarLong: () => khimarGeo(9, 0, true), kufi: () => kufiGeo(8), ghutra: () => ghutraGeo(10),
   };
-  const DOUBLE = new Set(['rida', 'khimar', 'khimarLong', 'ghutra', 'w_hijab', 'w_dress', 'm_cover']);
+  const DOUBLE = new Set(['rida', 'khimar', 'khimarLong', 'ghutra', 'w_hijab', 'w_hijabLong', 'w_dress', 'm_cover']);
   const useMan = !!(MAN && ihram);
   // Modell-Gruppen: w = Pilgerinnen, m = Pilger im Ihram. Teile je Gruppe:
   const POOLS = {
@@ -115,8 +115,11 @@ export function createCrowd(world, n, { men = 0.6, ihram = true, idtiba = false 
       if (MUSLIMA) {
         // Pilgerin als 3D-Modell (in der Nähe): etwas kleiner/größer (sh) und schlanker/kräftiger (sw)
         sh[i] = 0.94 + Math.random() * 0.12; sw[i] = 0.9 + Math.random() * 0.24;
-        const colOf = { dress: tint(col.dress, 0.04), hijab: tint(hijab, 0.03), head: tint(skin, 0.04), arms: tint(skin, 0.04), eyes: new THREE.Color(0xffffff), shoes: tint(col.shoes, 0.05) };
-        model[i] = { s: 'w', parts: POOLS.w.keys.map((k) => ['w_' + k, colOf[k] || new THREE.Color(0xffffff)]) };
+        const hj = tint(hijab, 0.03);
+        const colOf = { dress: tint(col.dress, 0.04), hijab: hj, hijabLong: hj, head: tint(skin, 0.04), arms: tint(skin, 0.04), eyes: new THREE.Color(0xffffff), shoes: tint(col.shoes, 0.05) };
+        // Hijab kurz oder lang (Südostasien/Iran öfter lang)
+        const long = Math.random() < (R.id === 'Südostasien' || R.id === 'Iran' ? 0.6 : 0.3);
+        model[i] = { s: 'w', skip: long ? 'w_hijab' : 'w_hijabLong', parts: POOLS.w.keys.map((k) => ['w_' + k, colOf[k] || new THREE.Color(0xffffff)]) };
       }
     }
     people[i] = list;
@@ -129,9 +132,14 @@ export function createCrowd(world, n, { men = 0.6, ihram = true, idtiba = false 
     const mat = srcMat ? Object.assign(srcMat.clone(), { side }) : new THREE.MeshStandardMaterial({ roughness: k === 'face' || k === 'head' || k === 'torso' ? 0.65 : 0.92, side });
     if (srcMat && k !== 'm_cover') mat.color.setHex(0xffffff);
     // Gehbewegung (Beine/Arme) im Shader; Takt je Instanz im Attribut aWalk
-    if (WALK[k]) { geo = geo.clone(); geo.setAttribute('aWalk', new THREE.InstancedBufferAttribute(new Float32Array(count * 3), 3)); walkMaterial(mat, WALK[k], { groupHip: HIP_OF[k.includes('_') ? k[0] : ''] }); }
+    if (WALK[k]) {
+      const grp = k.includes('_') ? k[0] : '';
+      geo = geo.clone(); geo.setAttribute('aWalk', new THREE.InstancedBufferAttribute(new Float32Array(count * 3), 3));
+      geo.setAttribute('aFace', new THREE.InstancedBufferAttribute(new Float32Array(count * 3).fill(1), 3));
+      walkMaterial(mat, WALK[k], { groupHip: HIP_OF[grp], faceKey: k, group: grp });
+    }
     const m = new THREE.InstancedMesh(geo, mat, count);
-    m.userData.walk = geo.attributes.aWalk || null;
+    m.userData.walk = geo.attributes.aWalk || null; m.userData.face = geo.attributes.aFace || null; m.userData.key = k;
     m.frustumCulled = false; meshes[k] = m; world.add(m);
     return m;
   };
@@ -149,6 +157,8 @@ export function createCrowd(world, n, { men = 0.6, ihram = true, idtiba = false 
 
   const slotOf = new Int32Array(n).fill(-1);
   const phase = new Float32Array(n).map(() => Math.random() * 6.28), amt = new Float32Array(n), kneel = new Uint8Array(n);
+  // Gesichtsform je Person: Breite, Länge, Kinnpartie
+  const faceF = new Float32Array(n * 3).map((_, j) => [0.9 + Math.random() * 0.2, 0.94 + Math.random() * 0.12, 0.86 + Math.random() * 0.26][j % 3]);
   const last = new Float32Array(n * 6), hasLast = new Uint8Array(n);
   const ZERO = new THREE.Matrix4().makeScale(0, 0, 0);
   const d = new THREE.Object3D(), camAt = new THREE.Vector3(1e9, 0, 0);
@@ -199,10 +209,10 @@ export function createCrowd(world, n, { men = 0.6, ihram = true, idtiba = false 
       }
       if (useModel) {
         const sl = slotOf[i];
-        for (const m of POOLS[model[i].s].meshes) { m.setMatrixAt(sl, d.matrix); if (m.userData.walk) m.userData.walk.setXYZ(sl, phase[i], amt[i], kneel[i]); }
+        for (const m of POOLS[model[i].s].meshes) { m.setMatrixAt(sl, m.userData.key === model[i].skip ? ZERO : d.matrix); if (m.userData.walk) m.userData.walk.setXYZ(sl, phase[i], amt[i], kneel[i]); if (m.userData.face) m.userData.face.setXYZ(sl, faceF[i * 3], faceF[i * 3 + 1], faceF[i * 3 + 2]); }
         for (let k = 0; k < L.length; k++) L[k][1].setMatrixAt(L[k][2], ZERO);
       } else {
-        for (let k = 0; k < L.length; k++) { L[k][1].setMatrixAt(L[k][2], d.matrix); const wa = L[k][1].userData.walk; if (wa) wa.setXYZ(L[k][2], phase[i], amt[i], kneel[i]); }
+        for (let k = 0; k < L.length; k++) { L[k][1].setMatrixAt(L[k][2], d.matrix); const ud = L[k][1].userData; if (ud.walk) ud.walk.setXYZ(L[k][2], phase[i], amt[i], kneel[i]); if (ud.face) ud.face.setXYZ(L[k][2], faceF[i * 3], faceF[i * 3 + 1], faceF[i * 3 + 2]); }
       }
     },
     commit() {
@@ -218,7 +228,7 @@ export function createCrowd(world, n, { men = 0.6, ihram = true, idtiba = false 
         for (const m of pool.meshes) { m.count = top; if (colorsDirty && m.instanceColor) m.instanceColor.needsUpdate = true; }
       }
       colorsDirty = false;
-      if (dirty) for (const m of Object.values(meshes)) { m.instanceMatrix.needsUpdate = true; if (m.userData.walk) m.userData.walk.needsUpdate = true; }
+      if (dirty) for (const m of Object.values(meshes)) { m.instanceMatrix.needsUpdate = true; if (m.userData.walk) m.userData.walk.needsUpdate = true; if (m.userData.face) m.userData.face.needsUpdate = true; }
       dirty = false;
     },
   };

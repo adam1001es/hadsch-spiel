@@ -72,6 +72,7 @@ export function createFigure(world, { color = 0xf3f1ea, skin = 0xc68642, ring = 
     variants[id] = { grp };
     for (const [k, part] of Object.entries(src)) {
       const mat = part.material.clone();
+      if (k === 'hijabLong') continue; // Spielfigur: kurzer Hijab
       mat.side = ['hijab', 'dress', 'cover'].includes(k) ? THREE.DoubleSide : THREE.FrontSide;
       if (k === 'skin' || k === 'head' || k === 'arms' || k === 'hands') mat.color = skinM.color; // Hautfarbe der Figur
       else if (k === 'dress' || k === 'hijab' || k === 'top' || k === 'bottom') mat.color = cloth.color; // Kleidungsfarbe
@@ -81,7 +82,7 @@ export function createFigure(world, { color = 0xf3f1ea, skin = 0xc68642, ring = 
       else if (k !== 'cover') mat.color = new THREE.Color(0xffffff);
       // Gehen, Armhaltung, Knien und Verbeugen (weich gebeugt an der Hüfte) im Shader
       const wp = WALK[PREFIX[id] + k] || { hip: 0 };
-      walkU.push(walkMaterial(mat, wp, { instanced: false, groupHip: HIP, body: true }));
+      walkU.push(walkMaterial(mat, wp, { instanced: false, groupHip: HIP, body: true, faceKey: PREFIX[id] + k, group: PREFIX[id][0] }));
       const a = new THREE.Mesh(part.geometry, mat);
       a.castShadow = true; grp.add(a);
       if (k === 'cover') mCover = [a];

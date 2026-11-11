@@ -20,7 +20,7 @@ export const WALK = {
   w_dress: { hip: 0.85, legAmp: 0.2, armX: 0.215, armAmp: 0.3, shy: 1.32, armMinY: 0.9, fold: false, armAttr: true }, // Ärmel im Modell markiert (armW)
   w_arms: { hip: 0, armX: 0, armAmp: 0.3, shy: 1.32 },
   w_shoes: { hip: 0.85, legAmp: 0.32, lift: 0.04, armX: 9 },
-  w_hijab: { hip: 0 }, w_head: { hip: 0 }, w_eyes: { hip: 0 },
+  w_hijab: { hip: 0 }, w_hijabLong: { hip: 0 }, w_head: { hip: 0 }, w_eyes: { hip: 0 },
   // Pilger im Ihram
   m_cloth: { hip: 0.92, legAmp: 0.36, lift: 0.03, armX: 0.24, armAmp: 0.4, shy: 1.4, fold: false },
   m_skin: { hip: 0.92, legAmp: 0.42, lift: 0.05, armX: 0.24, armAmp: 0.42, shy: 1.4 },
@@ -33,23 +33,36 @@ export const WALK = {
   k_hands: { hip: 0, armX: 0, armAmp: 0.4, shy: 1.38 },
   k_head: { hip: 0 }, k_eyes: { hip: 0 },
 };
+// Gesichtsformen: Kopfmitte und Halsansatz je Gruppe (Meter). Teile mit face: true werden pro Person verformt:
+// Breite, Länge und Kinnpartie (aFace / uFace) – Kopf, Augen und Kopftuch gemeinsam, damit alles zusammenpasst.
+export const HEAD_OF = { '': [1.6, 1.49], w: [1.41, 1.31], m: [1.625, 1.51], k: [1.585, 1.45] };
+const FACE_KEYS = ['head', 'face', 'hair', 'beard', 'khimar', 'khimarLong', 'kufi', 'ghutra', 'w_head', 'w_eyes', 'w_hijab', 'w_hijabLong', 'm_skin', 'k_head', 'k_eyes'];
 // Hüfthöhe je Modell-Gruppe (für das Absenken beim Knien in der Menge)
 export const HIP_OF = { '': 0.95, w: 0.85, m: 0.92, k: 0.92 };
 
 const f = (x) => { const s = String(+x.toFixed(4)); return s.includes('.') || s.includes('e') ? s : s + '.0'; };
-export function walkMaterial(mat, p, { instanced = true, yOff = 0, groupHip = 0.95, body = false } = {}) {
+export function walkMaterial(mat, p, { instanced = true, yOff = 0, groupHip = 0.95, body = false, faceKey = '', group = '' } = {}) {
+  const face = FACE_KEYS.includes(faceKey), [HY, NY] = HEAD_OF[group] || HEAD_OF[''];
   if (!p) return null;
   const P = { hip: 0, legAmp: 0, lift: 0, shy: 1.38, armX: 9, armAmp: 0, armMinY: 0.55, fold: true, ...p };
   const H = P.hip || groupHip, KN = H * 0.5, SEAT = 0.2; // Kniehöhe, Sitzhöhe der Hüfte beim Knien
-  const uniforms = { uWalk: { value: new THREE.Vector3(0, 0, 0) }, uArm: { value: new THREE.Vector2(0, 0) }, uElbow: { value: new THREE.Vector2(0, 0) }, uBody: { value: new THREE.Vector2(0, 0) } };
+  const uniforms = { uWalk: { value: new THREE.Vector3(0, 0, 0) }, uArm: { value: new THREE.Vector2(0, 0) }, uElbow: { value: new THREE.Vector2(0, 0) }, uBody: { value: new THREE.Vector2(0, 0) }, uFace: { value: new THREE.Vector3(1, 1, 1) } };
   mat.onBeforeCompile = (sh) => {
     Object.assign(sh.uniforms, uniforms);
     sh.vertexShader = sh.vertexShader
       .replace('#include <common>', `#include <common>
 ${instanced ? 'attribute vec3 aWalk;' : 'uniform vec3 uWalk; uniform vec2 uArm; uniform vec2 uElbow; uniform vec2 uBody;'}
 ${P.armAttr ? 'attribute float armW;' : ''}
+${face ? (instanced ? 'attribute vec3 aFace;' : 'uniform vec3 uFace;') : ''}
 vec3 walkRot(vec3 v, vec2 piv, float a) { float c = cos(a), s = sin(a); float dy = v.y - piv.x, dz = v.z - piv.y; return vec3(v.x, piv.x + dz * s + dy * c, piv.y + dz * c - dy * s); }`)
       .replace('#include <begin_vertex>', `#include <begin_vertex>
+${face ? `{ // Gesichtsform: Breite (x), Länge (y), Kinnpartie (z) – nur oberhalb des Halses
+  vec3 fc = ${instanced ? 'aFace' : 'uFace'};
+  float hb = smoothstep(${f(NY - 0.03)}, ${f(NY + 0.04)}, transformed.y)${faceKey === 'm_skin' ? ` * (1.0 - smoothstep(0.12, 0.16, abs(transformed.x)))` : ''};
+  float jaw = smoothstep(${f(HY)}, ${f(HY - 0.1)}, transformed.y);
+  transformed.x *= mix(1.0, fc.x * mix(1.0, fc.z, jaw), hb);
+  transformed.y = mix(transformed.y, ${f(HY)} + (transformed.y - ${f(HY)}) * fc.y, hb);
+}` : ''}
 {
   vec3 wk = ${instanced ? 'aWalk' : 'uWalk'};
   float kneel = wk.z, amt = wk.y * (1.0 - kneel);
@@ -83,7 +96,7 @@ vec3 walkRot(vec3 v, vec2 piv, float a) { float c = cos(a), s = sin(a); float dy
   }
 }`);
   };
-  const key = 'walk3' + JSON.stringify(P) + instanced + yOff + groupHip + body;
+  const key = 'walk4' + JSON.stringify(P) + instanced + yOff + groupHip + body + face + group;
   mat.customProgramCacheKey = () => key;
   return uniforms;
 }
