@@ -65,5 +65,7 @@ Jede Datei in `src/stations/` exportiert `create(ctx)` und gibt `{ update(dt), d
   Tawaf al-Ifada, Sa'i. Reihenfolge ist Sunnah, Abweichungen erlaubt.
 - 11.–12. (13. optional): nach dem Mittag alle drei Dschamarat (klein → mittel → groß), je 7; Dua nach den ersten beiden.
 - Abschieds-Tawaf vor der Abreise (Frauen in der Menstruation befreit).
-- Respektvolle Darstellung: keine Gewalt, keine Witze, keine echten Personen. Kalligrafie auf der Kiswa nur stilisiert.
+- Respektvolle Darstellung: keine Gewalt, keine Witze, keine echten Personen.
+- Kalligrafie auf der Kiswa: echte, lesbare Schrift ist erlaubt (Entscheidung des Nutzers), aber nur scharf, unverzerrt und
+  in würdiger Qualität (z. B. aus geprüften 3D-Modellen mit freier Lizenz). Sonst stilisiert lassen (aktueller Stand).
 - Hinweis im Spiel: vereinfachte Lerndarstellung, Details unterscheiden sich je nach Rechtsschule.
