@@ -6,7 +6,7 @@ Texte, Gebete und Reihenfolge stehen zusätzlich in `src/content/hajj.js` (gleic
 ## 1. Grundidee
 - Der Spieler erlebt die Pilgerfahrt (Hadsch at-Tamattu') vom Miqat bis zum Abschieds-Tawaf.
 - Ruhig, würdevoll, lehrreich. Kein Zeitdruck, kein Verlieren. Fehler werden erklärt, nicht bestraft.
-- Ziel-Gerät: iPhone im Hochformat, Browser. Ziel 30+ FPS.
+- Ziel-Geräte: Smartphone, Tablet und Laptop im Browser, Hoch- und Querformat. Ziel 30+ FPS.
 - Sprache: Deutsch. Gebete immer dreifach: Arabisch (mit Vokalzeichen), Umschrift, deutsche Bedeutung.
 
 ## 2. Steuerung (überall gleich)

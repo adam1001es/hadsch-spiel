@@ -1,7 +1,7 @@
 # Hadsch-Spiel – Regeln für Claude Code
 
-3D-Lernspiel über den Hadsch (Hadsch at-Tamattu'), spielbar im Handy-Browser.
-Der Nutzer testet ausschließlich am iPhone über GitHub Pages. Er programmiert nicht selbst.
+3D-Lernspiel über den Hadsch (Hadsch at-Tamattu'), spielbar im Browser auf Smartphone, Tablet und Laptop.
+Der Nutzer testet über GitHub Pages (iPhone und Laptop). Er programmiert nicht selbst.
 
 ## Tech-Stack
 - Three.js (npm `three`), Vite, reines JavaScript (ES-Module), kein Framework.
@@ -13,6 +13,8 @@ Der Nutzer testet ausschließlich am iPhone über GitHub Pages. Er programmiert 
 - Immer nur **eine Station pro Aufgabe** bauen oder verbessern, dann committen und pushen.
 - Vor jedem Commit `npm run build` ausführen; der Build muss fehlerfrei sein.
 - Nach dem Push dem Nutzer kurz auf Deutsch sagen, was sich geändert hat und was er testen soll.
+- **Alles muss auf Smartphone, Tablet und Laptop funktionieren** (Hoch- und Querformat, Touch und Maus/Tastatur).
+  Vor jedem Commit Layout bei ca. 390×844, 820×1180 und 1440×900 prüfen (z. B. Playwright-Screenshots).
 - Wenn eine Station fertig ist: in `public/anleitung.html` im Array `S` bei dieser Station `done:true` setzen.
 - Keine Inhalte aus `src/content/hajj.js` erfinden oder ändern, ohne dass der Nutzer es verlangt.
 
@@ -42,7 +44,7 @@ Jede Datei in `src/stations/` exportiert `create(ctx)` und gibt `{ update(dt), d
 `ctx` enthält `{ engine, sky, ui, input, next, content }`. `next()` wechselt zur nächsten Station.
 
 ## Grafik-Ziele
-- Realistisch, aber flüssig auf iPhone: Pixelratio max. 2, Schattenkarte max. 2048, Menschen per InstancedMesh.
+- Realistisch, aber flüssig auf Smartphone und Tablet: Pixelratio max. 2, Schattenkarte max. 2048, Menschen per InstancedMesh.
 - PBR (`MeshStandardMaterial`), ACES-Tonemapping, sRGB-Ausgabe, Nebel, Bloom nur wenn die FPS reichen.
 - Kaaba ca. 13,1 m hoch, Seiten ca. 11–12,8 m; schwarze Kiswa mit goldenem Band (Hizam) auf ca. 2/3 Höhe,
   goldene Tür auf der Nordost-Seite nahe dem Schwarzen Stein, Hijr Ismail als halbrunde Mauer auf der Nordwest-Seite.
