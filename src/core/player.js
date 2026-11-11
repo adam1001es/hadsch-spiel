@@ -55,7 +55,7 @@ export function createFigure(world, { color = 0xf3f1ea, skin = 0xc68642, ring = 
   let armMeshes = [];
   // 3D-Modell als Spielfigur (wie die Pilger in der Menge): an der Hüfte geteilt, damit Ruku'/Sujud weiter gehen
   // Je Outfit eine Modell-Variante: Frau (Abaya), Mann im Ihram, Mann im Shalwar Kameez
-  const HIP = covered ? 0.9 : 0.95;
+  const HIP = covered ? 0.88 : 0.95;
   const variants = {}, walkU = [], PREFIX = { woman: 'w_', ihram: 'm_', kameez: 'k_' };
   let mCover = null;
   // Teilen an der Hüfte; Arme/Hände (|x| > armX) gehören immer zum Oberkörper, auch wenn sie tiefer hängen
@@ -74,7 +74,7 @@ export function createFigure(world, { color = 0xf3f1ea, skin = 0xc68642, ring = 
       const mat = part.material.clone();
       if (k === 'hijabLong') continue; // Spielfigur: kurzer Hijab
       mat.side = ['hijab', 'dress', 'cover'].includes(k) ? THREE.DoubleSide : THREE.FrontSide;
-      if (k === 'skin' || k === 'head' || k === 'arms' || k === 'hands') mat.color = skinM.color; // Hautfarbe der Figur
+      if (k === 'skin' || k === 'head' || k === 'arms' || k === 'hands' || k === 'feet') mat.color = skinM.color; // Hautfarbe der Figur
       else if (k === 'dress' || k === 'hijab' || k === 'top' || k === 'bottom') mat.color = cloth.color; // Kleidungsfarbe
       else if (k === 'trim') mat.color = new THREE.Color(0x2a2420);
       else if (k === 'cloth') mat.color = new THREE.Color(0xf6f4ee);

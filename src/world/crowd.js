@@ -13,8 +13,8 @@ function pickRegion() {
   return REGIONS[0];
 }
 
-// 3D-Modell „hijab muslim woman“ (Yasser.Hamedah, CC BY 4.0), fürs Spiel umgewandelt: Arme gesenkt, vereinfacht,
-// Teile einzeln färbbar (dress, hijab, head, arms = Hände, eyes, shoes). Wird beim Start vorgeladen.
+// 3D-Modell „women in hijab“ (Abdullah5007, CC BY 4.0), fürs Spiel umgewandelt: Arme gesenkt, vereinfacht,
+// Teile einzeln färbbar (dress, hijab mit Goldrand, head, arms = Hände, eyes, feet). Wird beim Start vorgeladen.
 // 3D-Modell „Middle Eastern Hajj“ (trisutrisno, CC BY 4.0): Pilger im Ihram, Arme gesenkt, Haut/Stoff getrennt färbbar,
 // „cover“ = Tuchstück über der rechten Schulter (außerhalb des Umrah-Tawaf ist die Schulter bedeckt).
 // 3D-Modell „Shalwar Kameez Man“ (Abdullah5007, CC BY 4.0): Männer ohne Ihram (top, bottom, trim, shoes, head, hands, eyes).
@@ -116,9 +116,11 @@ export function createCrowd(world, n, { men = 0.6, ihram = true, idtiba = false 
         // Pilgerin als 3D-Modell (in der Nähe): etwas kleiner/größer (sh) und schlanker/kräftiger (sw)
         sh[i] = 0.94 + Math.random() * 0.12; sw[i] = 0.9 + Math.random() * 0.24;
         const hj = tint(hijab, 0.03);
-        const colOf = { dress: tint(col.dress, 0.04), hijab: hj, hijabLong: hj, head: tint(skin, 0.04), arms: tint(skin, 0.04), eyes: new THREE.Color(0xffffff), shoes: tint(col.shoes, 0.05) };
+        const colOf = { feet: tint(skin, 0.04), dress: tint(col.dress, 0.04), hijab: hj, hijabLong: hj, head: tint(skin, 0.04), arms: tint(skin, 0.04), eyes: new THREE.Color(0xffffff), shoes: tint(col.shoes, 0.05) };
         // Hijab kurz oder lang (Südostasien/Iran öfter lang)
-        const long = Math.random() < (R.id === 'Südostasien' || R.id === 'Iran' ? 0.6 : 0.3);
+        // nur wenn das Modell beide Längen hat (sonst bliebe die Pilgerin ohne Hijab)
+        const hasLong = POOLS.w.keys.includes('hijabLong');
+        const long = hasLong && Math.random() < (R.id === 'Südostasien' || R.id === 'Iran' ? 0.6 : 0.3);
         model[i] = { s: 'w', skip: long ? 'w_hijab' : 'w_hijabLong', parts: POOLS.w.keys.map((k) => ['w_' + k, colOf[k] || new THREE.Color(0xffffff)]) };
       }
     }

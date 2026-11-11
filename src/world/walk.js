@@ -17,10 +17,10 @@ export const WALK = {
   head: { hip: 0 }, hair: { hip: 0 }, beard: { hip: 0 }, face: { hip: 0 }, torso: { hip: 0 }, rida: { hip: 0 },
   khimar: { hip: 0 }, khimarLong: { hip: 0 }, kufi: { hip: 0 }, ghutra: { hip: 0 },
   // Pilgerin (Abaya)
-  w_dress: { hip: 0.85, legAmp: 0.2, armX: 0.215, armAmp: 0.3, shy: 1.32, armMinY: 0.9, fold: false, armAttr: true }, // Ärmel im Modell markiert (armW)
-  w_arms: { hip: 0, armX: 0, armAmp: 0.3, shy: 1.32 },
+  w_dress: { hip: 0.88, legAmp: 0.2, armX: 0.215, armAmp: 0.3, shy: 1.36, armMinY: 0.9, fold: false, armAttr: true }, // Ärmel im Modell markiert (armW)
+  w_arms: { hip: 0, armX: 0, armAmp: 0.3, shy: 1.36 },
   w_shoes: { hip: 0.85, legAmp: 0.32, lift: 0.04, armX: 9 },
-  w_hijab: { hip: 0 }, w_hijabLong: { hip: 0 }, w_head: { hip: 0 }, w_eyes: { hip: 0 },
+  w_hijab: { hip: 0, trim: true }, w_hijabLong: { hip: 0, trim: true }, w_feet: { hip: 0.88, legAmp: 0.32, lift: 0.04, armX: 9 }, w_head: { hip: 0 }, w_eyes: { hip: 0 },
   // Pilger im Ihram
   m_cloth: { hip: 0.92, legAmp: 0.36, lift: 0.03, armX: 0.24, armAmp: 0.4, shy: 1.4, fold: false },
   m_skin: { hip: 0.92, legAmp: 0.42, lift: 0.05, armX: 0.24, armAmp: 0.42, shy: 1.4 },
@@ -35,10 +35,10 @@ export const WALK = {
 };
 // Gesichtsformen: Kopfmitte und Halsansatz je Gruppe (Meter). Teile mit face: true werden pro Person verformt:
 // Breite, Länge und Kinnpartie (aFace / uFace) – Kopf, Augen und Kopftuch gemeinsam, damit alles zusammenpasst.
-export const HEAD_OF = { '': [1.6, 1.49], w: [1.41, 1.31], m: [1.625, 1.51], k: [1.585, 1.45] };
+export const HEAD_OF = { '': [1.6, 1.49], w: [1.58, 1.47], m: [1.625, 1.51], k: [1.585, 1.45] };
 const FACE_KEYS = ['head', 'face', 'hair', 'beard', 'khimar', 'khimarLong', 'kufi', 'ghutra', 'w_head', 'w_eyes', 'w_hijab', 'w_hijabLong', 'm_skin', 'k_head', 'k_eyes'];
 // Hüfthöhe je Modell-Gruppe (für das Absenken beim Knien in der Menge)
-export const HIP_OF = { '': 0.95, w: 0.85, m: 0.92, k: 0.92 };
+export const HIP_OF = { '': 0.95, w: 0.88, m: 0.92, k: 0.92 };
 
 const f = (x) => { const s = String(+x.toFixed(4)); return s.includes('.') || s.includes('e') ? s : s + '.0'; };
 export function walkMaterial(mat, p, { instanced = true, yOff = 0, groupHip = 0.95, body = false, faceKey = '', group = '' } = {}) {
@@ -49,6 +49,7 @@ export function walkMaterial(mat, p, { instanced = true, yOff = 0, groupHip = 0.
   const uniforms = { uWalk: { value: new THREE.Vector3(0, 0, 0) }, uArm: { value: new THREE.Vector2(0, 0) }, uElbow: { value: new THREE.Vector2(0, 0) }, uBody: { value: new THREE.Vector2(0, 0) }, uFace: { value: new THREE.Vector3(1, 1, 1) } };
   mat.onBeforeCompile = (sh) => {
     Object.assign(sh.uniforms, uniforms);
+    if (P.trim) patchTrim(sh);
     sh.vertexShader = sh.vertexShader
       .replace('#include <common>', `#include <common>
 ${instanced ? 'attribute vec3 aWalk;' : 'uniform vec3 uWalk; uniform vec2 uArm; uniform vec2 uElbow; uniform vec2 uBody;'}
@@ -99,4 +100,12 @@ ${face ? `{ // Gesichtsform: Breite (x), Länge (y), Kinnpartie (z) – nur ober
   const key = 'walk4' + JSON.stringify(P) + instanced + yOff + groupHip + body + face + group;
   mat.customProgramCacheKey = () => key;
   return uniforms;
+}
+
+// Hijab mit Goldrand: Die Textur ist eine Maske (weiß = Goldrand). Der Stoff bekommt die Farbe der Person, der Rand bleibt golden.
+export const TRIM_GOLD = '0.80, 0.62, 0.28';
+export function patchTrim(sh) {
+  sh.fragmentShader = sh.fragmentShader
+    .replace('#include <map_fragment>', '#ifdef USE_MAP\n float trimM = texture2D(map, vMapUv).r;\n#else\n float trimM = 0.0;\n#endif')
+    .replace('#include <color_fragment>', `#include <color_fragment>\n diffuseColor.rgb = mix(diffuseColor.rgb, vec3(${TRIM_GOLD}), trimM);`);
 }
