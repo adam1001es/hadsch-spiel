@@ -7,6 +7,7 @@ import * as arafat from '../stations/arafat.js';
 import * as muzdalifa from '../stations/muzdalifa.js';
 import * as jamarat from '../stations/jamarat.js';
 import * as info from '../stations/info.js';
+import { progressStore } from './progress.js';
 
 // Neue Stationen hier eintragen, sobald die Datei in src/stations/ existiert.
 const IMPL = { tawaf, miqat, sai, mina, arafat, muzdalifa, jamarat };
@@ -63,6 +64,25 @@ export function createStations(ctx) {
     };
   }
 
+  let lastPlayed = -1; // zuletzt gespielte Station (in dieser Sitzung)
+
+  // Quereinstieg: kurze Einordnung „Davor … · Danach …“
+  function contextFor(i) {
+    if (i === 0 || i === lastPlayed + 1) return '';
+    const prev = STATIONS[i - 1], next = STATIONS[i + 1];
+    const recap = TEXT.learn[i - 1].recap[0];
+    return `Davor: <b>${i}. ${prev.title}</b> – ${recap}${next ? ` Danach: <b>${i + 2}. ${next.title}</b>.` : ''}`;
+  }
+
+  // Stationsauswahl über die Rauten oben im HUD
+  ctx.ui.el.dots.addEventListener('click', async () => {
+    if (paused || busy || index < 0 || index >= STATIONS.length) return;
+    paused = true;
+    const sel = await ctx.ui.chooser(STATIONS, index, progressStore.get().done);
+    paused = false;
+    if (sel != null && sel !== index) { lastPlayed = -1; go(sel); }
+  });
+
   async function go(i) {
     await ctx.ui.fade(true);
     current?.dispose?.();
@@ -73,7 +93,7 @@ export function createStations(ctx) {
     index = i; tutorial = null;
     if (i >= STATIONS.length) { current = info.ending(ctx); ctx.ui.fade(false); return; }
     const st = STATIONS[i];
-    const L = personal(TEXT.learn[i]);
+    const L = { ...personal(TEXT.learn[i]), context: contextFor(i) };
     ctx.ui.station(i, STATIONS.length, st);
     ctx.mission = makeMission(L.tasks);
     const impl = IMPL[st.id] || info;
@@ -96,6 +116,8 @@ export function createStations(ctx) {
       ctx.ui.prompt(null); ctx.ui.hold(null); ctx.ui.auto(false); ctx.ui.coach(null);
       const first = await ctx.ui.learnRecap(L, st);
       ctx.progress.quizN++; if (first) ctx.progress.quizOk++;
+      progressStore.finish(index);
+      lastPlayed = index;
     }
     await go(index + 1);
     busy = false;

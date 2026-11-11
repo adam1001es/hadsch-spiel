@@ -88,7 +88,13 @@
         <p class="small pf-note">Wird nur auf diesem Gerät gespeichert – damit dich das Spiel mit Namen anspricht und die Regeln für dich passen.</p>
       </form>
       <button id="startBtn" class="primary" type="button">Bismillah – Beginnen</button>
-      <div id="jump"></div>
+      <button id="resumeBtn" type="button" hidden></button>
+      <!-- Gezielt lernen: eingeklappt, damit der empfohlene Weg (der Reihe nach) im Vordergrund bleibt -->
+      <details id="jumpBox">
+        <summary>Station gezielt wählen</summary>
+        <p class="small">Empfohlen: der Reihe nach – jede Station baut auf der vorherigen auf. Nach einer gewählten Station geht es mit der nächsten weiter.</p>
+        <div id="jump"></div>
+      </details>
     </div>
   </section>
 

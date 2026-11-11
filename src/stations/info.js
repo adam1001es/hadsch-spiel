@@ -2,6 +2,7 @@ import { ENDING } from '../content/hajj.js';
 import { buildKaaba } from '../world/kaaba.js';
 import { buildHaram } from '../world/haram.js';
 import { SUNNAH_LIST } from '../core/kit.js';
+import { progressStore } from '../core/progress.js';
 
 // Platzhalter für Stationen, die noch nicht gebaut sind: zeigt Text und Schritte, dann "Weiter".
 // Claude Code ersetzt jede Station durch eine eigene Datei (siehe CLAUDE.md).
@@ -29,13 +30,14 @@ export function ending(ctx) {
   ui.el.day.textContent = 'Abgeschlossen';
   ui.el.title.textContent = 'Hadsch mabrur';
   const pf = ctx.profile || {};
+  const nDone = progressStore.get().done.length;
   ui.goal(null); ui.hold(null);
   ui.el.stick.classList.add('off');
   const done = SUNNAH_LIST.filter(([k]) => ctx.progress.sunnah.has(k));
   ui.counter(`Sunnah: ${done.length} von ${SUNNAH_LIST.length}`);
   ui.el.panel.classList.remove('collapsed');
   ui.info(`${ui.prayer(ENDING)}
-    <div class="cert"><div class="k">Urkunde</div><b>${pf.name || 'Du'}</b>${pf.age ? ` (${pf.age >= 18 ? '18+' : pf.age} Jahre)` : ''} ${pf.name ? 'hat' : 'hast'} alle 12 Stationen des Hadsch-Pfads geschafft.</div>
+    <div class="cert"><div class="k">Urkunde</div><b>${pf.name || 'Du'}</b>${pf.age ? ` (${pf.age >= 18 ? '18+' : pf.age} Jahre)` : ''} ${pf.name ? 'hat' : 'hast'} ${nDone >= 12 ? 'alle 12 Stationen' : `${nDone} von 12 Stationen`} des Hadsch-Pfads geschafft.</div>
     ${ctx.progress.quizN ? `<p><b>Quiz:</b> ${ctx.progress.quizOk} von ${ctx.progress.quizN} Fragen beim ersten Versuch richtig ${ctx.progress.quizOk === ctx.progress.quizN ? '– hervorragend!' : ''}</p>` : ''}
     <ul class="sunnah-list">${SUNNAH_LIST.map(([k, label]) => `<li class="${ctx.progress.sunnah.has(k) ? 'ok' : ''}">${ctx.progress.sunnah.has(k) ? '✓' : '○'} ${label}</li>`).join('')}</ul>
     <p class="tr">Gezählt wird nur, was du wirklich getan hast – Sunnah ist freiwillig.</p>`);

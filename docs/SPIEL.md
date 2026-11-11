@@ -29,6 +29,7 @@ Texte, Gebete und Reihenfolge stehen zusätzlich in `src/content/hajj.js` (gleic
 - Zwischen Stationen Überblendung über Schwarz.
 - Startbildschirm: Kamera kreist um die Kaaba bei Nacht. Titel „Hadsch-Pfad“, Hinweis, Knopf „Bismillah – Beginnen“, darunter alle Stationen zum direkten Springen.
 - Testlink je Station: `…/#s1` bis `…/#s12`.
+- **Stationsauswahl (minimal)**: Startbildschirm „Bismillah – Beginnen“ (von vorn), „Weiterspielen: Station X“ (gespeicherter Stand) und eingeklappt „Station gezielt wählen“ (✓ = erledigt). Im Spiel öffnet ein Tipp auf die 12 Rauten dieselbe Liste. Beim Quereinstieg zeigt die Lernkarte „So ordnet sich diese Station ein: Davor … · Danach …“; danach geht es mit der nächsten Station weiter.
 
 ## 3a. Pädagogischer Aufbau (Zielgruppe: Schülerinnen und Schüler)
 Jede Station folgt demselben Muster, damit Lernende sich immer orientieren können:

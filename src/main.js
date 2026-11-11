@@ -6,6 +6,7 @@ import { createUI } from './core/ui.js';
 import { createStations } from './core/stations.js';
 import { preview } from './stations/tawaf.js';
 import * as content from './content/hajj.js';
+import { progressStore } from './core/progress.js';
 
 const engine = createEngine(document.getElementById('c'));
 const sky = createSky(engine);
@@ -52,12 +53,21 @@ const begin = (i, check = true) => {
 ui.el.stick.classList.add('off');
 document.getElementById('startBtn').addEventListener('click', () => begin(0));
 const jump = document.getElementById('jump');
+const prog = progressStore.get();
 content.STATIONS.forEach((st, i) => {
   const b = document.createElement('button');
   b.type = 'button'; b.textContent = `${i + 1}. ${st.title}`;
+  if (prog.done.includes(i)) b.className = 'done';
   b.addEventListener('click', () => begin(i));
   jump.appendChild(b);
 });
+// Weiterspielen, wenn es einen gespeicherten Stand gibt
+const resume = document.getElementById('resumeBtn');
+if (prog.next > 0 && prog.next < content.STATIONS.length) {
+  resume.hidden = false;
+  resume.textContent = `Weiterspielen: ${prog.next + 1}. ${content.STATIONS[prog.next].title}`;
+  resume.addEventListener('click', () => begin(prog.next));
+}
 
 // Übersicht & Anleitung (runder Kartenknopf oben rechts)
 const guide = document.getElementById('guide');

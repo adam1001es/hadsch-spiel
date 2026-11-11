@@ -202,6 +202,7 @@ export function createUI() {
     learnIntro(L, idx, total, st) {
       return new Promise((resolve) => {
         el.learnCard.innerHTML = `${idx === 0 && L.hello ? `<p class="hello">${L.hello} Schön, dass du dabei bist.</p>` : ''}<div class="k">Station ${idx + 1} von ${total} · ${st.day}</div><h2>${st.title}</h2>
+          ${L.context ? `<div class="fact" style="margin:0 0 6px"><b>So ordnet sich diese Station ein:</b> ${L.context}</div>` : ''}
           <h3>Worum geht es?</h3><p>${L.what}</p>
           <h3>Warum?</h3><p>${L.why}</p>
           <h3>Deine Aufgaben</h3><ol>${L.tasks.map((t) => `<li>${t.t}${t.s ? ' <span class="s">· Sunnah (freiwillig)</span>' : ''}</li>`).join('')}</ol>
@@ -236,6 +237,18 @@ export function createUI() {
           });
           box.appendChild(b);
         });
+      });
+    },
+    // Stationsauswahl (über die Rauten oben): gibt den Index zurück oder null (abbrechen)
+    chooser(stations, current, done) {
+      return new Promise((resolve) => {
+        el.learnCard.innerHTML = `<div class="k">Station wählen</div><h2>Deine Pilgerfahrt</h2>
+          <p class="small">Empfohlen ist die Reihenfolge – jede Station baut auf der vorherigen auf. Du kannst aber gezielt eine Station üben.</p>
+          <div class="st-list">${stations.map((s, i) => `<button type="button" data-i="${i}" class="${i === current ? 'now' : ''} ${done.includes(i) ? 'done' : ''}"><b>${i + 1}.</b> ${s.title}<span class="d">${s.day}</span></button>`).join('')}</div>
+          <button class="go" type="button">Zurück zur Station</button>`;
+        el.learn.hidden = false; el.learnCard.scrollTop = 0;
+        el.learnCard.querySelector('.go').addEventListener('click', () => { el.learn.hidden = true; resolve(null); });
+        el.learnCard.querySelectorAll('.st-list button').forEach((b) => b.addEventListener('click', () => { el.learn.hidden = true; resolve(+b.dataset.i); }));
       });
     },
     // Zeigehinweis (Steuerungs-Training). where: 'stick' | 'look' | 'hold' | 'prompt' | 'center'
