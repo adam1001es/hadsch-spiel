@@ -18,7 +18,7 @@ html, body { height: 100%; margin: 0; overflow: hidden; background: #0d1a2b; col
 #c { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
 [hidden] { display: none !important; }
 
-#hud { position: fixed; top: 0; left: 0; right: 0; padding: calc(env(safe-area-inset-top, 0px) + 10px) var(--sr) 0 var(--sl); color: var(--ivory); pointer-events: none; text-shadow: 0 1px 6px rgba(0,0,0,.55); }
+#hud { position: fixed; top: 0; left: 0; right: 0; padding: calc(env(safe-area-inset-top, 0px) + 10px) calc(var(--sr) + 56px) 0 var(--sl); color: var(--ivory); pointer-events: none; text-shadow: 0 1px 6px rgba(0,0,0,.55); }
 .hud-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
 .eyebrow { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; opacity: .85; }
 .title { font: 22px/1.15 var(--f-display); }
@@ -55,3 +55,11 @@ button:focus-visible { outline: 3px solid #e6c46e; outline-offset: 2px; }
 .small { font-size: 12px; color: var(--muted); }
 #jump { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
 #jump button { font-size: 12px; padding: 6px 10px; }
+
+/* Runder Kartenknopf oben rechts: öffnet die Übersicht (public/anleitung.html) */
+#guideBtn { position: fixed; z-index: 30; top: calc(env(safe-area-inset-top, 0px) + 10px); right: var(--sr); width: 46px; height: 46px; padding: 0; border-radius: 50%; display: grid; place-items: center; background: rgba(20, 37, 31, .78); color: #e6c46e; border: 1.5px solid #e6c46e; box-shadow: 0 2px 10px rgba(0,0,0,.35); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+#guideBtn svg { width: 24px; height: 24px; }
+#guideBtn:active { transform: scale(.94); }
+#guide { position: fixed; inset: 0; z-index: 40; background: #eef0ea; }
+#guide iframe { width: 100%; height: 100%; border: 0; display: block; }
+#guideClose { position: fixed; z-index: 41; top: calc(env(safe-area-inset-top, 0px) + 10px); right: var(--sr); width: 46px; height: 46px; padding: 0; border-radius: 50%; background: #1d5642; color: #f5f1e6; border: 1.5px solid #e6c46e; font-size: 18px; }

@@ -13,6 +13,7 @@ Der Nutzer testet ausschließlich am iPhone über GitHub Pages. Er programmiert 
 - Immer nur **eine Station pro Aufgabe** bauen oder verbessern, dann committen und pushen.
 - Vor jedem Commit `npm run build` ausführen; der Build muss fehlerfrei sein.
 - Nach dem Push dem Nutzer kurz auf Deutsch sagen, was sich geändert hat und was er testen soll.
+- Wenn eine Station fertig ist: in `public/anleitung.html` im Array `S` bei dieser Station `done:true` setzen.
 - Keine Inhalte aus `src/content/hajj.js` erfinden oder ändern, ohne dass der Nutzer es verlangt.
 
 ## Struktur
@@ -33,6 +34,7 @@ src/
   stations/            Eine Datei pro Station, exportiert create(ctx)
   content/hajj.js      ALLE Texte, Gebete, Regeln (einzige Quelle)
 public/assets/textures Texturen (Polyhaven / ambientCG, CC0)
+public/anleitung.html  Übersicht & Anleitung (runder Kartenknopf oben rechts im Spiel)
 ```
 
 ## Station-Schnittstelle

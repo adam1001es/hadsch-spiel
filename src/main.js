@@ -35,6 +35,16 @@ content.STATIONS.forEach((st, i) => {
   jump.appendChild(b);
 });
 
+// Übersicht & Anleitung (runder Kartenknopf oben rechts)
+const guide = document.getElementById('guide');
+const guideFrame = document.getElementById('guideFrame');
+document.getElementById('guideBtn').addEventListener('click', () => {
+  if (!guideFrame.src) guideFrame.src = './anleitung.html';
+  input.holding = false;
+  guide.hidden = false;
+});
+document.getElementById('guideClose').addEventListener('click', () => { guide.hidden = true; });
+
 // Direkt zu einer Station springen (zum Testen): …/index.html#s2 öffnet Station 2.
 const m = location.hash.match(/^#s(\d+)$/);
 if (m) begin(Math.max(0, Math.min(content.STATIONS.length - 1, +m[1] - 1)));

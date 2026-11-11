@@ -1,0 +1,319 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Hadsch-Pfad Anleitung</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Amiri&family=Figtree:wght@400;600;700&family=Marcellus&display=swap">
+<style>
+/* Layout: ruhige Pilgerkarte oben, dann Tagesleiste, Steuerung, Stationskarten, Bildschirmaufbau */
+:root{
+  --bg:#eef0ea; --surface:#fbfcf8; --ink:#13281f; --muted:#5b6b62; --line:#d3d9cf;
+  --green:#1d5642; --gold:#a97c2c; --gold-soft:#e8d29a; --sand:#d9c9a8; --night:#16233d; --ok:#2f8a5b;
+  --f-d:'Marcellus',Georgia,serif; --f-b:'Figtree',system-ui,sans-serif; --f-ar:'Amiri','Geeza Pro',serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0f1714; --surface:#16211c; --ink:#e9ede6; --muted:#9aa89f; --line:#2a3832;
+  --green:#5fb48f; --gold:#d6ad5c; --gold-soft:#5a4a22; --sand:#6d5e45; --night:#0b1222; --ok:#5fc38c; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f1714; --surface:#16211c; --ink:#e9ede6; --muted:#9aa89f; --line:#2a3832;
+  --green:#5fb48f; --gold:#d6ad5c; --gold-soft:#5a4a22; --sand:#6d5e45; --night:#0b1222; --ok:#5fc38c; color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--f-b);margin:0}
+.wrap{max-width:1060px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:calc(env(safe-area-inset-top,0px) + 64px) calc(env(safe-area-inset-bottom,0px) + 60px);display:grid;gap:44px}
+h1{font:clamp(30px,6vw,46px)/1.05 var(--f-d);margin:0;text-wrap:balance}
+h2{font:26px/1.2 var(--f-d);margin:0 0 6px;text-wrap:balance}
+.lead{color:var(--muted);max-width:62ch;margin:6px 0 0}
+.eyebrow{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);font-weight:700}
+.ar{font:24px/1.6 var(--f-ar);direction:rtl;color:var(--green)}
+header{display:grid;gap:8px}
+
+/* Karte */
+.mapbox{background:var(--night);border-radius:18px;overflow:hidden;position:relative}
+.mapbox svg{display:block;width:100%;height:auto}
+.caption{display:flex;gap:14px;align-items:center;flex-wrap:wrap;padding:14px 18px;background:var(--surface);border:1px solid var(--line);border-top:0;border-radius:0 0 18px 18px}
+.caption .num{font:34px/1 var(--f-d);color:var(--gold);font-variant-numeric:tabular-nums;min-width:42px}
+.caption .txt{flex:1;min-width:0}
+.caption .t1{font:20px/1.2 var(--f-d)}
+.caption .t2{color:var(--muted);font-size:13px}
+.tag{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:4px 10px;border-radius:999px;border:1px solid var(--line);background:var(--bg);white-space:nowrap}
+.tag svg{width:16px;height:16px}
+.ctrl{display:flex;gap:8px}
+button{font:600 14px var(--f-b);border:1px solid var(--green);color:var(--green);background:transparent;border-radius:10px;padding:8px 12px;cursor:pointer}
+button.on{background:var(--green);color:var(--surface)}
+button:focus-visible,textarea:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+
+/* Tagesleiste */
+.days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}
+.day{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px;display:grid;gap:6px;align-content:start;min-width:0}
+.day b{font:15px/1.2 var(--f-d)}
+.day small{color:var(--muted);font-size:12px}
+.chips{display:flex;flex-wrap:wrap;gap:4px}
+.chip{font:600 12px var(--f-b);width:24px;height:24px;border-radius:50%;display:grid;place-items:center;background:var(--bg);border:1px solid var(--line);cursor:pointer;padding:0;color:var(--ink)}
+.chip.now{background:var(--gold);border-color:var(--gold);color:#1a1405}
+.sky{height:6px;border-radius:3px}
+@media (max-width:760px){.days{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* Steuerung */
+.mechs{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.mech{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;display:grid;gap:8px;justify-items:center;text-align:center}
+.mech svg{width:84px;height:84px}
+.mech b{font:17px var(--f-d)}
+.mech span{font-size:13px;color:var(--muted)}
+
+/* Stationen */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;display:grid;gap:8px;align-content:start;min-width:0;transition:border-color .3s,box-shadow .3s}
+.card.now{border-color:var(--gold);box-shadow:0 0 0 2px var(--gold-soft)}
+.card .top{display:flex;gap:10px;align-items:center}
+.card .ic{width:44px;height:44px;flex:none;border-radius:10px;background:var(--night);display:grid;place-items:center}
+.card .ic svg{width:30px;height:30px}
+.card h3{font:18px/1.2 var(--f-d);margin:0}
+.card .d{font-size:12px;color:var(--muted)}
+.card ol{margin:0;padding-left:18px;font-size:13px}
+.card ol li{margin:2px 0}
+.status{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+.status.ok{color:var(--ok)} .status.plan{color:var(--muted)}
+textarea{width:100%;box-sizing:border-box;min-height:56px;resize:vertical;font:13px/1.4 var(--f-b);color:var(--ink);background:var(--bg);border:1px dashed var(--gold);border-radius:8px;padding:8px}
+.saved{font-size:11px;color:var(--muted)}
+
+/* Bildschirm */
+.screen{display:grid;grid-template-columns:240px 1fr;gap:24px;align-items:center}
+.phone{width:240px;max-width:100%;aspect-ratio:9/19;border-radius:32px;background:linear-gradient(#1b2a4a,#3b2f2a 70%,#c9b48f);position:relative;overflow:hidden;border:6px solid var(--ink)}
+.phone .hud{position:absolute;top:22px;left:14px;right:14px;color:#f5f1e6;font-size:9px}
+.phone .hud .tt{font:15px var(--f-d)}
+.phone .hud .cnt{font:22px var(--f-d);margin-top:6px}
+.phone .k{position:absolute;left:50%;top:40%;width:44px;height:52px;transform:translateX(-50%);background:#0d0d0d;box-shadow:0 0 0 1px #333}
+.phone .k::after{content:"";position:absolute;left:0;right:0;top:12px;height:5px;background:#c9a24a}
+.phone .walker{position:absolute;left:50%;top:40%;width:8px;height:8px;margin:22px 0 0 -4px;border-radius:50%;background:#f0c35a;offset-path:circle(46px at 0 0);animation:orbit 5s linear infinite}
+@keyframes orbit{to{offset-distance:100%}}
+.phone .panel{position:absolute;left:0;right:0;bottom:0;height:30%;background:rgba(245,241,230,.95);border-top:1px solid #a97c2c;padding:10px;font-size:9px;color:#14251f}
+.phone .panel .b{display:inline-block;border:1px solid #a97c2c;border-radius:6px;padding:3px 5px;margin-top:6px;color:#7a5716;font-weight:700}
+.phone .hold{position:absolute;right:10px;bottom:12px;width:46px;height:46px;border-radius:50%;background:#1d5642;border:2px solid #e6c46e;color:#f5f1e6;font:700 9px var(--f-b);display:grid;place-items:center;animation:press 1.6s ease-in-out infinite}
+@keyframes press{50%{transform:scale(.9);background:#2b7558}}
+.legend{display:grid;gap:10px;counter-reset:l}
+.legend div{display:grid;grid-template-columns:28px 1fr;gap:10px;align-items:start}
+.legend i{font-style:normal;width:26px;height:26px;border-radius:50%;background:var(--gold);color:#1a1405;display:grid;place-items:center;font-weight:700;font-size:13px}
+@media (max-width:620px){.screen{grid-template-columns:1fr;justify-items:center}}
+
+@media (prefers-reduced-motion:reduce){.phone .walker,.phone .hold,.anim{animation:none!important}}
+</style>
+</head>
+<body>
+
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-kaaba" viewBox="0 0 32 32"><rect x="7" y="6" width="18" height="21" fill="#0d0d0d" stroke="#555" stroke-width=".6"/><rect x="7" y="11" width="18" height="2.4" fill="#d6ad5c"/><rect x="11" y="18" width="4" height="7" fill="#d6ad5c"/></symbol>
+    <symbol id="i-mosque" viewBox="0 0 32 32"><path d="M8 27V17a8 8 0 0 1 16 0v10z" fill="#f2efe6"/><rect x="25" y="9" width="3" height="18" fill="#f2efe6"/><path d="M26.5 4l1.5 5h-3z" fill="#d6ad5c"/><rect x="4" y="26" width="25" height="2" fill="#d9c9a8"/></symbol>
+    <symbol id="i-safa" viewBox="0 0 32 32"><path d="M2 26c3-5 6-7 9-7s4 3 5 3 3-6 7-6 5 6 7 10z" fill="#9b8a72"/><path d="M5 12h22" stroke="#5fe0a0" stroke-width="2.4" stroke-linecap="round"/><path d="M9 8l-4 4 4 4M23 8l4 4-4 4" stroke="#f2efe6" stroke-width="1.8" fill="none" stroke-linecap="round"/></symbol>
+    <symbol id="i-tent" viewBox="0 0 32 32"><path d="M2 26l7-10 7 10z" fill="#f2efe6"/><path d="M14 26l8-12 8 12z" fill="#e3ddd0"/><path d="M8 26l6-8 6 8z" fill="#fff"/><circle cx="25" cy="7" r="3" fill="#f0c35a"/></symbol>
+    <symbol id="i-arafat" viewBox="0 0 32 32"><path d="M2 27l10-12 4 3 5-7 9 16z" fill="#7a6a5a"/><rect x="20" y="4" width="2.4" height="8" fill="#fff"/><circle cx="7" cy="8" r="3.4" fill="#f4a65a"/></symbol>
+    <symbol id="i-stones" viewBox="0 0 32 32"><path d="M20 6a7 7 0 1 0 6 11 6 6 0 0 1-6-11z" fill="#e8e2c8"/><circle cx="7" cy="24" r="2.2" fill="#b7aa95"/><circle cx="13" cy="26" r="1.8" fill="#9f927e"/><circle cx="18" cy="23" r="2" fill="#c3b7a3"/><circle cx="23" cy="26" r="1.6" fill="#a99c87"/><circle cx="5" cy="7" r=".9" fill="#fff"/><circle cx="11" cy="4" r=".7" fill="#fff"/></symbol>
+    <symbol id="i-jamra" viewBox="0 0 32 32"><rect x="12" y="5" width="8" height="19" rx="3" fill="#b9b2a6"/><ellipse cx="16" cy="25" rx="13" ry="3.5" fill="none" stroke="#d6ad5c" stroke-width="1.6"/><circle cx="6" cy="12" r="1.6" fill="#e9e3d5"/><path d="M6 12q5-6 6-1" stroke="#e9e3d5" stroke-width="1" fill="none" stroke-dasharray="1.5 1.5"/></symbol>
+    <symbol id="i-hady" viewBox="0 0 32 32"><rect x="5" y="9" width="22" height="15" rx="3" fill="#f2efe6"/><path d="M5 14h22" stroke="#d6ad5c" stroke-width="2"/><path d="M11 19h7" stroke="#7a6a5a" stroke-width="1.6"/><path d="M22 3l3 4-3 1z" fill="#f2efe6"/></symbol>
+    <symbol id="i-end" viewBox="0 0 32 32"><circle cx="16" cy="16" r="11" fill="none" stroke="#d6ad5c" stroke-width="2"/><path d="M11 16l4 4 7-8" stroke="#5fe0a0" stroke-width="2.6" fill="none" stroke-linecap="round"/></symbol>
+    <!-- Mechanik-Symbole -->
+    <symbol id="m-hold" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="4" fill="currentColor"/></symbol>
+    <symbol id="m-tap" viewBox="0 0 24 24"><path d="M9 11V5a2 2 0 0 1 4 0v6l4 1a2 2 0 0 1 1.5 2.4L17 21H9l-4-6 1.5-1.2L9 15z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></symbol>
+    <symbol id="m-throw" viewBox="0 0 24 24"><path d="M3 20Q8 3 20 8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-dasharray="2.5 2"/><circle cx="20" cy="8" r="2.4" fill="currentColor"/></symbol>
+    <symbol id="m-time" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 7v5l3 3" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round"/></symbol>
+    <symbol id="m-choose" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="5" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/><rect x="3" y="14" width="18" height="5" rx="2" fill="currentColor"/></symbol>
+  </defs>
+</svg>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Übersicht & Anleitung</div>
+    <h1>Hadsch-Pfad</h1>
+    <div class="ar">لَبَّيْكَ اللَّهُمَّ لَبَّيْكَ</div>
+    <p class="lead">So läuft das Spiel: 12 Stationen an 5 Orten, vom Miqat bis zum Abschieds-Tawaf. Der goldene Punkt auf der Karte wandert die Reise ab. Tippe auf eine Nummer, um zu einer Station zu springen, und schreib deine Ideen direkt in die Karten unten.</p>
+  </header>
+
+  <section aria-labelledby="h-map">
+    <h2 id="h-map">Die Reise auf der Karte</h2>
+    <div class="mapbox">
+      <svg id="map" viewBox="0 0 800 440" role="img" aria-label="Schematische Karte von Medina, Mekka, Mina, Muzdalifa und Arafat mit der Route des Pilgers">
+        <defs>
+          <radialGradient id="glow"><stop offset="0" stop-color="#f0c35a" stop-opacity=".9"/><stop offset="1" stop-color="#f0c35a" stop-opacity="0"/></radialGradient>
+          <linearGradient id="ground" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1c2a45"/><stop offset="1" stop-color="#2e2a2a"/></linearGradient>
+        </defs>
+        <rect width="800" height="440" fill="url(#ground)"/>
+        <g id="stars" fill="#fff" opacity=".55"></g>
+        <path d="M0 360 C120 330 200 350 300 340 S520 320 800 350 L800 440 L0 440Z" fill="#3a3129" opacity=".7"/>
+        <path d="M560 360l40-60 30 30 40-70 50 60 30-30 50 70z" fill="#4a3e33" opacity=".8"/>
+        <path id="route" d="" fill="none" stroke="#e8d29a" stroke-opacity=".35" stroke-width="3" stroke-dasharray="6 7"/>
+        <path id="trail" d="" fill="none" stroke="#f0c35a" stroke-width="3.2" stroke-linecap="round"/>
+        <g id="places"></g>
+        <circle id="halo" r="22" fill="url(#glow)"/>
+        <circle id="dot" r="7" fill="#f0c35a" stroke="#fff" stroke-width="2"/>
+        <text x="20" y="420" fill="#c9bfa8" font-size="12" font-family="Figtree">Schematisch, nicht maßstabsgetreu · Medina liegt ca. 400 km nördlich</text>
+      </svg>
+    </div>
+    <div class="caption" aria-live="polite">
+      <div class="num" id="cNum">1</div>
+      <div class="txt"><div class="t1" id="cTitle"></div><div class="t2" id="cDay"></div></div>
+      <span class="tag" id="cMech"></span>
+      <div class="ctrl"><button id="play" class="on" type="button">Pause</button></div>
+    </div>
+  </section>
+
+  <section aria-labelledby="h-days">
+    <h2 id="h-days">Tage und Tageszeiten</h2>
+    <p class="lead">Jede Spalte ist ein Abschnitt der Pilgerfahrt. Der Farbbalken zeigt, ob die Station bei Tag, Abend oder Nacht spielt.</p>
+    <div class="days" id="days" style="margin-top:14px"></div>
+  </section>
+
+  <section aria-labelledby="h-mech">
+    <h2 id="h-mech">Fünf Arten zu spielen</h2>
+    <p class="lead">Mehr braucht das Spiel nicht. Jede Station nutzt eine davon, damit es am Handy einfach bleibt.</p>
+    <div class="mechs" style="margin-top:14px">
+      <div class="mech">
+        <svg viewBox="0 0 84 84"><circle cx="42" cy="42" r="30" fill="none" stroke="var(--line)" stroke-width="2" stroke-dasharray="4 5"/><rect x="34" y="32" width="16" height="20" fill="#0d0d0d"/><rect x="34" y="37" width="16" height="2.5" fill="var(--gold)"/><circle r="5" fill="var(--gold)"><animateMotion class="anim" dur="4s" repeatCount="indefinite" path="M42 72 A30 30 0 1 1 42.01 72"/></circle></svg>
+        <b>Halten = Gehen</b><span>Tawaf im Kreis, Sa'i hin und her</span>
+      </div>
+      <div class="mech">
+        <svg viewBox="0 0 84 84"><circle cx="20" cy="62" r="4" fill="var(--sand)"/><circle cx="40" cy="68" r="3.5" fill="var(--sand)"/><circle cx="62" cy="60" r="4" fill="var(--sand)"/><circle cx="50" cy="44" r="4.5" fill="var(--gold)"><animate attributeName="cy" values="44;44;14;14" keyTimes="0;.5;.8;1" dur="2.4s" repeatCount="indefinite"/><animate attributeName="opacity" values="1;1;0;0" keyTimes="0;.6;.8;1" dur="2.4s" repeatCount="indefinite"/></circle><g transform="translate(46 40)"><use href="#m-tap" width="30" height="30" color="var(--ink)"/></g></svg>
+        <b>Antippen</b><span>Steine in Muzdalifa sammeln</span>
+      </div>
+      <div class="mech">
+        <svg viewBox="0 0 84 84"><rect x="62" y="10" width="10" height="64" rx="5" fill="var(--bg)" stroke="var(--line)"/><rect x="62" y="30" width="10" height="18" fill="var(--ok)" opacity=".7"/><rect x="58" y="40" width="18" height="3" fill="var(--ink)"><animate attributeName="y" values="70;12;70" dur="1.8s" repeatCount="indefinite"/></rect><rect x="16" y="20" width="10" height="44" rx="4" fill="#b9b2a6"/><path d="M50 70Q40 20 26 40" fill="none" stroke="var(--gold)" stroke-width="2" stroke-dasharray="3 3"/></svg>
+        <b>Werfen</b><span>Im grünen Bereich tippen, Stein landet im Becken</span>
+      </div>
+      <div class="mech">
+        <svg viewBox="0 0 84 84"><path d="M10 64h64" stroke="var(--line)" stroke-width="2"/><path d="M14 64A28 28 0 0 1 70 64" fill="none" stroke="var(--line)" stroke-dasharray="3 4"/><circle r="7" fill="#f4a65a"><animateMotion dur="4s" repeatCount="indefinite" path="M14 64A28 28 0 0 1 70 64"/></circle></svg>
+        <b>Zeitraffer</b><span>Gebete, Nächte und Arafat bis Sonnenuntergang</span>
+      </div>
+      <div class="mech">
+        <svg viewBox="0 0 84 84"><rect x="12" y="20" width="60" height="16" rx="6" fill="none" stroke="var(--green)" stroke-width="2"/><rect x="12" y="46" width="60" height="16" rx="6" fill="var(--green)"><animate attributeName="opacity" values="1;.4;1" dur="2s" repeatCount="indefinite"/></rect><rect x="12" y="46" width="60" height="16" rx="6" fill="none" stroke="var(--gold)" stroke-width="2" opacity="0"><animate attributeName="opacity" values="0;1;0" dur="2s" repeatCount="indefinite"/></rect></svg>
+        <b>Wählen</b><span>Ihram, Niyya, Halq oder Taqsir</span>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="h-st">
+    <h2 id="h-st">Alle Stationen</h2>
+    <p class="lead">Grün markiert ist schon spielbar. Die gestrichelten Felder sind für deine Ideen; sie werden in diesem Browser gespeichert, damit du sie später an Claude Code weitergeben kannst.</p>
+    <div class="grid" id="grid" style="margin-top:14px"></div>
+  </section>
+
+  <section aria-labelledby="h-scr">
+    <h2 id="h-scr">So sieht der Bildschirm aus</h2>
+    <div class="screen" style="margin-top:14px">
+      <div class="phone" aria-hidden="true">
+        <div class="hud"><div style="letter-spacing:.1em">UMRAH · MEKKA</div><div class="tt">Tawaf der Umrah</div><div class="cnt">Runde 3 / 7</div></div>
+        <div class="k"></div><div class="walker"></div>
+        <div class="panel">Die Kaaba bleibt links, 7 Runden.<br><span class="b">✋ Allahu Akbar · Sunnah</span></div>
+        <div class="hold">Gehen</div>
+      </div>
+      <div class="legend">
+        <div><i>1</i><span><b>Oben:</b> Tag, Stationsname und 12 Rauten für den Fortschritt.</span></div>
+        <div><i>2</i><span><b>Großer Zähler:</b> Runden, Strecken, Steine oder Uhrzeit, je nach Station.</span></div>
+        <div><i>3</i><span><b>Mitte:</b> die 3D-Welt. Wischen schaut sich um, Antippen wählt Dinge aus.</span></div>
+        <div><i>4</i><span><b>Unten:</b> Erklärung und Gebet (Arabisch, Umschrift, Deutsch) sowie Knöpfe. Grün gefüllt ist Pflicht, gold umrandet ist Sunnah.</span></div>
+        <div><i>5</i><span><b>Gehen-Knopf:</b> gedrückt halten zum Laufen. In Arafat heißt er „Dua“ und lässt die Zeit laufen.</span></div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+const P = { // Orte auf der Karte
+  miqat:{x:110,y:70,n:'Miqat (bei Medina)',i:'i-mosque'},
+  mekka:{x:230,y:290,n:'Mekka · Masjid al-Haram',i:'i-kaaba'},
+  mina:{x:450,y:255,n:'Mina',i:'i-tent'},
+  muz:{x:575,y:300,n:'Muzdalifa',i:'i-stones'},
+  arafat:{x:710,y:255,n:'Arafat',i:'i-arafat'}
+};
+const M = {hold:['m-hold','Halten'],tap:['m-tap','Antippen'],throw:['m-throw','Werfen'],time:['m-time','Zeitraffer'],choose:['m-choose','Wählen']};
+const S = [
+ {t:'Miqat & Ihram',d:'Vor dem 8. Dhul-Hiddscha',p:'miqat',m:'choose',i:'i-mosque',sky:'#f4c27a',done:false,steps:['Ghusl & Ihram anlegen','Niyya für die Umrah','Talbiyah sprechen']},
+ {t:'Tawaf der Umrah',d:'Umrah · Nacht',p:'mekka',m:'hold',i:'i-kaaba',sky:'#1b2a4a',done:true,steps:['7 Runden, Kaaba links','Istilam am Schwarzen Stein','2 Rak\'at & Zamzam']},
+ {t:'Sa\'i',d:'Umrah · Nacht',p:'mekka',m:'hold',i:'i-safa',sky:'#1b2a4a',done:false,steps:['Start auf Safa','7 Strecken, grüner Bereich eilen','Ende Marwa, Taqsir']},
+ {t:'Mina',d:'8. Dhul-Hiddscha',p:'mina',m:'time',i:'i-tent',sky:'linear-gradient(90deg,#9fc6e8,#f4a65a,#1b2a4a)',done:false,steps:['Ihram für den Hadsch','5 Gebete verkürzt','Übernachten']},
+ {t:'Arafat',d:'9. Dhul-Hiddscha',p:'arafat',m:'time',i:'i-arafat',sky:'linear-gradient(90deg,#9fc6e8,#f4a65a)',done:false,steps:['Dhuhr & Asr zusammen','„Dua“ halten bis Sonnenuntergang','Aufbruch nach Muzdalifa']},
+ {t:'Muzdalifa',d:'Nacht zum 10.',p:'muz',m:'tap',i:'i-stones',sky:'#16233d',done:false,steps:['Maghrib & Isha zusammen','7 Steine antippen','Schlafen, Fajr, los']},
+ {t:'Dschamrat al-Aqaba',d:'10. Dhul-Hiddscha · Morgen',p:'mina',m:'throw',i:'i-jamra',sky:'#cfe3f0',done:false,steps:['7 gültige Würfe','Talbiyah endet','Allahu Akbar je Wurf']},
+ {t:'Opfer & Rasur',d:'10. Dhul-Hiddscha',p:'mina',m:'choose',i:'i-hady',sky:'#cfe3f0',done:false,steps:['Hady bestätigen','Halq oder Taqsir','Erstes Tahallul']},
+ {t:'Tawaf al-Ifada',d:'10. Dhul-Hiddscha · Nachmittag',p:'mekka',m:'hold',i:'i-kaaba',sky:'#f4c27a',done:true,steps:['7 Runden','Normale Kleidung','Säule des Hadsch']},
+ {t:'Sa\'i des Hadsch',d:'10. Dhul-Hiddscha',p:'mekka',m:'hold',i:'i-safa',sky:'#f4c27a',done:false,steps:['7 Strecken','Zweites Tahallul']},
+ {t:'Die drei Dschamarat',d:'11.–12. Dhul-Hiddscha',p:'mina',m:'throw',i:'i-jamra',sky:'#f4c27a',done:false,steps:['Klein → mittel → groß','Je 7 Würfe','Dua nach den ersten beiden']},
+ {t:'Abschieds-Tawaf',d:'Abreise · Nacht',p:'mekka',m:'hold',i:'i-kaaba',sky:'#1b2a4a',done:true,steps:['7 Runden','Endbildschirm „Hadsch mabrur“']}
+];
+const DAYS=[['Anreise','Miqat',[0]],['Umrah','Mekka',[1,2]],['8. Dhul-Hiddscha','Tarwiya',[3]],['9. Dhul-Hiddscha','Tag von Arafa',[4]],['Nacht zum 10.','Muzdalifa',[5]],['10. Dhul-Hiddscha','Yaum an-Nahr',[6,7,8,9]],['11.–12. & Abreise','Taschriq',[10,11]]];
+
+const ns='http://www.w3.org/2000/svg', $=id=>document.getElementById(id);
+const el=(tag,attrs,parent)=>{const e=document.createElementNS(ns,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);parent&&parent.appendChild(e);return e};
+
+// Sterne
+for(let i=0;i<90;i++) el('circle',{cx:Math.random()*800,cy:Math.random()*230,r:Math.random()*1.3+.3},$('stars'));
+
+// Orte
+const places=$('places');
+for(const k in P){const p=P[k];const g=el('g',{transform:`translate(${p.x} ${p.y})`},places);
+  el('circle',{r:30,fill:'#0b1222',opacity:.5},g);
+  el('use',{href:'#'+p.i,x:-20,y:-24,width:40,height:40},g);
+  const t=el('text',{y:38,'text-anchor':'middle',fill:'#efe6cf','font-size':13,'font-family':'Figtree','font-weight':600},g);t.textContent=p.n;}
+
+// Route: Punkte je Station, mehrfach besuchte Orte leicht versetzt
+const seen={}; const pts=S.map((s)=>{const p=P[s.p];const c=seen[s.p]=(seen[s.p]||0)+1;const a=c*1.9;return {x:p.x+Math.cos(a)*(c>1?16:0),y:p.y+Math.sin(a)*(c>1?16:0)}});
+const curve=(a,b)=>{const mx=(a.x+b.x)/2,my=(a.y+b.y)/2-40;return `Q${mx} ${my} ${b.x} ${b.y}`};
+let d=`M${pts[0].x} ${pts[0].y}`;for(let i=1;i<pts.length;i++)d+=' '+curve(pts[i-1],pts[i]);
+$('route').setAttribute('d',d);
+// Nummern-Chips auf der Karte
+const byPlace={};S.forEach((s,i)=>(byPlace[s.p]=byPlace[s.p]||[]).push(i));
+const chipPos=S.map((s,i)=>{const list=byPlace[s.p],k=list.indexOf(i),n=list.length,base=P[s.p];
+  const a=n===1?-Math.PI/4:(-Math.PI*0.95)+(Math.PI*0.9)*(k/(n-1));return {x:base.x+Math.cos(a)*44,y:base.y+Math.sin(a)*44}});
+pts.forEach((p0,i)=>{const p=chipPos[i];const g=el('g',{transform:`translate(${p.x} ${p.y})`,style:'cursor:pointer',tabindex:0,role:'button','aria-label':'Station '+(i+1)},places);
+  el('circle',{r:10,fill:'#16233d',stroke:'#e8d29a','stroke-width':1.2,class:'mchip'},g);
+  const t=el('text',{y:4,'text-anchor':'middle',fill:'#efe6cf','font-size':11,'font-family':'Figtree','font-weight':700},g);t.textContent=i+1;
+  g.addEventListener('click',()=>jump(i));g.addEventListener('keydown',e=>{if(e.key==='Enter')jump(i)});});
+
+// Segmente für Animation
+const segs=[];for(let i=1;i<pts.length;i++){const p=document.createElementNS(ns,'path');p.setAttribute('d',`M${pts[i-1].x} ${pts[i-1].y} `+curve(pts[i-1],pts[i]));segs.push({p,len:p.getTotalLength()||1})}
+
+// Tage
+const days=$('days');
+DAYS.forEach(([a,b,ids])=>{const dv=document.createElement('div');dv.className='day';
+  dv.innerHTML=`<b>${a}</b><small>${b}</small><div class="sky" style="background:${S[ids[0]].sky}"></div><div class="chips"></div>`;
+  ids.forEach(i=>{const c=document.createElement('button');c.type='button';c.className='chip';c.dataset.i=i;c.textContent=i+1;c.title=S[i].t;c.addEventListener('click',()=>jump(i));dv.querySelector('.chips').appendChild(c)});
+  days.appendChild(dv)});
+
+// Karten
+const store={get(k){try{return localStorage.getItem(k)||''}catch(e){return ''}},set(k,v){try{localStorage.setItem(k,v);return true}catch(e){return false}}};
+const grid=$('grid');
+S.forEach((s,i)=>{const c=document.createElement('article');c.className='card';c.id='card'+i;
+  c.innerHTML=`<div class="top"><div class="ic"><svg><use href="#${s.i}"/></svg></div><div><div class="d">${i+1} · ${s.d}</div><h3>${s.t}</h3></div></div>
+  <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center"><span class="tag"><svg><use href="#${M[s.m][0]}"/></svg>${M[s.m][1]}</span><span class="status ${s.done?'ok':'plan'}">${s.done?'✓ spielbar':'geplant'}</span></div>
+  <ol>${s.steps.map(x=>`<li>${x}</li>`).join('')}</ol>
+  <textarea id="note${i}" aria-label="Deine Ideen zu ${s.t}" placeholder="Deine Ideen: Was soll man hier sehen, hören, tun?"></textarea><div class="saved" id="sv${i}"></div>`;
+  grid.appendChild(c);
+  const ta=c.querySelector('textarea');ta.value=store.get('hp-note-'+i);
+  ta.addEventListener('input',()=>{$('sv'+i).textContent=store.set('hp-note-'+i,ta.value)?'Gespeichert':'Konnte nicht gespeichert werden'})});
+
+// Animation
+let cur=0,t=0,playing=true,phase='stay',moveT=0;
+const STAY=2.4,MOVE=1.6;
+function show(i){const s=S[i];$('cNum').textContent=i+1;$('cTitle').textContent=s.t;$('cDay').textContent=s.d+' · '+P[s.p].n;
+  $('cMech').innerHTML=`<svg><use href="#${M[s.m][0]}"/></svg>${M[s.m][1]}`;
+  document.querySelectorAll('.chip').forEach(c=>c.classList.toggle('now',+c.dataset.i===i));
+  document.querySelectorAll('.card').forEach((c,k)=>c.classList.toggle('now',k===i));
+  let td=`M${pts[0].x} ${pts[0].y}`;for(let k=1;k<=i;k++)td+=' '+curve(pts[k-1],pts[k]);$('trail').setAttribute('d',i?td:'');}
+function place(x,y){$('dot').setAttribute('cx',x);$('dot').setAttribute('cy',y);$('halo').setAttribute('cx',x);$('halo').setAttribute('cy',y)}
+function jump(i){cur=i;phase='stay';t=0;place(pts[i].x,pts[i].y);show(i)}
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+if(reduce){playing=false;$('play').textContent='Abspielen';$('play').classList.remove('on')}
+$('play').addEventListener('click',()=>{playing=!playing;$('play').textContent=playing?'Pause':'Abspielen';$('play').classList.toggle('on',playing)});
+jump(0);
+let last=performance.now();
+function loop(now){const dt=Math.min(.05,(now-last)/1000);last=now;
+  if(playing){t+=dt;
+    if(phase==='stay'&&t>STAY){if(cur<S.length-1){phase='move';t=0}else{jump(0)}}
+    else if(phase==='move'){const k=Math.min(1,t/MOVE),e=k*k*(3-2*k),sg=segs[cur],pt=sg.p.getPointAtLength(sg.len*e);place(pt.x,pt.y);
+      if(k>=1){cur++;phase='stay';t=0;show(cur)}}}
+  const pulse=22+Math.sin(now/300)*4;$('halo').setAttribute('r',pulse);
+  requestAnimationFrame(loop)}
+requestAnimationFrame(loop);
+</script>
+
+</body>
+</html>
