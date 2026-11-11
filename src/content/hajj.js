@@ -106,4 +106,122 @@ export const TEXT = {
     maqamGoal: 'Hinter Maqam Ibrahim', zamzamGoal: 'Zamzam', exitGoal: 'Ausgang',
     maqamPray: '2 Rak\'at beten', zamzamDrink: 'Zamzam trinken',
   },
+
+  miqat: {
+    goGhusl: 'Waschhaus', ghusl: 'Ghusl nehmen',
+    ghuslInfo: 'Vor dem Ihram: Ghusl (Ganzkörperwaschung). Danach die Ihram-Kleidung anlegen.',
+    clothesQ: 'Welche Kleidung legt ein Mann für den Ihram an?',
+    clothes: [
+      { html: 'Zwei ungenähte weiße Tücher: Izar (um die Hüfte) und Rida\' (über die Schultern)', ok: true, why: 'Richtig. Frauen tragen ihre normale bedeckende Kleidung – ohne Niqab und ohne Handschuhe.' },
+      { html: 'Ein weißes, genähtes Gewand mit Kopfbedeckung', ok: false, why: 'Männer tragen im Ihram keine genähte Kleidung und bedecken den Kopf nicht.' },
+      { html: 'Normale Alltagskleidung', ok: false, why: 'Für Männer gilt besondere Kleidung: zwei ungenähte Tücher.' },
+    ],
+    goMosque: 'Moschee', niyyaPlace: 'Niyya fassen',
+    niyyaQ: 'Mit welcher Absicht beginnst du am Miqat (Hadsch at-Tamattu\')?',
+    niyya: [
+      { html: '<span class="ar">لَبَّيْكَ عُمْرَةً</span>Labbaika ʿumratan – Hier bin ich, für die Umrah.', ok: true, why: 'Richtig. Beim Tamattu\' kommt zuerst die Umrah; die Absicht für den Hadsch folgt am 8. Dhul-Hiddscha.' },
+      { html: '<span class="ar">لَبَّيْكَ حَجًّا</span>Labbaika ḥaddschan – Hier bin ich, für den Hadsch.', ok: false, why: 'Diese Absicht fasst du beim Tamattu\' erst am 8. Dhul-Hiddscha in Mina.' },
+    ],
+    talbiyahQ: 'Sprich die Talbiyah: Tippe die Teile in der richtigen Reihenfolge an.',
+    talbiyahParts: ['Labbaika llāhumma labbaik,', 'labbaika lā scharīka laka labbaik,', 'inna l-ḥamda wa n-niʿmata laka wa l-mulk,', 'lā scharīka lak.'],
+    rulesQ: 'Was ist im Ihram verboten?',
+    rules: [
+      ['Parfüm benutzen', true], ['Haare oder Nägel schneiden', true], ['Jagen', true], ['Eheliche Intimität', true],
+      ['Männer: Kopf bedecken, genähte Kleidung', true], ['Beten, Dhikr, Talbiyah', false], ['Wasser trinken und essen', false],
+    ],
+    rulesInfo: 'Ihram-Verbote: kein Parfüm, kein Haare- oder Nägelschneiden, keine Jagd, keine eheliche Intimität; Männer: Kopf nicht bedecken, keine genähte Kleidung.',
+    goBus: 'Bus nach Mekka', bus: 'Nach Mekka reisen',
+  },
+
+  sai: {
+    startInfo: 'Du stehst auf Safa. Hadschar lief hier sieben Mal zwischen den Hügeln, auf der Suche nach Wasser für ihren Sohn Ismail – bis Zamzam entsprang.',
+    ayah: 'Ayah rezitieren & Dua', duaHill: 'Dua Richtung Kaaba',
+    go: 'Lauf Richtung Marwa (Spur links der Mitte).', back: 'Zurück Richtung Safa (Spur rechts der Mitte).',
+    green: 'Grüne Lichter: Hier eilen Männer.', greenHint: 'Im grünen Bereich zügig laufen: Joystick weit ziehen oder Umschalt halten.',
+    turn: 'Dua Richtung Kaaba, dann umkehren', faceKaaba: 'Richtung Kaaba (Pfeil)',
+    taqsir: 'Haare kürzen (Taqsir)', taqsirGoal: 'Friseur bei Marwa',
+    umrahDone: 'Die Umrah ist vollständig. Du verlässt den Ihram bis zum 8. Dhul-Hiddscha.',
+    hajjDone: 'Damit endet auch das letzte Ihram-Verbot (zweites Tahallul).',
+    exit: 'Ausgang',
+  },
+
+  mina8: {
+    ihramQ: 'Am 8. Dhul-Hiddscha legst du erneut den Ihram an. Welche Absicht fasst du?',
+    ihram: [
+      { html: '<span class="ar">لَبَّيْكَ حَجًّا</span>Labbaika ḥaddschan – Hier bin ich, für den Hadsch.', ok: true, why: 'Richtig. Jetzt beginnt der Hadsch.' },
+      { html: '<span class="ar">لَبَّيْكَ عُمْرَةً</span>Labbaika ʿumratan – Hier bin ich, für die Umrah.', ok: false, why: 'Die Umrah hast du schon vollendet. Jetzt geht es um den Hadsch.' },
+    ],
+    tentGoal: 'Dein Zelt', tent: 'Ins Zelt',
+    prayers: [
+      { name: 'Dhuhr', hour: 12.5, rakat: 2, opts: [2, 4], why: 'In Mina werden die Vierer-Gebete verkürzt: 2 Rak\'at.' },
+      { name: 'Asr', hour: 15.67, rakat: 2, opts: [2, 4], why: 'Verkürzt auf 2 Rak\'at – aber nicht mit Dhuhr zusammengelegt, jedes zu seiner Zeit.' },
+      { name: 'Maghrib', hour: 18.5, rakat: 3, opts: [2, 3], why: 'Maghrib wird nie verkürzt: 3 Rak\'at.' },
+      { name: 'Isha', hour: 20, rakat: 2, opts: [2, 4], why: 'Isha verkürzt auf 2 Rak\'at.' },
+      { name: 'Fajr', hour: 29.33, rakat: 2, opts: [2, 4], why: 'Fajr hat ohnehin 2 Rak\'at.' },
+    ],
+    prayQ: (n) => `Wie viele Rak'at betest du ${n} in Mina?`,
+    sleep: 'In Mina übernachten', sleepHold: 'Halten: schlafen',
+    note: 'Vierer-Gebete werden verkürzt, aber nicht zusammengelegt.',
+    leave: 'Nach Sonnenaufgang nach Arafat', busGoal: 'Bus nach Arafat',
+  },
+
+  arafat: {
+    start: 'Der Aufenthalt (Wuquf) ist der Kern des Hadsch – „Der Hadsch ist Arafat.“ Geh hinein in die Ebene von Arafat (Grenzschilder).',
+    boundary: 'Grenze von Arafat', inside: 'Du bist in Arafat.',
+    outside: 'Hier ist noch nicht Arafat – geh hinter die Grenzschilder.',
+    prayQ: 'Wie betest du Dhuhr und Asr in Arafat?',
+    pray: [
+      { html: 'Zusammengelegt und verkürzt: je 2 Rak\'at, direkt nacheinander zur Zeit des Dhuhr', ok: true, why: 'Richtig. Nach der Predigt werden Dhuhr und Asr zusammengelegt und verkürzt.' },
+      { html: 'Getrennt, jedes zu seiner Zeit, mit 4 Rak\'at', ok: false, why: 'In Arafat werden Dhuhr und Asr zusammengelegt und verkürzt.' },
+    ],
+    sermon: 'Predigt hören, Dhuhr & Asr beten',
+    duaGoal: 'Platz mit Blick zum Jabal ar-Rahma',
+    dua: 'Halten: Dua',
+    duaTexts: ['ARAFAT', 'Astaghfirullah – Ich bitte Allah um Vergebung.', 'Bitte für deine Eltern, deine Familie und alle Muslime.', 'RABBANA', 'Bleib bis Sonnenuntergang.'],
+    stay: 'Bleib bis Sonnenuntergang in Arafat.',
+    leave: 'Nach Sonnenuntergang nach Muzdalifa', busGoal: 'Bus nach Muzdalifa',
+  },
+
+  muzdalifa: {
+    start: 'Muzdalifa bei Nacht. Zuerst Maghrib und Isha zusammen beten.',
+    prayQ: 'Wie betest du Maghrib und Isha in Muzdalifa?',
+    pray: [
+      { html: 'Zusammen: Maghrib 3 Rak\'at, dann Isha 2 Rak\'at', ok: true, why: 'Richtig. In Muzdalifa werden Maghrib und Isha zusammengelegt (Isha verkürzt).' },
+      { html: 'Nur Maghrib, Isha erst morgen früh', ok: false, why: 'Beide werden in Muzdalifa zusammen gebetet.' },
+    ],
+    stones: 'Sammle 7 Kiesel: Tippe Steine in deiner Nähe an.',
+    stonesInfo: 'Etwa so groß wie Kichererbsen. Für den 10. brauchst du 7; viele sammeln hier gleich alle 49 (bzw. 70).',
+    tooFar: 'Geh näher heran (Joystick), dann tippen.',
+    matGoal: 'Freie Matte', sleep: 'Halten: unter freiem Himmel schlafen',
+    fajr: 'Fajr beten', masharGoal: 'Al-Mash\'ar al-Haram', dhikr: 'Halten: Dhikr',
+    leave: 'Vor Sonnenaufgang nach Mina', busGoal: 'Weg nach Mina',
+  },
+
+  jamarat: {
+    approach: 'Geh an den Rand des Beckens.',
+    aim: 'Werfen: auf der rechten Seite nach unten ziehen (wie eine Schleuder) und loslassen. Seitlich ziehen = zielen.',
+    valid: 'Allahu Akbar ✓', short: 'Zu kurz – der Stein muss im Becken landen. Wirf noch einmal.',
+    long: 'Zu weit – der Stein muss im Becken landen. Wirf noch einmal.', miss: 'Daneben – der Stein muss im Becken landen. Wirf noch einmal.',
+    talbiyahEnds: 'Die Talbiyah endet jetzt.',
+    tooFar: 'Geh näher an das Becken heran.',
+    names: { ula: ['الجمرة الصغرى', 'Kleine Dschamra (al-Ula)'], wusta: ['الجمرة الوسطى', 'Mittlere Dschamra (al-Wusta)'], aqaba: ['جمرة العقبة', 'Große Dschamra (al-Aqaba)'] },
+    dua: 'Dua Richtung Qibla', duaGoal: 'Etwas zur Seite treten',
+    next: 'Zur nächsten Dschamra', afterAll: 'Am 12. wiederholt sich das; wer Mina bis Sonnenuntergang am 12. nicht verlässt, wirft auch am 13.',
+    toTawaf: 'Zum Abschieds-Tawaf', toMina: 'Weiter', exitGoal: 'Ausgang',
+  },
+
+  mina10: {
+    hadyGoal: 'Hady-Schalter', hady: 'Hady-Gutschein zeigen',
+    hadyInfo: 'Für Tamattu\' ist ein Opfertier (Hady) Pflicht – heute meist per offiziellem Gutschein; das Fleisch geht an Bedürftige.',
+    barberGoal: 'Friseur',
+    hairQ: 'Halq oder Taqsir?',
+    hair: [
+      { html: 'Halq – Kopf rasieren (Männer, besser)', ok: true, why: 'Halq ist für Männer besser. Frauen kürzen eine Fingerspitzenlänge.' },
+      { html: 'Taqsir – Haare kürzen', ok: true, why: 'Auch Taqsir ist erlaubt. Frauen kürzen eine Fingerspitzenlänge.' },
+    ],
+    tahallul: 'Erstes Tahallul: Alle Ihram-Verbote enden außer der ehelichen Intimität. Normale Kleidung ist erlaubt.',
+    order: 'Die Reihenfolge Werfen → Opfer → Rasieren → Tawaf ist Sunnah; Abweichungen sind erlaubt.',
+    clothesGoal: 'Zelt: Kleidung wechseln', clothes: 'Normale Kleidung anziehen',
+    leave: 'Nach Mekka zum Tawaf al-Ifada', busGoal: 'Bus nach Mekka',
+  },
 };

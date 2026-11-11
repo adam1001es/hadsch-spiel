@@ -80,6 +80,7 @@ export function createUI() {
       return new Promise((resolve) => {
         el.choiceQ.innerHTML = question;
         el.choiceOpts.innerHTML = '';
+        el.choiceFb.innerHTML = '';
         el.choiceFb.hidden = true;
         el.choice.hidden = false;
         options.forEach((o) => {

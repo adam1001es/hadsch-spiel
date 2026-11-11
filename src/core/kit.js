@@ -3,25 +3,30 @@ import * as THREE from 'three';
 // Gemeinsame Bausteine für interaktive Stationen.
 
 // Ablauf als Skript: `await flow.until(() => bedingung)` wartet, bis die Bedingung in einem Frame erfüllt ist.
+// `await flow.run(aktion)` aktualisiert eine Aktion (z. B. holdAction) jeden Frame, bis sie fertig ist.
 export function createFlow() {
-  let waits = [], dead = false;
+  let waits = [], dead = false, tickers = [];
   return {
     until(cond) { return new Promise((res) => waits.push({ cond, res })); },
     wait(sec) { let t = 0; return this.until(() => (t += this.dt) >= sec); },
+    run(action) { tickers.push(action); return this.until(() => action.done); },
     dt: 0,
     update(dt) {
       if (dead) return;
       this.dt = dt;
+      tickers = tickers.filter((a) => { a.update(dt); return !a.done; });
       const still = [];
       for (const w of waits) { if (w.cond()) w.res(); else still.push(w); }
       waits = still;
     },
-    dispose() { dead = true; waits = []; },
+    dispose() { dead = true; waits = []; tickers.forEach((a) => a.cancel?.()); tickers = []; },
     get dead() { return dead; },
   };
 }
 
 // Zielmarkierung: leuchtender Ring am Boden + Lichtsäule. Sichtbar aus der Ferne.
+// (Alle Markierungen stehen zusätzlich in window.__markers – nur für automatische Tests.)
+const MARKERS = (window.__markers = []);
 export function createMarker(world, { color = 0xe6c46e, r = 1.6, height = 14 } = {}) {
   const g = new THREE.Group();
   const ring = new THREE.Mesh(new THREE.RingGeometry(r * 0.82, r, 48), new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.9, depthWrite: false, side: THREE.DoubleSide }));
@@ -30,7 +35,7 @@ export function createMarker(world, { color = 0xe6c46e, r = 1.6, height = 14 } =
   const beam = new THREE.Mesh(beamG, new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.16, depthWrite: false, side: THREE.DoubleSide, fog: false }));
   g.add(ring, beam); g.visible = false; world.add(g);
   let t = 0;
-  return {
+  const api = {
     group: g,
     r,
     show(x, z, y = 0) { g.position.set(x, y, z); g.visible = true; },
@@ -39,6 +44,8 @@ export function createMarker(world, { color = 0xe6c46e, r = 1.6, height = 14 } =
     update(dt) { if (!g.visible) return; t += dt; ring.scale.setScalar(1 + Math.sin(t * 3) * 0.05); beam.material.opacity = 0.12 + Math.sin(t * 2) * 0.04; },
     inside(p, extra = 0) { return g.visible && Math.hypot(p.x - g.position.x, p.z - g.position.z) < r + extra; },
   };
+  MARKERS.push(api);
+  return api;
 }
 
 // Pfeil oben links: zeigt relativ zur Blickrichtung zum Ziel.
@@ -110,3 +117,56 @@ export const SUNNAH_LIST = [
   ['jamarat_dua', 'Dua nach den ersten beiden Dschamarat'],
 ];
 export function sunnah(ctx, key) { ctx.progress.sunnah.add(key); }
+
+// Wartet, bis der Spieler in der Markierung steht; zeigt solange den Zielpfeil.
+export async function goTo(ctx, flow, marker, text, x, z) {
+  marker.show(x, z);
+  await flow.until(() => { pointGoal(ctx.ui, ctx.player, text, x, z); return marker.inside(ctx.player.pos); });
+  ctx.ui.goal(null);
+}
+
+// Aktionsknopf vor Ort zeigen und auf Antippen warten (verschwindet, wenn man den Ort verlässt).
+export async function promptAt(ctx, flow, label, inside = () => true, opts = {}) {
+  let clicked = false;
+  await flow.until(() => {
+    if (inside()) ctx.ui.prompt(label, () => { clicked = true; }, opts); else ctx.ui.prompt(null);
+    return clicked;
+  });
+  ctx.ui.prompt(null);
+}
+
+// Gebet als Halte-Handlung: Figur geht Stehen/Ruku'/Sujud durch.
+export function pray(ctx, flow, rakat, label = 'Halten: beten') {
+  return flow.run(holdAction(ctx, ctx.player, { label, steps: rakatSteps(rakat) }));
+}
+
+// Winkel zum Ziel relativ zur Blickrichtung (für Qibla-Anzeige)
+export function angleTo(player, tx, tz) {
+  const want = Math.atan2(-(tx - player.pos.x), -(tz - player.pos.z));
+  return Math.atan2(Math.sin(want - player.viewYaw), Math.cos(want - player.viewYaw));
+}
+
+// Zur Qibla drehen und Dua halten: Fortschritt läuft nur, wenn man in Richtung Kaaba schaut.
+export function duaFacing(ctx, flow, { label = 'Halten: Dua', sec = 6, tx, tz, text = 'Richtung Qibla drehen', onTick }) {
+  const { ui, player, input } = ctx;
+  let t = 0, done = false;
+  ui.hold(label);
+  ctx.facingTarget = { x: tx, z: tz };
+  const act = {
+    get done() { return done; },
+    update(dt) {
+      const a = angleTo(player, tx, tz), ok = Math.abs(a) < 0.45;
+      ui.goal(ok ? 'Qibla ✓' : text, -a);
+      if (input.holding && ok) {
+        t += dt; player.freeze(true); player.heading = player.viewYaw; player.fig.pose('dua'); onTick?.(t / sec, dt);
+        if (t >= sec) { done = true; ui.hold(null); player.freeze(false); player.fig.pose('stand'); ui.goal(null); ui.counter(''); return; }
+      } else {
+        if (input.holding && !ok) ui.hint('Dreh dich zuerst Richtung Qibla (rechts wischen).', 1200);
+        player.freeze(false); if (player.fig.poseName === 'dua') player.fig.pose('stand');
+      }
+      ui.counter(`${Math.round((t / sec) * 100)} %`);
+    },
+    cancel() { done = true; ui.hold(null); player.freeze(false); },
+  };
+  return flow.run(act);
+}

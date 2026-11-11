@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { pbr } from './assets.js';
 
 // Wüstengelände mit flacher Mitte und Bergen am Rand. Für Mina, Arafat, Muzdalifa.
 function hash(x, y) { const s = Math.sin(x * 127.1 + y * 311.7) * 43758.5453; return s - Math.floor(s); }
@@ -22,7 +23,7 @@ export function heightFn({ r0 = 250, r1 = 550, amp = 150, sx = 1, sz = 1 } = {})
 export function buildTerrain(world, h, size = 1600, seg = 160) {
   const geo = new THREE.PlaneGeometry(size, size, seg, seg); geo.rotateX(-Math.PI / 2);
   const p = geo.attributes.position, col = new Float32Array(p.count * 3);
-  const sand = new THREE.Color(0xd2b88f), rock = new THREE.Color(0x7a6450), c = new THREE.Color();
+  const sand = new THREE.Color(0xffffff), rock = new THREE.Color(0x5a4a3e), c = new THREE.Color();
   for (let i = 0; i < p.count; i++) {
     const x = p.getX(i), z = p.getZ(i), y = h(x, z);
     p.setY(i, y);
@@ -31,7 +32,9 @@ export function buildTerrain(world, h, size = 1600, seg = 160) {
   }
   geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
   geo.computeVertexNormals();
-  const m = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1 }));
+  // Echte Sand-Textur (Kachel ca. 6 m), durch Vertex-Farben zu Fels abgedunkelt
+  const tex = pbr('sand', [size / 6, size / 6]);
+  const m = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ ...tex, vertexColors: true, roughness: 1, normalScale: new THREE.Vector2(0.8, 0.8) }));
   m.receiveShadow = true; world.add(m);
   return m;
 }

@@ -1,4 +1,7 @@
 import { ENDING } from '../content/hajj.js';
+import { buildKaaba } from '../world/kaaba.js';
+import { buildHaram } from '../world/haram.js';
+import { SUNNAH_LIST } from '../core/kit.js';
 
 // Platzhalter für Stationen, die noch nicht gebaut sind: zeigt Text und Schritte, dann "Weiter".
 // Claude Code ersetzt jede Station durch eine eigene Datei (siehe CLAUDE.md).
@@ -19,10 +22,28 @@ export function create(ctx, st) {
 
 export function ending(ctx) {
   const { ui, sky, engine } = ctx;
-  sky.setHour(5.8);
+  sky.setHour(5.9);
+  sky.state.artificial = 1;
+  buildKaaba(engine.world);
+  const { glow } = buildHaram(engine.world);
   ui.el.day.textContent = 'Abgeschlossen';
   ui.el.title.textContent = 'Hadsch mabrur';
-  ui.info(ui.prayer(ENDING));
+  ui.goal(null); ui.hold(null);
+  ui.el.stick.classList.add('off');
+  const done = SUNNAH_LIST.filter(([k]) => ctx.progress.sunnah.has(k));
+  ui.counter(`Sunnah: ${done.length} von ${SUNNAH_LIST.length}`);
+  ui.info(`${ui.prayer(ENDING)}
+    <p><b>Alle 12 Stationen ✓</b></p>
+    <ul class="sunnah-list">${SUNNAH_LIST.map(([k, label]) => `<li class="${ctx.progress.sunnah.has(k) ? 'ok' : ''}">${ctx.progress.sunnah.has(k) ? '✓' : '○'} ${label}</li>`).join('')}</ul>
+    <p class="tr">Gezählt wird nur, was du wirklich getan hast – Sunnah ist freiwillig.</p>`);
   ui.actions([{ label: 'Nochmal spielen', kind: 'primary', onClick: () => location.reload() }]);
-  return { update() { engine.camera.position.set(0, 30, 60); engine.camera.lookAt(0, 0, 0); } };
+  let t = 0;
+  return {
+    update(dt) {
+      t += dt;
+      for (const m of glow) m.emissiveIntensity = sky.art * 0.55;
+      engine.camera.position.set(Math.cos(t * 0.04) * 60, 24, Math.sin(t * 0.04) * 60);
+      engine.camera.lookAt(0, 8, 0);
+    },
+  };
 }

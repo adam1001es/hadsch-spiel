@@ -10,15 +10,19 @@ Texte, Gebete und Reihenfolge stehen zusätzlich in `src/content/hajj.js` (gleic
 - Sprache: Deutsch. Gebete immer dreifach: Arabisch (mit Vokalzeichen), Umschrift, deutsche Bedeutung.
 
 ## 2. Steuerung (überall gleich)
-- **Gehen**: runder Knopf unten rechts gedrückt halten.
-- **Umschauen**: auf dem Bild wischen.
-- **Antippen**: Dinge in der Welt auswählen (z. B. Steine sammeln).
-- **Aktionsknöpfe** im Panel unten: Pflicht-Schritte grün gefüllt, Sunnah-Schritte gold umrandet mit Zusatz „Sunnah“.
-- Am PC: Leertaste/W = Gehen, Maus ziehen = Umschauen.
+- **Gehen**: Der Spieler läuft überall selbst. Virtueller Joystick auf der linken Bildschirmhälfte (erscheint unter dem Daumen); weit ziehen = zügig gehen (Raml, grüner Bereich).
+- **Umschauen**: auf der rechten Hälfte wischen.
+- **Ziele**: Lichtsäule + Ring am Boden, dazu oben links ein goldener Pfeil mit Entfernung.
+- **Aktionsknopf vor Ort**: Steht man am richtigen Platz, erscheint ein goldener Knopf (z. B. „Ghusl nehmen“, „Istilam“). Sunnah-Knöpfe tragen den Zusatz „Sunnah“.
+- **Halte-Knopf** (rechts unten): Beten (Figur geht Stehen/Ruku'/Sujud durch), Dua, Schlafen – Fortschritt und Zeit laufen nur, solange gehalten wird. Dua nur, wenn man zur Qibla schaut (Pfeil).
+- **Antippen**: Dinge in der Welt (Kiesel in Muzdalifa – nur in der Nähe).
+- **Werfen**: rechts nach unten ziehen (Schleuder), seitlich zielen, loslassen; Flugbahn-Vorschau grün = Treffer.
+- **Wissensfragen**: kurze Fragen (Kleidung, Niyya, Rak'at …). Falsche Antworten werden erklärt, nicht bestraft.
+- Am PC: W A S D = Gehen, Umschalt = zügig, Maus ziehen oder ← → = Umschauen, Leertaste = Halten, Enter = Aktionsknopf.
 
 ## 3. Bildschirm
 - Oben: Tag (z. B. „9. Dhul-Hiddscha · Tag von Arafa“), Stationsname, 12 Rauten als Fortschritt, großer Zähler (z. B. „Runde 3 / 7“).
-- Unten: Panel mit Erklärtext, Gebet, Aktionsknöpfen; rechts der Gehen-Knopf. Panel darf max. 46 % der Höhe einnehmen.
+- Unten: Panel mit Erklärtext, Gebet, Aktionsknöpfen; rechts der Halte-Knopf (nur bei Gebet, Dua, Schlafen). Panel darf max. 46 % der Höhe einnehmen.
 - Kurze Meldungen (Toasts) in der Mitte oben, z. B. „Runde 2 ✓“.
 - Zwischen Stationen Überblendung über Schwarz.
 - Startbildschirm: Kamera kreist um die Kaaba bei Nacht. Titel „Hadsch-Pfad“, Hinweis, Knopf „Bismillah – Beginnen“, darunter alle Stationen zum direkten Springen.
@@ -35,7 +39,7 @@ Texte, Gebete und Reihenfolge stehen zusätzlich in `src/content/hajj.js` (gleic
 
 ### Station 1 – Miqat & Ihram (vor dem 8. Dhul-Hiddscha)
 - **Ort**: Moschee Dhul-Hulaifa (Abyar Ali) bei Medina. Weiße Moschee mit Minarett, Palmen, Berge, Nachmittag (16 Uhr).
-- **Kamera**: kreist langsam um die Spieler-Figur.
+- **Kamera**: folgt der Spieler-Figur (überall gleich). Man geht selbst zum Waschhaus, zur Moschee und zum Bus.
 - **Ablauf**:
   1. Knopf „Ghusl & Ihram anlegen“ → Figur wechselt von bunter Kleidung zu Weiß.
      Text: Männer tragen zwei ungenähte weiße Tücher (Izar und Rida'), Frauen ihre normale bedeckende Kleidung ohne Niqab und Handschuhe.
@@ -46,7 +50,8 @@ Texte, Gebete und Reihenfolge stehen zusätzlich in `src/content/hajj.js` (gleic
 
 ### Station 2 – Tawaf der Umrah (fertig gebaut)
 - **Ort**: Masjid al-Haram bei Nacht (21 Uhr), hell beleuchtet.
-- **Mechanik**: Gehen halten → Figur läuft im Kreis (Radius ca. 17,5 m) gegen den Uhrzeigersinn, Kaaba links. 7 Runden, gezählt an der grünen Linie beim Schwarzen Stein.
+- **Mechanik**: Der Spieler läuft selbst um die Kaaba, gegen den Uhrzeigersinn, Kaaba links. 7 Runden, gezählt beim Überqueren der grünen Linie am Schwarzen Stein. Falsche Richtung → Hinweis. Wer durch den Hijr Ismail geht, dessen Runde zählt nicht (Erklärung).
+- Nach dem Tawaf selbst hinter Maqam Ibrahim gehen (2 Rak'at halten), zu den Zamzam-Spendern und zum Ausgang.
 - **Sunnah**: Bei jeder Runde am Schwarzen Stein Knopf „✋ Bismillah, Allahu Akbar“ (Istilam). Zwischen Rukn al-Yamani und Schwarzem Stein erscheint Sure 2:201. Sonst: „Freies Dua und Dhikr“.
 - Raml: in Runde 1–3 etwas schneller. Hinweis auf Idtiba' im Einleitungstext.
 - **Ende**: Sunnah-Knöpfe „2 Rak'at hinter Maqam Ibrahim“ und „Zamzam trinken“, dann „Weiter“.
@@ -59,7 +64,7 @@ Texte, Gebete und Reihenfolge stehen zusätzlich in `src/content/hajj.js` (gleic
 - **Länge im Spiel**: ca. 90 m (echt ca. 450 m); grüner Abschnitt etwa bei 38–60 %.
 - **Mechanik**:
   1. Start auf Safa. Text zur Geschichte Hadschars. Sunnah-Knopf „Ayah rezitieren & Dua“ zeigt Sure 2:158 (aus `hajj.js`). Pflicht-Knopf „Losgehen“.
-  2. Gehen halten → Figur läuft Richtung Marwa (Spur links der Mitte). Im grünen Bereich: Toast „Zwischen den grünen Lichtern eilen Männer“, Figur läuft schneller.
+  2. Selbst laufen → Richtung Marwa (Spur links der Mitte). Im grünen Bereich: Toast „Zwischen den grünen Lichtern eilen Männer“, Figur läuft schneller.
   3. Am Ende angekommen: Zähler „Strecke 1 / 7 ✓“, Knopf „Dua Richtung Kaaba & umkehren“. Dann zurück (Spur rechts der Mitte).
   4. Nach 7 Strecken endet man auf **Marwa**.
 - **Mitpilger**: ca. 400, die links Richtung Marwa und rechts Richtung Safa laufen; im grünen Bereich schneller.
@@ -85,13 +90,13 @@ Texte, Gebete und Reihenfolge stehen zusätzlich in `src/content/hajj.js` (gleic
 - **Ablauf**:
   1. Start 11:45 Uhr. Text: Der Aufenthalt (Wuquf) ist der Kern des Hadsch – „Der Hadsch ist Arafat.“
   2. Knopf „Predigt hören, Dhuhr & Asr zusammen beten“ → 13:15 Uhr.
-  3. Gehen-Knopf wird zu **„Dua“**: Halten lässt die Zeit bis Sonnenuntergang (18:30) laufen, ca. 30 Sekunden gesamt. Großer Zähler zeigt die Uhrzeit.
+  3. Zur Qibla drehen und **„Dua“** halten: Halten lässt die Zeit bis Sonnenuntergang (18:30) laufen, ca. 30 Sekunden gesamt. Großer Zähler zeigt die Uhrzeit.
      Wechselnde Texte während der Zeit: Arafat-Dhikr (aus `hajj.js`) → „Astaghfirullah – Ich bitte Allah um Vergebung“ → „Bitte für deine Eltern, deine Familie und alle Muslime“ → Sure 2:201 → „Bleib bis Sonnenuntergang“.
   4. Sonnenuntergang mit warmem Himmel. Knopf „Nach Sonnenuntergang nach Muzdalifa“.
 
 ### Station 6 – Muzdalifa, Nacht zum 10.
 - **Ort**: offene Ebene bei Nacht, Pilger schlafen auf Matten auf dem Boden, Straßenlaternen in Reihen, in der Ferne die Moschee al-Mash'ar al-Haram mit beleuchteten Minaretten. Warmes Laternenlicht nahe der Kamera.
-- **Kamera**: steht, blickt schräg auf den Boden vor dem Spieler.
+- **Kamera**: folgt dem Spieler; Kiesel in der Nähe leuchten auf und werden angetippt.
 - **Ablauf**:
   1. Knopf „Maghrib & Isha zusammen beten“.
   2. **Steine sammeln**: ca. 140 kleine Kiesel liegen am Boden. Antippen → Stein fliegt in den Beutel, Zähler „Steine 3 / 7“. Ziel 7.
@@ -102,10 +107,10 @@ Texte, Gebete und Reihenfolge stehen zusätzlich in `src/content/hajj.js` (gleic
 
 ### Station 7 – Dschamrat al-Aqaba, 10. Dhul-Hiddscha
 - **Ort**: Jamarat-Brücke (mehrstöckig, Betondecken auf Säulen). Die Dschamra ist eine lange ovale Steinwand (ca. 26 m lang) in einem Becken mit niedrigem Rand. Pilger stehen am Beckenrand. Schild mit Namen über der Wand.
-- **Kamera**: vor dem Becken, Blick auf die Wand.
-- **Wurf-Mechanik**: rechts eine senkrechte Leiste mit grünem Zielbereich, eine Nadel pendelt auf und ab. Knopf „Werfen – Allahu Akbar“:
-  - Nadel im grünen Bereich → Stein trifft die Wand und fällt ins Becken ✓.
-  - Zu niedrig → Stein fällt vor das Becken. Zu hoch → Stein fliegt darüber.
+- **Kamera**: folgt dem Spieler; man geht selbst an den Beckenrand.
+- **Wurf-Mechanik**: auf der rechten Seite nach unten ziehen wie eine Schleuder (Länge = Kraft), seitlich ziehen = zielen, loslassen = Wurf mit „Allahu Akbar“. Eine Flugbahn-Vorschau wird grün, wenn der Wurf trifft:
+  - Stein trifft die Wand oder landet im Becken ✓.
+  - Zu kurz → Stein fällt vor das Becken. Zu weit → Stein fliegt darüber.
   - Ungültige Würfe zählen nicht, kurze Erklärung: „Der Stein muss im Becken landen – wirf noch einmal.“
 - **Ablauf**: 7 gültige Würfe. Beim ersten Wurf Toast „Die Talbiyah endet jetzt“. Danach „Weiter“.
 
