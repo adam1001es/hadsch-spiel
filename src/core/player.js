@@ -51,22 +51,26 @@ export function createFigure(world, { color = 0xf3f1ea, skin = 0xc68642, ring = 
   const isIhram = () => { const h = cloth.color.getHex(); return !covered && ((h >> 16) & 255) > 0xe6 && ((h >> 8) & 255) > 0xe6 && (h & 255) > 0xdc; };
   let armMeshes = [];
   // 3D-Modell als Spielfigur (wie die Pilger in der Menge): an der Hüfte geteilt, damit Ruku'/Sujud weiter gehen
+  // Je Outfit eine Modell-Variante: Frau (Abaya), Mann im Ihram, Mann im Shalwar Kameez
   const HIP = covered ? 0.9 : 0.95;
-  const mLower = new THREE.Group(), mHip = new THREE.Group(); mHip.position.y = HIP; body.add(mLower, mHip);
+  const variants = {};
   let mCover = null;
-  const src = models ? (covered ? models.woman : models.man) : null;
   function splitAt(geo, h) {
     const g = geo.index ? geo.toNonIndexed() : geo, pos = g.attributes.position, lo = [], up = [];
     for (let t = 0; t < pos.count; t += 3) ((pos.getY(t) + pos.getY(t + 1) + pos.getY(t + 2)) / 3 > h ? up : lo).push(t);
     const pick = (tris, dy) => { const ng = new THREE.BufferGeometry(); for (const k of Object.keys(g.attributes)) { const at = g.attributes[k], arr = new Float32Array(tris.length * 3 * at.itemSize); tris.forEach((t, j) => { for (let q = 0; q < 3; q++) for (let c = 0; c < at.itemSize; c++) arr[(j * 3 + q) * at.itemSize + c] = at.array[(t + q) * at.itemSize + c]; }); ng.setAttribute(k, new THREE.BufferAttribute(arr, at.itemSize)); } ng.translate(0, -dy, 0); return ng; };
     return [pick(lo, 0), pick(up, h)];
   }
-  if (src) {
+  function buildVariant(id, src) {
+    if (!src) return;
+    const mLower = new THREE.Group(), mHip = new THREE.Group(); mHip.position.y = HIP; body.add(mLower, mHip);
+    variants[id] = { mLower, mHip };
     for (const [k, part] of Object.entries(src)) {
       const mat = part.material.clone();
       mat.side = ['hijab', 'dress', 'cover'].includes(k) ? THREE.DoubleSide : THREE.FrontSide;
-      if (k === 'skin' || k === 'head' || k === 'arms') mat.color = skinM.color;            // Hautfarbe der Figur
-      else if (k === 'dress' || k === 'hijab') mat.color = cloth.color;                     // Kleidungsfarbe der Figur
+      if (k === 'skin' || k === 'head' || k === 'arms' || k === 'hands') mat.color = skinM.color; // Hautfarbe der Figur
+      else if (k === 'dress' || k === 'hijab' || k === 'top' || k === 'bottom') mat.color = cloth.color; // Kleidungsfarbe
+      else if (k === 'trim') mat.color = new THREE.Color(0x2a2420);
       else if (k === 'cloth') mat.color = new THREE.Color(0xf6f4ee);
       else if (k === 'shoes') mat.color = new THREE.Color(0x1e1c1b);
       else if (k !== 'cover') mat.color = new THREE.Color(0xffffff);
@@ -76,12 +80,14 @@ export function createFigure(world, { color = 0xf3f1ea, skin = 0xc68642, ring = 
       if (k === 'cover') mCover = [a, b];
     }
   }
+  if (models) { if (covered) buildVariant('woman', models.woman); else { buildVariant('ihram', models.man); buildVariant('kameez', models.kameez); } }
   const procedural = () => [lowerDress, lowerIzar, upper, torso, rida, ridaIdt, head, hair, khimar, face];
   let armGroups = [];
   function outfit() {
     const ih = isIhram();
-    const useModel = !!src && (covered || ih); // Frau: immer Modell (Abaya in Kleidungsfarbe); Mann: Modell nur im Ihram
-    mLower.visible = mHip.visible = useModel;
+    const want = covered ? 'woman' : ih ? 'ihram' : 'kameez';
+    const useModel = !!variants[want];
+    for (const [id, v] of Object.entries(variants)) v.mLower.visible = v.mHip.visible = id === want;
     if (mCover) for (const m of mCover) m.visible = !idtiba; // Idtiba': rechte Schulter frei
     for (const a of armGroups) a.visible = !useModel;
     if (useModel) { for (const m of procedural()) m.visible = false; return; }
@@ -129,8 +135,8 @@ export function createFigure(world, { color = 0xf3f1ea, skin = 0xc68642, ring = 
       swing += dt * (walking > 0.05 ? 7 + walking * 5 : 0);
       const sw = walking > 0.05 ? Math.sin(swing) * 0.45 * Math.min(1, walking) : 0;
       hip.rotation.x = cur.hip;
-      lowerDress.scale.y = lowerIzar.scale.y = mLower.scale.y = 1 - cur.drop;
-      mHip.rotation.x = cur.hip; mHip.position.y = HIP * (1 - cur.drop);
+      lowerDress.scale.y = lowerIzar.scale.y = 1 - cur.drop;
+      for (const v of Object.values(variants)) { v.mLower.scale.y = 1 - cur.drop; v.mHip.rotation.x = cur.hip; v.mHip.position.y = HIP * (1 - cur.drop); }
       hip.position.y = 0.9 * (1 - cur.drop);
       arms[0].rotation.x = -cur.arm[0] + sw;
       arms[1].rotation.x = -cur.arm[1] - sw;

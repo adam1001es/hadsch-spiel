@@ -16,13 +16,14 @@ function pickRegion() {
 // Teile einzeln färbbar (dress, hijab, head, arms = Hände, eyes, shoes). Wird beim Start vorgeladen.
 // 3D-Modell „Middle Eastern Hajj“ (trisutrisno, CC BY 4.0): Pilger im Ihram, Arme gesenkt, Haut/Stoff getrennt färbbar,
 // „cover“ = Tuchstück über der rechten Schulter (außerhalb des Umrah-Tawaf ist die Schulter bedeckt).
-let MUSLIMA = null, MAN = null;
+// 3D-Modell „Shalwar Kameez Man“ (Abdullah5007, CC BY 4.0): Männer ohne Ihram (top, bottom, trim, shoes, head, hands, eyes).
+let MUSLIMA = null, MAN = null, KAM = null;
 const loadParts = (url) => new GLTFLoader().loadAsync(url).then((g) => { const parts = {}; g.scene.traverse((c) => { if (c.isMesh) parts[c.name] = { geometry: c.geometry, material: c.material }; }); return parts; });
 // Für die Spielfigur: die geladenen Modelle (oder null)
-export const peopleModels = () => ({ woman: MUSLIMA, man: MAN });
+export const peopleModels = () => ({ woman: MUSLIMA, man: MAN, kameez: KAM });
 
 // Status der Modelle (für die Anzeige auf dem Startbildschirm)
-export const peopleStatus = { woman: 'lädt …', man: 'lädt …' };
+export const peopleStatus = { woman: 'lädt …', man: 'lädt …', kameez: 'lädt …' };
 const why = (e) => String(e?.message || e || 'unbekannt').slice(0, 120);
 export function preloadPeople() {
   return Promise.all([
@@ -30,6 +31,8 @@ export function preloadPeople() {
       .catch((e) => { peopleStatus.woman = 'Fehler: ' + why(e); console.error('muslima.glb', e); }),
     loadParts('./assets/models/man.glb').then((p) => { if (p.cloth && p.skin) { MAN = p; peopleStatus.man = 'geladen ✓'; } else peopleStatus.man = 'Teile fehlen: ' + Object.keys(p).join(','); })
       .catch((e) => { peopleStatus.man = 'Fehler: ' + why(e); console.error('man.glb', e); }),
+    loadParts('./assets/models/kameez.glb').then((p) => { if (p.top && p.head) { KAM = p; peopleStatus.kameez = 'geladen ✓'; } else peopleStatus.kameez = 'Teile fehlen'; })
+      .catch((e) => { peopleStatus.kameez = 'Fehler: ' + why(e); console.error('kameez.glb', e); }),
   ]);
 }
 // Kleidfarben der Pilgerinnen: gedeckte dunkle Töne, Weiß/Beige/Creme und Pastell
@@ -64,6 +67,7 @@ export function createCrowd(world, n, { men = 0.6, ihram = true, idtiba = false 
   const POOLS = {
     w: MUSLIMA ? { src: MUSLIMA, keys: Object.keys(MUSLIMA) } : null,
     m: useMan ? { src: MAN, keys: Object.keys(MAN).filter((k) => k !== 'cover' || !idtiba) } : null,
+    k: KAM && !ihram ? { src: KAM, keys: Object.keys(KAM) } : null,
   };
 
   // 1. Personen erzeugen: einfache Figur (für die Ferne) + Modellteile (für die Nähe), gleiche Farben
@@ -91,6 +95,12 @@ export function createCrowd(world, n, { men = 0.6, ihram = true, idtiba = false 
         if (R.men.ghutra && Math.random() < R.men.ghutra) put('ghutra', pick(R.men.ghutraCol));
         else if (R.men.cap.length && Math.random() < R.men.capP) { put('kufi', pick(R.men.cap)); put('hair', hair, 0.1); }
         else put('hair', hair, 0.1);
+        if (KAM) {
+          const cl = tint(col, 0.04), dark = tint(pick([0x2a2420, 0x1e1c1b, 0x5a4636]), 0.05);
+          const colOf = { top: cl, bottom: cl, head: tint(skin, 0.04), hands: tint(skin, 0.04), eyes: new THREE.Color(0xffffff), shoes: dark, trim: dark };
+          model[i] = { s: 'k', parts: POOLS.k.keys.map((k) => ['k_' + k, colOf[k] || new THREE.Color(0xffffff)]) };
+          sh[i] = 0.94 + Math.random() * 0.1; sw[i] = 0.9 + Math.random() * 0.22;
+        }
       }
       if (Math.random() < (old ? 0.85 : 0.5)) put('beard', hair, 0.1);
       scale[i] = 0.95 + Math.random() * 0.12;

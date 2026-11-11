@@ -12,7 +12,7 @@ const peopleReady = preloadPeople(); // 3D-Pilgerinnen im Hintergrund laden
 
 const engine = createEngine(document.getElementById('c'));
 const sky = createSky(engine);
-setCrowdCamera(engine.camera, { near: 26, cap: engine.isMobile ? 90 : 160 }); // 3D-Pilgerinnen/Pilger nur in der Nähe (je Gruppe)
+setCrowdCamera(engine.camera, { near: 26, cap: engine.isMobile ? 70 : 140 }); // 3D-Pilgerinnen/Pilger nur in der Nähe (je Gruppe)
 const ui = createUI();
 const input = createInput(engine.renderer.domElement, ui.el.hold, ui.el.stick);
 const ctx = { engine, sky, ui, input, content, progress: { sunnah: new Set(), done: new Set() } };
@@ -36,7 +36,7 @@ document.getElementById('disclaimer').textContent = content.DISCLAIMER;
 // Version + Status der 3D-Modelle (hilft beim Testen am iPhone)
 const ver = document.createElement('p'); ver.className = 'small'; ver.id = 'version';
 document.getElementById('disclaimer').after(ver);
-const showVer = () => { ver.textContent = `Version ${__BUILD__} · Pilgerin: ${peopleStatus.woman} · Pilger: ${peopleStatus.man}`; };
+const showVer = () => { ver.textContent = `Version ${__BUILD__} · Pilgerin: ${peopleStatus.woman} · Pilger: ${peopleStatus.man} · Kameez: ${peopleStatus.kameez}`; };
 showVer(); peopleReady.then(showVer);
 // Profil (Vorname, Geschlecht, Alter) – nur lokal im Browser gespeichert
 const pf = (() => { try { return JSON.parse(localStorage.getItem('hp-profile') || '{}'); } catch { return {}; } })();
