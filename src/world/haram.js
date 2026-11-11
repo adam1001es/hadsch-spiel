@@ -1,11 +1,12 @@
 import * as THREE from 'three';
-import { marble, arches } from './textures.js';
+import { arches } from './textures.js';
+import { pbr } from './assets.js';
 
 // Masjid al-Haram stark vereinfacht: Marmorboden, drei Arkaden-Ringe, Minarette, Uhrturm.
 // glow: Liste von Materialien, deren Leuchten nachts hochgeregelt wird.
 export function buildHaram(world) {
   const glow = [];
-  const floor = new THREE.Mesh(new THREE.CircleGeometry(420, 96), new THREE.MeshStandardMaterial({ map: marble([90, 90]), roughness: 0.25 }));
+  const floor = new THREE.Mesh(new THREE.CircleGeometry(420, 96), new THREE.MeshStandardMaterial({ ...pbr('marble_floor', [840 / 1.5, 840 / 1.5]), roughness: 1, normalScale: new THREE.Vector2(0.6, 0.6) }));
   floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; world.add(floor);
 
   for (const [r, h, rows, reps] of [[57, 15, 2, 26], [92, 32, 3, 36], [150, 50, 4, 52]]) {

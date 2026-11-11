@@ -32,10 +32,13 @@ src/
     kaaba.js           Kaaba, Hijr Ismail, Maqam Ibrahim
     haram.js           Masjid al-Haram (Boden, Arkaden, Minarette)
     crowd.js           Menschenmengen per InstancedMesh
+    assets.js          Lädt echte CC0-Texturen (pbr) und HDRI-Umgebungslicht
+    textures.js        Canvas-Texturen (Hizam-Kalligrafie stilisiert, Tür, Arkaden)
     terrain.js         Gelände (Mina, Arafat, Muzdalifa)
   stations/            Eine Datei pro Station, exportiert create(ctx)
   content/hajj.js      ALLE Texte, Gebete, Regeln (einzige Quelle)
-public/assets/textures Texturen (Polyhaven / ambientCG, CC0)
+public/assets/textures Texturen (Poly Haven, CC0), Quellen im README dort
+public/assets/hdri     Himmelsbilder für Umgebungslicht (Poly Haven, CC0)
 public/anleitung.html  Übersicht & Anleitung (runder Kartenknopf oben rechts im Spiel)
 ```
 

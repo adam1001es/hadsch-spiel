@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { Sky } from 'three/examples/jsm/objects/Sky.js';
+import { environment } from '../world/assets.js';
 
 const smooth = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
 
@@ -31,6 +32,15 @@ export function createSky(engine) {
   scene.add(hemi, sun, sun.target);
   scene.fog = new THREE.Fog(0x9fb3c8, 80, 1800);
 
+  // Umgebungslicht (HDRI): Tag- oder Nachtbild, je nach Sonnenstand. Wird im Hintergrund geladen.
+  let envWanted = '', envReady = {};
+  function useEnv(which) {
+    if (envWanted === which) return;
+    envWanted = which;
+    environment(renderer, which).then((t) => { envReady[which] = t; if (envWanted === which) scene.environment = t; });
+    if (envReady[which]) scene.environment = envReady[which];
+  }
+
   const state = { hour: 12, art: 0, artificial: 0, indoor: false, focus: new THREE.Vector3(), shadowSize: 50, anim: null };
   const sunDir = new THREE.Vector3(), lightDir = new THREE.Vector3();
   const warm = new THREE.Color(0xfff0d6), night = new THREE.Color(0x0b1430), dayFog = new THREE.Color(0xc9d4dc), duskFog = new THREE.Color(0xd99a6a);
@@ -52,8 +62,11 @@ export function createSky(engine) {
     lightDir.lerp(new THREE.Vector3(0.25, 1, 0.18).normalize(), art * 0.8).normalize();
     sun.color.setHSL(0.09, 0.6 * (1 - dayK) + 0.1, 0.85).lerp(warm, art * 0.7);
     sun.intensity = Math.max(0.15, dayK * 2.4) + art * 2.2;
-    hemi.intensity = 0.25 + dayK * 0.6 + art * 1.6;
+    hemi.intensity = 0.15 + dayK * 0.35 + art * 0.9;
     hemi.color.set(0x8fa4c8).lerp(new THREE.Color(0xcfe0f2), dayK).lerp(warm, art * 0.5);
+    useEnv(dayK > 0.35 && !state.indoor ? 'day' : 'night');
+    scene.environmentIntensity = dayK > 0.35 ? 0.25 + dayK * 0.2 : 0.15 + art * 0.25;
+    scene.environmentRotation.y = 0.6;
     const fogC = night.clone().lerp(duskFog, smooth(-0.1, 0.05, e)).lerp(dayFog, smooth(0.05, 0.35, e));
     scene.fog.color.copy(fogC);
 

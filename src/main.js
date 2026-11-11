@@ -17,7 +17,9 @@ const stations = createStations(ctx);
 let current = preview(ctx);
 const clock = new THREE.Clock();
 engine.renderer.setAnimationLoop(() => {
-  const dt = Math.min(clock.getDelta(), 0.05);
+  const raw = clock.getDelta();
+  const dt = Math.min(raw, 0.05);
+  engine.adapt(raw);
   sky.update(dt);
   if (current) current.update(dt); else stations.update(dt);
   engine.renderer.render(engine.scene, engine.camera);
