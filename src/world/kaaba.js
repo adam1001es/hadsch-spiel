@@ -7,19 +7,38 @@ export const KAABA = { w: 12, d: 10.5, h: 13.1, blackStoneAngle: (5 * Math.PI) /
 
 export function buildKaaba(world) {
   const { w, d, h } = KAABA;
-  const y0 = 0.4; // Höhe des Marmorsockels (Shadharwan)
+  const y0 = 0.4; // Bezugshöhe für Band, Tür und Vorhang
 
   // Kiswa: schwarzer, gemusterter Webstoff (echte Stofftextur, eingefärbt). Eine Kachel = 3 m, Ornamente ca. 0,75 m.
   const kiswaMat = (len) => new THREE.MeshStandardMaterial({ ...pbr('kiswa', [len / 3, h / 4.5]), roughness: 1, normalScale: new THREE.Vector2(0.9, 0.9) });
   const sideX = kiswaMat(d), sideZ = kiswaMat(w);
   const top = new THREE.MeshStandardMaterial({ color: 0x141414, roughness: 0.9 });
-  const k = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), [sideX, sideX, top, top, sideZ, sideZ]);
-  k.position.y = h / 2 + y0; k.castShadow = k.receiveShadow = true; world.add(k);
+  // Kiswa beginnt erst über dem Steinsockel (wie im Modell); Oberkante bleibt bei h + y0
+  const S = 2.0; // Höhe des sichtbaren Steinsockels
+  const kh = h + y0 - S;
+  for (const m of [sideX, sideZ]) for (const t of [m.map, m.normalMap, m.roughnessMap]) t.repeat.y = kh / 4.5;
+  const k = new THREE.Mesh(new THREE.BoxGeometry(w, kh, d), [sideX, sideX, top, top, sideZ, sideZ]);
+  k.position.y = S + kh / 2; k.castShadow = k.receiveShadow = true; world.add(k);
 
-  // Sockel aus Marmor, leicht abgeschrägt
-  const marbleMat = new THREE.MeshStandardMaterial({ ...pbr('marble_floor', [3, 0.3]), roughness: 1 });
-  const base = new THREE.Mesh(new THREE.CylinderGeometry(1, 1.06, y0, 4, 1).rotateY(Math.PI / 4).scale(w * 0.72, 1, d * 0.72), marbleMat);
-  base.position.y = y0 / 2; base.receiveShadow = true; world.add(base);
+  // Steinsockel: graue Granitblöcke (Textur aus demselben CC-BY-Modell, siehe README)
+  const stoneMat = (len) => new THREE.MeshStandardMaterial({
+    map: texture('kaaba_stone.jpg', { repeat: [len / 2.4, S / 2.4] }), bumpMap: texture('kaaba_stone_bump.jpg', { repeat: [len / 2.4, S / 2.4], color: false }),
+    bumpScale: 1.5, roughness: 0.85,
+  });
+  const stX = stoneMat(d), stZ = stoneMat(w);
+  const plinth = new THREE.Mesh(new THREE.BoxGeometry(w + 0.04, S, d + 0.04), [stX, stX, top, top, stZ, stZ]);
+  plinth.position.y = S / 2; plinth.castShadow = plinth.receiveShadow = true; world.add(plinth);
+
+  // Shadharwan: weiße, geschwungene Marmorleiste rund um den Fuß (an den Ecken offen, wie im Modell)
+  const marbleMat = new THREE.MeshStandardMaterial({ ...pbr('marble_floor', [2, 0.4]), roughness: 1, color: 0xf4f2ee });
+  const prof = new THREE.Shape();
+  prof.moveTo(0, 0); prof.lineTo(0.6, 0); prof.quadraticCurveTo(0.5, 0.42, 0, 0.55); prof.lineTo(0, 0);
+  for (const [len, rot, px, pz] of [[w, -Math.PI / 2, 0, d / 2], [w, Math.PI / 2, 0, -d / 2], [d, 0, w / 2, 0], [d, Math.PI, -w / 2, 0]]) {
+    const L = len - 0.6;
+    const g = new THREE.ExtrudeGeometry(prof, { depth: L, bevelEnabled: true, bevelThickness: 0.04, bevelSize: 0.03, bevelSegments: 2, curveSegments: 10 });
+    g.translate(0, 0, -L / 2); g.rotateY(rot);
+    const m = new THREE.Mesh(g, marbleMat); m.position.set(px * 1.002, 0, pz * 1.002); m.castShadow = m.receiveShadow = true; world.add(m);
+  }
 
   // Hizam: goldbesticktes Band auf ca. 2/3 Höhe – echte Kalligrafie (Texturen aus dem CC-BY-Modell
   // „Holy Kaaba – Mecca – Low Poly“ von haidarzafermoayad, vergrößert und geschärft; Quellen: public/assets/textures/README.md).

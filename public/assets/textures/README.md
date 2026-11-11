@@ -18,6 +18,6 @@ Hizam-Kalligrafie und Türornamente werden bewusst stilisiert per Canvas gezeich
 
 | Datei | Quelle | Bearbeitung |
 |---|---|---|
-| `hizam_a.jpg`, `hizam_b.jpg`, `kiswa_panels.png`, `sitara.jpg` (+ `_mr.jpg`) | Texturen aus „Holy Kaaba – Mecca – Low Poly“ von **haidarzafermoayad**, https://sketchfab.com/3d-models/holy-kaaba-mecca-low-poly-08ea4704d00c40419094487e9646648d, Lizenz **CC BY 4.0** (http://creativecommons.org/licenses/by/4.0/) | zugeschnitten, 2× vergrößert, geschärft; `_mr.jpg` = selbst erzeugte Metall-/Rauheitsmaske für die Goldfäden |
+| `hizam_a.jpg`, `hizam_b.jpg`, `kiswa_panels.png`, `sitara.jpg` (+ `_mr.jpg`), `kaaba_stone.jpg` (+ `_bump.jpg`) | Texturen aus „Holy Kaaba – Mecca – Low Poly“ von **haidarzafermoayad**, https://sketchfab.com/3d-models/holy-kaaba-mecca-low-poly-08ea4704d00c40419094487e9646648d, Lizenz **CC BY 4.0** (http://creativecommons.org/licenses/by/4.0/) | zugeschnitten, 2× vergrößert, geschärft; `_mr.jpg` = selbst erzeugte Metall-/Rauheitsmaske für die Goldfäden |
 
-Nur die Texturen werden verwendet, nicht die Geometrie des Modells.
+Nur die Texturen werden verwendet, nicht die Geometrie des Modells. Steinsockel und Marmorleiste sind nach dem Vorbild des Modells nachgebaut.
