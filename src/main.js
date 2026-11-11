@@ -10,8 +10,9 @@ import * as content from './content/hajj.js';
 const engine = createEngine(document.getElementById('c'));
 const sky = createSky(engine);
 const ui = createUI();
-const input = createInput(engine.renderer.domElement, ui.el.hold);
-const ctx = { engine, sky, ui, input, content };
+const input = createInput(engine.renderer.domElement, ui.el.hold, ui.el.stick);
+const ctx = { engine, sky, ui, input, content, progress: { sunnah: new Set(), done: new Set() } };
+window.__hp = ctx; // für automatische Tests
 const stations = createStations(ctx);
 
 let current = preview(ctx);
@@ -27,7 +28,8 @@ engine.renderer.setAnimationLoop(() => {
 
 const startScreen = document.getElementById('start');
 document.getElementById('disclaimer').textContent = content.DISCLAIMER;
-const begin = (i) => { startScreen.hidden = true; current = null; stations.go(i); };
+const begin = (i) => { startScreen.hidden = true; ui.el.stick.classList.remove('off'); current = null; stations.go(i); };
+ui.el.stick.classList.add('off');
 document.getElementById('startBtn').addEventListener('click', () => begin(0));
 const jump = document.getElementById('jump');
 content.STATIONS.forEach((st, i) => {

@@ -85,3 +85,25 @@ export const ENDING = {
   tr: 'Ḥaddschan mabrūran wa dhanban maghfūrā',
   de: 'Ein angenommener Hadsch und vergebene Sünden.',
 };
+
+// ---------------------------------------------------------------------------
+// Texte für die interaktiven Stationen (Hinweise, Wissensfragen). Inhaltlich nach docs/SPIEL.md und CLAUDE.md.
+export const TEXT = {
+  controls: 'Gehen: Joystick links (Laptop: W A S D, Umschalt = zügig). Umschauen: rechts wischen (Laptop: Maus ziehen oder ← →).',
+  tawaf: {
+    start: 'Stell dich an die grüne Linie beim Schwarzen Stein und geh los – die Kaaba bleibt immer links von dir.',
+    wrongWay: 'Andere Richtung: Beim Tawaf ist die Kaaba immer links von dir (gegen den Uhrzeigersinn).',
+    hijrIn: 'Du bist im Hijr Ismail. Er gehört zur Kaaba – eine Runde hindurch zählt nicht. Geh außen herum.',
+    hijrLap: 'Diese Runde ging durch den Hijr und zählt nicht. Geh sie noch einmal außen herum.',
+    istilam: '✋ Istilam: Bismillah, Allahu Akbar',
+    istilamInfo: 'Am Schwarzen Stein: zu ihm hin grüßen (Istilam) mit „Bismillah, Allahu Akbar“ – bei jeder Runde.',
+    raml: 'Raml (nur Männer, nur im Tawaf der Umrah): Runden 1–3 mit zügigen, kurzen Schritten – Joystick weit ziehen oder Umschalt halten.',
+    free: 'Freies Dua und Dhikr, in jeder Sprache.',
+    yemeni: 'Zwischen Rukn al-Yamani und Schwarzem Stein:',
+    done: 'Der Tawaf ist vollständig.',
+    doneWada: 'Der Abschieds-Tawaf ist vollständig.',
+    after: 'Sunnah: Geh hinter Maqam Ibrahim (goldene Säule) und bete 2 Rak\'at, dann trink Zamzam. Danach weiter zum Ausgang (grün).',
+    maqamGoal: 'Hinter Maqam Ibrahim', zamzamGoal: 'Zamzam', exitGoal: 'Ausgang',
+    maqamPray: '2 Rak\'at beten', zamzamDrink: 'Zamzam trinken',
+  },
+};
