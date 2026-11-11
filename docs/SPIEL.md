@@ -51,7 +51,9 @@ Alle Lerntexte stehen in `src/content/hajj.js` unter `TEXT.learn` (gleiche Reihe
 ## 4. Grafik-Stil
 - Realistisch, warmes Licht, Dunst in der Wüste, klare Sternennächte.
 - Tageszeit läuft über `sky.setHour()` / `sky.animateTo()`; nachts schaltet sich künstliches Licht an (`sky.state.artificial = 1`).
-- Menschen: einfache Figuren per InstancedMesh. Männer in weißem Ihram, Frauen in Weiß, Schwarz oder gedeckten Farben. Keine Gesichter.
+- Menschen: Figuren per InstancedMesh. Männer im Ihram (Izar + Rida'), Frauen als 3D-Modell „hijab muslim woman“ (Gesichter erlaubt – Entscheidung des Nutzers),
+  in vielen Varianten: kleiner/größer, schlanker/kräftiger, Kleidfarben gedeckt dunkel (Braun, Schwarz, Dunkellila, Dunkelblau, Dunkelrot, Grau),
+  hell (Weiß, Beige, Creme) und Pastell; Hautfarben aus allen Herkunftsregionen.
 - Spieler-Figur mit goldenem Ring am Boden, damit man sich findet.
 - Echte Texturen (CC0) später in `public/assets/textures`, bis dahin Canvas-Platzhalter.
 

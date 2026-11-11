@@ -107,6 +107,7 @@ export function create(ctx, st) {
     update(dt) {
       boundHint -= dt;
       flow.update(dt);
+      crowd.commit(); // Detailstufen der Pilgerinnen mit der Kamera mitführen
       player.update(dt);
       marker.update(dt);
       marker.group.position.y = h(marker.group.position.x, marker.group.position.z);

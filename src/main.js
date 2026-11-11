@@ -7,12 +7,16 @@ import { createStations } from './core/stations.js';
 import { preview } from './stations/tawaf.js';
 import * as content from './content/hajj.js';
 import { progressStore } from './core/progress.js';
+import { preloadPeople, setCrowdCamera } from './world/crowd.js';
+const peopleReady = preloadPeople(); // 3D-Pilgerinnen im Hintergrund laden
 
 const engine = createEngine(document.getElementById('c'));
 const sky = createSky(engine);
+setCrowdCamera(engine.camera, { near: 28, cap: engine.isMobile ? 130 : 200 }); // 3D-Pilgerinnen nur in der Nähe
 const ui = createUI();
 const input = createInput(engine.renderer.domElement, ui.el.hold, ui.el.stick);
 const ctx = { engine, sky, ui, input, content, progress: { sunnah: new Set(), done: new Set() } };
+ctx.ready = peopleReady;
 window.__hp = ctx; // für automatische Tests
 const stations = createStations(ctx);
 

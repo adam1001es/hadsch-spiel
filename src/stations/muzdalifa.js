@@ -157,6 +157,7 @@ export function create(ctx, st) {
     update(dt) {
       time += dt;
       flow.update(dt);
+      crowd.commit(); // Detailstufen der Pilgerinnen mit der Kamera mitführen
       auto.update(dt);
       player.update(dt);
       marker.update(dt); mExit.update(dt);

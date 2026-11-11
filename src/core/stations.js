@@ -85,6 +85,7 @@ export function createStations(ctx) {
 
   async function go(i) {
     await ctx.ui.fade(true);
+    await ctx.ready; // Modelle (z. B. Pilgerinnen) fertig geladen
     current?.dispose?.();
     ctx.engine.clearWorld();
     ctx.sky.reset();
