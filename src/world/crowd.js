@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { WALK, walkMaterial } from './walk.js';
+import { WALK, HIP_OF, walkMaterial } from './walk.js';
 import { REGIONS, dressGeo, izarGeo, torsoGeo, ridaGeo, armsGeo, headGeo, hairGeo, beardGeo, faceGeo, khimarGeo, kufiGeo, ghutraGeo } from './people.js';
 
 // Menschenmenge: Pilgerinnen und Pilger aus aller Welt, per InstancedMesh (eine Form = ein Draw Call).
@@ -19,7 +19,7 @@ function pickRegion() {
 // „cover“ = Tuchstück über der rechten Schulter (außerhalb des Umrah-Tawaf ist die Schulter bedeckt).
 // 3D-Modell „Shalwar Kameez Man“ (Abdullah5007, CC BY 4.0): Männer ohne Ihram (top, bottom, trim, shoes, head, hands, eyes).
 let MUSLIMA = null, MAN = null, KAM = null;
-const loadParts = (url) => new GLTFLoader().loadAsync(url).then((g) => { const parts = {}; g.scene.traverse((c) => { if (c.isMesh) parts[c.name] = { geometry: c.geometry, material: c.material }; }); return parts; });
+const loadParts = (url) => new GLTFLoader().loadAsync(url).then((g) => { const parts = {}; g.scene.traverse((c) => { if (!c.isMesh) return; const ge = c.geometry; if (ge.attributes.__arm) { ge.setAttribute('armW', ge.attributes.__arm); ge.deleteAttribute('__arm'); } parts[c.name] = { geometry: ge, material: c.material }; }); return parts; });
 // Für die Spielfigur: die geladenen Modelle (oder null)
 export const peopleModels = () => ({ woman: MUSLIMA, man: MAN, kameez: KAM });
 
@@ -129,7 +129,7 @@ export function createCrowd(world, n, { men = 0.6, ihram = true, idtiba = false 
     const mat = srcMat ? Object.assign(srcMat.clone(), { side }) : new THREE.MeshStandardMaterial({ roughness: k === 'face' || k === 'head' || k === 'torso' ? 0.65 : 0.92, side });
     if (srcMat && k !== 'm_cover') mat.color.setHex(0xffffff);
     // Gehbewegung (Beine/Arme) im Shader; Takt je Instanz im Attribut aWalk
-    if (WALK[k]) { geo = geo.clone(); geo.setAttribute('aWalk', new THREE.InstancedBufferAttribute(new Float32Array(count * 2), 2)); walkMaterial(mat, WALK[k]); }
+    if (WALK[k]) { geo = geo.clone(); geo.setAttribute('aWalk', new THREE.InstancedBufferAttribute(new Float32Array(count * 3), 3)); walkMaterial(mat, WALK[k], { groupHip: HIP_OF[k.includes('_') ? k[0] : ''] }); }
     const m = new THREE.InstancedMesh(geo, mat, count);
     m.userData.walk = geo.attributes.aWalk || null;
     m.frustumCulled = false; meshes[k] = m; world.add(m);
@@ -148,7 +148,7 @@ export function createCrowd(world, n, { men = 0.6, ihram = true, idtiba = false 
   for (const m of Object.values(meshes)) if (m.instanceColor) m.instanceColor.needsUpdate = true;
 
   const slotOf = new Int32Array(n).fill(-1);
-  const phase = new Float32Array(n).map(() => Math.random() * 6.28), amt = new Float32Array(n);
+  const phase = new Float32Array(n).map(() => Math.random() * 6.28), amt = new Float32Array(n), kneel = new Uint8Array(n);
   const last = new Float32Array(n * 6), hasLast = new Uint8Array(n);
   const ZERO = new THREE.Matrix4().makeScale(0, 0, 0);
   const d = new THREE.Object3D(), camAt = new THREE.Vector3(1e9, 0, 0);
@@ -182,7 +182,11 @@ export function createCrowd(world, n, { men = 0.6, ihram = true, idtiba = false 
         if (dist < 1) phase[i] += (dist / 0.7) * Math.PI;
         const target = sy > 0.9 && rx === 0 && dist < 1 ? Math.min(1, dist / 0.012) : 0;
         amt[i] += (target - amt[i]) * 0.25;
-      } last[o] = x; last[o + 1] = y; last[o + 2] = z; last[o + 3] = ry; last[o + 4] = sy; last[o + 5] = rx; hasLast[i] = 1;
+      }
+      // Sitzen (sy < 0.9): nicht stauchen, sondern knien (im Shader)
+      kneel[i] = sy < 0.9 && rx === 0 ? 1 : 0;
+      last[o] = x; last[o + 1] = y; last[o + 2] = z; last[o + 3] = ry; last[o + 4] = sy; last[o + 5] = rx; hasLast[i] = 1;
+      if (kneel[i]) sy = 1;
       setsSinceCommit++; dirty = true;
       const s = scale[i];
       d.position.set(x, y, z); d.rotation.set(rx, ry, 0); d.scale.set(s * sw[i], sy * s * sh[i], s * sw[i]); d.updateMatrix();
@@ -195,10 +199,10 @@ export function createCrowd(world, n, { men = 0.6, ihram = true, idtiba = false 
       }
       if (useModel) {
         const sl = slotOf[i];
-        for (const m of POOLS[model[i].s].meshes) { m.setMatrixAt(sl, d.matrix); if (m.userData.walk) m.userData.walk.setXY(sl, phase[i], amt[i]); }
+        for (const m of POOLS[model[i].s].meshes) { m.setMatrixAt(sl, d.matrix); if (m.userData.walk) m.userData.walk.setXYZ(sl, phase[i], amt[i], kneel[i]); }
         for (let k = 0; k < L.length; k++) L[k][1].setMatrixAt(L[k][2], ZERO);
       } else {
-        for (let k = 0; k < L.length; k++) { L[k][1].setMatrixAt(L[k][2], d.matrix); const wa = L[k][1].userData.walk; if (wa) wa.setXY(L[k][2], phase[i], amt[i]); }
+        for (let k = 0; k < L.length; k++) { L[k][1].setMatrixAt(L[k][2], d.matrix); const wa = L[k][1].userData.walk; if (wa) wa.setXYZ(L[k][2], phase[i], amt[i], kneel[i]); }
       }
     },
     commit() {

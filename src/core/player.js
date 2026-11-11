@@ -12,16 +12,18 @@ const lathe = (pts, seg) => { const g = new THREE.LatheGeometry(pts.map(([x, y])
 
 // Ziel-Haltungen: Winkel in Radiant. hip = Oberkörper vorbeugen, knee = Absenken, armL/armR = Arme heben (nach vorne)
 const POSES = {
-  stand: { hip: 0, drop: 0, arm: [0.05, 0.05], lie: 0 },
-  walk: { hip: 0.06, drop: 0, arm: [0.05, 0.05], lie: 0 },
-  ruku: { hip: 1.45, drop: 0, arm: [1.35, 1.35], lie: 0 },
-  sujud: { hip: 2.25, drop: 0.62, arm: [2.6, 2.6], lie: 0 },
-  sit: { hip: 0.05, drop: 0.55, arm: [0.5, 0.5], lie: 0 },
-  dua: { hip: 0.08, drop: 0, arm: [1.15, 1.15], lie: 0 },
-  istilam: { hip: 0.05, drop: 0, arm: [0.2, 1.9], lie: 0 },
-  throw: { hip: 0.12, drop: 0, arm: [0.3, 2.7], lie: 0 },
-  sleep: { hip: 0, drop: 0, arm: [0.1, 0.1], lie: 1 },
-  bend: { hip: 1.1, drop: 0.25, arm: [1.5, 1.5], lie: 0 },
+  // arm/elbow = Haltung für das 3D-Modell: Arm nach vorn heben (Schulter) und Unterarm beugen, je [rechts, links]
+  stand: { hip: 0, drop: 0, arm: [0.05, 0.05], lie: 0, m: [0, 0], e: [0, 0] },
+  walk: { hip: 0.06, drop: 0, arm: [0.05, 0.05], lie: 0, m: [0, 0], e: [0, 0] },
+  ruku: { hip: 1.45, drop: 0, arm: [1.35, 1.35], lie: 0, m: [1.35, 1.35], e: [0, 0] },
+  sujud: { hip: 1.75, drop: 0.62, arm: [2.6, 2.6], lie: 0, m: [1.6, 1.6], e: [0.5, 0.5] },
+  sit: { hip: 0.05, drop: 0.55, arm: [0.5, 0.5], lie: 0, m: [0.55, 0.55], e: [0.55, 0.55] },
+  dua: { hip: 0.08, drop: 0, arm: [1.15, 1.15], lie: 0, m: [0.5, 0.5], e: [1.45, 1.45] },
+  istilam: { hip: 0.05, drop: 0, arm: [1.9, 0.2], lie: 0, m: [1.75, 0.05], e: [0.15, 0] },
+  drink: { hip: 0.05, drop: 0, arm: [1.6, 0.1], lie: 0, m: [0.75, 0.05], e: [2.05, 0] },
+  throw: { hip: 0.12, drop: 0, arm: [2.7, 0.3], lie: 0, m: [2.6, 0.15], e: [0.3, 0] },
+  sleep: { hip: 0, drop: 0, arm: [0.1, 0.1], lie: 1, m: [0, 0], e: [0, 0] },
+  bend: { hip: 1.1, drop: 0.25, arm: [1.5, 1.5], lie: 0, m: [1.3, 1.3], e: [0.2, 0.2] },
 };
 
 // covered: Kopf mit Tuch bedeckt (Frauen) – Kopf hat dann die Farbe der Kleidung und ist etwas größer (Tuch)
@@ -56,16 +58,18 @@ export function createFigure(world, { color = 0xf3f1ea, skin = 0xc68642, ring = 
   const HIP = covered ? 0.9 : 0.95;
   const variants = {}, walkU = [], PREFIX = { woman: 'w_', ihram: 'm_', kameez: 'k_' };
   let mCover = null;
-  function splitAt(geo, h) {
+  // Teilen an der Hüfte; Arme/Hände (|x| > armX) gehören immer zum Oberkörper, auch wenn sie tiefer hängen
+  function splitAt(geo, h, armX = 9) {
     const g = geo.index ? geo.toNonIndexed() : geo, pos = g.attributes.position, lo = [], up = [];
-    for (let t = 0; t < pos.count; t += 3) ((pos.getY(t) + pos.getY(t + 1) + pos.getY(t + 2)) / 3 > h ? up : lo).push(t);
+    const aw = g.attributes.armW;
+    for (let t = 0; t < pos.count; t += 3) { const y = (pos.getY(t) + pos.getY(t + 1) + pos.getY(t + 2)) / 3, x = Math.abs(pos.getX(t) + pos.getX(t + 1) + pos.getX(t + 2)) / 3; const arm = aw ? aw.getX(t) + aw.getX(t + 1) + aw.getX(t + 2) > 1.5 : x > armX && y > 0.55; (y > h || arm ? up : lo).push(t); }
     const pick = (tris, dy) => { const ng = new THREE.BufferGeometry(); for (const k of Object.keys(g.attributes)) { const at = g.attributes[k], arr = new Float32Array(tris.length * 3 * at.itemSize); tris.forEach((t, j) => { for (let q = 0; q < 3; q++) for (let c = 0; c < at.itemSize; c++) arr[(j * 3 + q) * at.itemSize + c] = at.array[(t + q) * at.itemSize + c]; }); ng.setAttribute(k, new THREE.BufferAttribute(arr, at.itemSize)); } ng.translate(0, -dy, 0); return ng; };
     return [pick(lo, 0), pick(up, h)];
   }
   function buildVariant(id, src) {
     if (!src) return;
-    const mLower = new THREE.Group(), mHip = new THREE.Group(); mHip.position.y = HIP; body.add(mLower, mHip);
-    variants[id] = { mLower, mHip };
+    const grp = new THREE.Group(); body.add(grp);
+    variants[id] = { grp };
     for (const [k, part] of Object.entries(src)) {
       const mat = part.material.clone();
       mat.side = ['hijab', 'dress', 'cover'].includes(k) ? THREE.DoubleSide : THREE.FrontSide;
@@ -75,14 +79,12 @@ export function createFigure(world, { color = 0xf3f1ea, skin = 0xc68642, ring = 
       else if (k === 'cloth') mat.color = new THREE.Color(0xf6f4ee);
       else if (k === 'shoes') mat.color = new THREE.Color(0x1e1c1b);
       else if (k !== 'cover') mat.color = new THREE.Color(0xffffff);
-      const [lo, up] = splitAt(part.geometry, HIP);
-      const matUp = mat.clone(); matUp.color = mat.color;
-      // Gehbewegung wie bei der Menge (Takt über Uniform); oberer Teil ist um HIP verschoben
-      const wp = WALK[PREFIX[id] + k];
-      if (wp) { walkU.push(walkMaterial(mat, wp, { instanced: false, yOff: 0 }), walkMaterial(matUp, wp, { instanced: false, yOff: HIP })); }
-      const a = new THREE.Mesh(lo, mat), b = new THREE.Mesh(up, matUp);
-      a.castShadow = b.castShadow = true; mLower.add(a); mHip.add(b);
-      if (k === 'cover') mCover = [a, b];
+      // Gehen, Armhaltung, Knien und Verbeugen (weich gebeugt an der Hüfte) im Shader
+      const wp = WALK[PREFIX[id] + k] || { hip: 0 };
+      walkU.push(walkMaterial(mat, wp, { instanced: false, groupHip: HIP, body: true }));
+      const a = new THREE.Mesh(part.geometry, mat);
+      a.castShadow = true; grp.add(a);
+      if (k === 'cover') mCover = [a];
     }
   }
   if (models) { if (covered) buildVariant('woman', models.woman); else { buildVariant('ihram', models.man); buildVariant('kameez', models.kameez); } }
@@ -92,7 +94,7 @@ export function createFigure(world, { color = 0xf3f1ea, skin = 0xc68642, ring = 
     const ih = isIhram();
     const want = covered ? 'woman' : ih ? 'ihram' : 'kameez';
     const useModel = !!variants[want];
-    for (const [id, v] of Object.entries(variants)) v.mLower.visible = v.mHip.visible = id === want;
+    for (const [id, v] of Object.entries(variants)) v.grp.visible = id === want;
     if (mCover) for (const m of mCover) m.visible = !idtiba; // Idtiba': rechte Schulter frei
     for (const a of armGroups) a.visible = !useModel;
     if (useModel) { for (const m of procedural()) m.visible = false; return; }
@@ -121,7 +123,7 @@ export function createFigure(world, { color = 0xf3f1ea, skin = 0xc68642, ring = 
   }
   world.add(root);
 
-  const cur = { hip: 0, drop: 0, arm: [0, 0], lie: 0 };
+  const cur = { hip: 0, drop: 0, arm: [0, 0], lie: 0, m: [0, 0], e: [0, 0] };
   let target = POSES.stand, swing = 0;
   return {
     root, cloth, skinM,
@@ -137,14 +139,17 @@ export function createFigure(world, { color = 0xf3f1ea, skin = 0xc68642, ring = 
       cur.lie += (target.lie - cur.lie) * k;
       cur.arm[0] += (target.arm[0] - cur.arm[0]) * k;
       cur.arm[1] += (target.arm[1] - cur.arm[1]) * k;
+      for (let q = 0; q < 2; q++) { cur.m[q] += (target.m[q] - cur.m[q]) * k; cur.e[q] += (target.e[q] - cur.e[q]) * k; }
       swing += dt * (walking > 0.05 ? 7 + walking * 5 : 0);
       const sw = walking > 0.05 ? Math.sin(swing) * 0.45 * Math.min(1, walking) : 0;
       // Modell-Figur: Beine/Arme im Shader (nur im Stehen/Gehen, nicht beim Beten oder Liegen)
       const wAmt = walking > 0.05 && cur.hip < 0.2 && cur.drop < 0.05 && cur.lie < 0.05 ? Math.min(1, walking) : 0;
-      for (const u of walkU) { u.uWalk.value.x = swing; u.uWalk.value.y += (wAmt - u.uWalk.value.y) * Math.min(1, dt * 10); }
+      const kn = Math.min(1, cur.drop / 0.55); // Knien statt Stauchen
+      for (const u of walkU) { u.uWalk.value.x = swing; u.uWalk.value.y += (wAmt - u.uWalk.value.y) * Math.min(1, dt * 10); u.uWalk.value.z = kn; u.uArm.value.set(cur.m[0], cur.m[1]); u.uElbow.value.set(cur.e[0], cur.e[1]); }
       hip.rotation.x = cur.hip;
       lowerDress.scale.y = lowerIzar.scale.y = 1 - cur.drop;
-      for (const v of Object.values(variants)) { v.mLower.scale.y = 1 - cur.drop; v.mHip.rotation.x = cur.hip; v.mHip.position.y = HIP * (1 - cur.drop); }
+      const sink = (HIP - 0.2) * Math.min(1, cur.drop / 0.55);
+      for (const u of walkU) u.uBody.value.set(cur.hip, sink);
       hip.position.y = 0.9 * (1 - cur.drop);
       arms[0].rotation.x = -cur.arm[0] + sw;
       arms[1].rotation.x = -cur.arm[1] - sw;

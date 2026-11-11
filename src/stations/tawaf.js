@@ -115,7 +115,7 @@ export function create(ctx, st) {
   function drink() {
     if (ctx.progress.sunnah.has('zamzam') && !mZam.visible) return;
     mZam.hide(); ui.prompt(null);
-    player.fig.pose('istilam');
+    player.fig.pose('drink');
     setTimeout(() => { if (flow.dead) return; player.fig.pose('stand'); ui.toast('Zamzam getrunken'); sunnah(ctx, 'zamzam'); ctx.mission?.done(4); }, 1400);
   }
 
