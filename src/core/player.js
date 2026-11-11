@@ -124,12 +124,12 @@ export function createPlayer(ctx, { x = 0, z = 0, heading = 0, color, speed = 1.
   const navMat = (opacity) => new THREE.MeshBasicMaterial({ color: 0xffd36a, transparent: true, opacity, depthWrite: false, depthTest: false, fog: false });
   const GN = 8;
   const chev = new THREE.Shape(); chev.moveTo(-0.45, -0.2); chev.lineTo(0, 0.25); chev.lineTo(0.45, -0.2); chev.lineTo(0.45, 0.05); chev.lineTo(0, 0.5); chev.lineTo(-0.45, 0.05);
-  const chevG = new THREE.ShapeGeometry(chev); chevG.rotateX(-Math.PI / 2);
+  const chevG = new THREE.ShapeGeometry(chev); chevG.rotateX(-Math.PI / 2); chevG.rotateY(Math.PI); // Spitze zeigt nach +z (= Richtung ang)
   const guide = new THREE.InstancedMesh(chevG, navMat(0.7), GN);
   guide.frustumCulled = false; guide.renderOrder = 20; engine.world.add(guide);
   const arrowS = new THREE.Shape();
   arrowS.moveTo(0, 0.9); arrowS.lineTo(0.5, 0.25); arrowS.lineTo(0.18, 0.25); arrowS.lineTo(0.18, -0.35); arrowS.lineTo(-0.18, -0.35); arrowS.lineTo(-0.18, 0.25); arrowS.lineTo(-0.5, 0.25);
-  const arrowG = new THREE.ShapeGeometry(arrowS); arrowG.rotateX(-Math.PI / 2);
+  const arrowG = new THREE.ShapeGeometry(arrowS); arrowG.rotateX(-Math.PI / 2); arrowG.rotateY(Math.PI);
   const navArrow = new THREE.Mesh(arrowG, navMat(0.95)); navArrow.renderOrder = 21; engine.world.add(navArrow);
   const lineG = new THREE.PlaneGeometry(0.12, 1); lineG.rotateX(-Math.PI / 2); lineG.translate(0, 0, 0.5);
   const navLine = new THREE.Mesh(lineG, navMat(0.35)); navLine.renderOrder = 19; engine.world.add(navLine);
