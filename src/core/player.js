@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { izarGeo, torsoGeo, ridaGeo, hairGeo, faceGeo, khimarGeo } from '../world/people.js';
 
 // Spielfigur mit einfachen Körperhaltungen, freier Bewegung, Kollision und Verfolgerkamera.
 // Figur: Unterkörper (Gewand), Oberkörper + Kopf (Drehpunkt Hüfte), zwei Arme (Drehpunkt Schulter).
@@ -27,20 +28,45 @@ export function createFigure(world, { color = 0xf3f1ea, skin = 0xc68642, ring = 
   const body = new THREE.Group(); root.add(body);
   const cloth = new THREE.MeshStandardMaterial({ color, roughness: 0.92 });
   const skinM = new THREE.MeshStandardMaterial({ color: skin, roughness: 0.6 });
-  const lower = new THREE.Mesh(lathe(LOWER, 24), cloth);
-  const hip = new THREE.Group(); hip.position.y = 0.9; body.add(lower, hip);
+  // Kleidung je nach Geschlecht und Zustand:
+  //  Mann im Ihram (weiße Kleidung): Izar + Rida', Oberkörper/Arme mit Haut; Idtiba' = rechte Schulter frei
+  //  Mann sonst: Gewand (Thobe) in der Kleidungsfarbe. Frau: Gewand + Kopftuch (Khimar), Gesicht frei
+  const lowerDress = new THREE.Mesh(lathe(LOWER, 24), cloth);
+  const lowerIzar = new THREE.Mesh(izarGeo(24), cloth);
+  const hip = new THREE.Group(); hip.position.y = 0.9; body.add(lowerDress, lowerIzar, hip);
   const upper = new THREE.Mesh(lathe(UPPER, 24), cloth);
+  const torso = new THREE.Mesh(torsoGeo(20, 0.9), skinM);
+  const ridaDouble = new THREE.MeshStandardMaterial({ color, roughness: 0.92, side: THREE.DoubleSide });
+  const rida = new THREE.Mesh(ridaGeo(28, 0.9), ridaDouble);
+  const ridaIdt = new THREE.Mesh(ridaGeo(28, 0.9, true), ridaDouble);
   const headG = new THREE.SphereGeometry(0.105, 20, 14); headG.scale(0.92, 1.12, 1);
-  const head = new THREE.Mesh(headG, covered ? cloth : skinM); head.position.set(0, 0.7, 0.01);
-  if (covered) { head.scale.set(1.18, 1.12, 1.18); head.position.y = 0.69; }
-  hip.add(upper, head);
+  const head = new THREE.Mesh(headG, skinM); head.position.set(0, 0.7, 0.01);
+  const hair = new THREE.Mesh(hairGeo(16, 0.9), new THREE.MeshStandardMaterial({ color: 0x1d1a17, roughness: 0.8 }));
+  const khimar = new THREE.Mesh(khimarGeo(28, 0.9), ridaDouble);
+  const face = new THREE.Mesh(faceGeo(16, 0.9), skinM);
+  hip.add(upper, torso, rida, ridaIdt, head, hair, khimar, face);
+  let idtiba = false;
+  // weiße Kleidung (sRGB-Werte, nicht die linearen Farbwerte) = Ihram
+  const isIhram = () => { const h = cloth.color.getHex(); return !covered && ((h >> 16) & 255) > 0xe6 && ((h >> 8) & 255) > 0xe6 && (h & 255) > 0xdc; };
+  let armMeshes = [];
+  function outfit() {
+    const ih = isIhram();
+    ridaDouble.color.copy(cloth.color);
+    lowerIzar.visible = ih; lowerDress.visible = !ih;
+    upper.visible = !ih; torso.visible = ih;
+    rida.visible = ih && !idtiba; ridaIdt.visible = ih && idtiba;
+    head.visible = !covered; hair.visible = !covered;
+    khimar.visible = covered; face.visible = covered;
+    for (const m of armMeshes) m.material = ih ? skinM : cloth;
+  }
   const armG = new THREE.CapsuleGeometry(0.05, 0.5, 4, 10); armG.translate(0, -0.3, 0);
   const arms = [-1, 1].map((side) => {
     const a = new THREE.Group(); a.position.set(side * 0.25, 0.43, 0);
-    const m = new THREE.Mesh(armG, cloth); a.add(m);
+    const m = new THREE.Mesh(armG, cloth); a.add(m); armMeshes.push(m);
     const hand = new THREE.Mesh(new THREE.SphereGeometry(0.05, 10, 8), skinM); hand.position.y = -0.6; a.add(hand);
     hip.add(a); return a;
   });
+  outfit();
   root.traverse((o) => { if (o.isMesh) o.castShadow = true; });
   let ringMesh = null;
   if (ring) {
@@ -53,7 +79,9 @@ export function createFigure(world, { color = 0xf3f1ea, skin = 0xc68642, ring = 
   let target = POSES.stand, swing = 0;
   return {
     root, cloth, skinM,
-    setColor(c) { cloth.color.setHex(c); },
+    setColor(c) { cloth.color.setHex(c); outfit(); },
+    // Idtiba': rechte Schulter frei (nur Männer, nur im Tawaf der Umrah)
+    setIdtiba(v) { idtiba = v; outfit(); },
     pose(name) { target = POSES[name] || POSES.stand; },
     get poseName() { return Object.keys(POSES).find((k) => POSES[k] === target); },
     update(dt, walking = 0) {
@@ -66,7 +94,7 @@ export function createFigure(world, { color = 0xf3f1ea, skin = 0xc68642, ring = 
       swing += dt * (walking > 0.05 ? 7 + walking * 5 : 0);
       const sw = walking > 0.05 ? Math.sin(swing) * 0.45 * Math.min(1, walking) : 0;
       hip.rotation.x = cur.hip;
-      lower.scale.y = 1 - cur.drop;
+      lowerDress.scale.y = lowerIzar.scale.y = 1 - cur.drop;
       hip.position.y = 0.9 * (1 - cur.drop);
       arms[0].rotation.x = -cur.arm[0] + sw;
       arms[1].rotation.x = -cur.arm[1] - sw;

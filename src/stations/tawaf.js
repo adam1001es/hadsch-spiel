@@ -68,10 +68,13 @@ export function create(ctx, st) {
   const dirX = -Math.sin(thS), dirZ = -Math.cos(thS); // Tangente in Richtung wachsendes θ
   const player = createPlayer(ctx, { x: sx, z: sz, heading: Math.atan2(dirX, dirZ), color: st.kind === 'umrah' ? 0xf3f1ea : 0x6f7f8e, speed: 3, fastSpeed: 4.4, colliders });
   input.yaw = Math.atan2(dirX, dirZ) + 0.5; // etwas zur Kaaba gedreht
+  // Idtiba' (nur Männer, nur Tawaf der Umrah): rechte Schulter frei während der 7 Runden
+  if (st.kind === 'umrah') player.fig.setIdtiba(true);
 
   // Menge
   const N = engine.isMobile ? 650 : 1100;
-  const crowd = createCrowd(world, N, { ihram: st.kind !== 'ifada' && st.kind !== 'wada' ? true : false, men: 0.6 });
+  // Umrah: Männer im Ihram mit freier rechter Schulter (Idtiba'); Ifada/Wada: normale Kleidung
+  const crowd = createCrowd(world, N, { ihram: st.kind === 'umrah', idtiba: st.kind === 'umrah', men: 0.6 });
   const ar = new Float32Array(N), aa = new Float32Array(N), av = new Float32Array(N), ph = new Float32Array(N);
   for (let i = 0; i < N; i++) { ar[i] = 10 + Math.pow(Math.random(), 1.4) * 36; aa[i] = Math.random() * TAU; av[i] = (1.0 + Math.random() * 0.6) / ar[i]; ph[i] = Math.random() * 6; }
 
@@ -143,6 +146,7 @@ export function create(ctx, st) {
 
   function finish() {
     auto.finish();
+    player.fig.setIdtiba(false); // nach dem Tawaf wieder beide Schultern bedeckt
     ctx.mission?.done(1); if (istilamCount < 7) ctx.mission?.skip(2);
     done = true;
     ui.counter('7 / 7 ✓');
