@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { izarGeo, torsoGeo, ridaGeo, hairGeo, faceGeo, khimarGeo } from '../world/people.js';
+import { peopleModels } from '../world/crowd.js';
 
 // Spielfigur mit einfachen Körperhaltungen, freier Bewegung, Kollision und Verfolgerkamera.
 // Figur: Unterkörper (Gewand), Oberkörper + Kopf (Drehpunkt Hüfte), zwei Arme (Drehpunkt Schulter).
@@ -23,7 +24,7 @@ const POSES = {
 };
 
 // covered: Kopf mit Tuch bedeckt (Frauen) – Kopf hat dann die Farbe der Kleidung und ist etwas größer (Tuch)
-export function createFigure(world, { color = 0xf3f1ea, skin = 0xc68642, ring = true, covered = false } = {}) {
+export function createFigure(world, { color = 0xf3f1ea, skin = 0xc68642, ring = true, covered = false, models = null } = {}) {
   const root = new THREE.Group();
   const body = new THREE.Group(); root.add(body);
   const cloth = new THREE.MeshStandardMaterial({ color, roughness: 0.92 });
@@ -49,8 +50,41 @@ export function createFigure(world, { color = 0xf3f1ea, skin = 0xc68642, ring = 
   // weiße Kleidung (sRGB-Werte, nicht die linearen Farbwerte) = Ihram
   const isIhram = () => { const h = cloth.color.getHex(); return !covered && ((h >> 16) & 255) > 0xe6 && ((h >> 8) & 255) > 0xe6 && (h & 255) > 0xdc; };
   let armMeshes = [];
+  // 3D-Modell als Spielfigur (wie die Pilger in der Menge): an der Hüfte geteilt, damit Ruku'/Sujud weiter gehen
+  const HIP = covered ? 0.9 : 0.95;
+  const mLower = new THREE.Group(), mHip = new THREE.Group(); mHip.position.y = HIP; body.add(mLower, mHip);
+  let mCover = null;
+  const src = models ? (covered ? models.woman : models.man) : null;
+  function splitAt(geo, h) {
+    const g = geo.index ? geo.toNonIndexed() : geo, pos = g.attributes.position, lo = [], up = [];
+    for (let t = 0; t < pos.count; t += 3) ((pos.getY(t) + pos.getY(t + 1) + pos.getY(t + 2)) / 3 > h ? up : lo).push(t);
+    const pick = (tris, dy) => { const ng = new THREE.BufferGeometry(); for (const k of Object.keys(g.attributes)) { const at = g.attributes[k], arr = new Float32Array(tris.length * 3 * at.itemSize); tris.forEach((t, j) => { for (let q = 0; q < 3; q++) for (let c = 0; c < at.itemSize; c++) arr[(j * 3 + q) * at.itemSize + c] = at.array[(t + q) * at.itemSize + c]; }); ng.setAttribute(k, new THREE.BufferAttribute(arr, at.itemSize)); } ng.translate(0, -dy, 0); return ng; };
+    return [pick(lo, 0), pick(up, h)];
+  }
+  if (src) {
+    for (const [k, part] of Object.entries(src)) {
+      const mat = part.material.clone();
+      mat.side = ['hijab', 'dress', 'cover'].includes(k) ? THREE.DoubleSide : THREE.FrontSide;
+      if (k === 'skin' || k === 'head' || k === 'arms') mat.color = skinM.color;            // Hautfarbe der Figur
+      else if (k === 'dress' || k === 'hijab') mat.color = cloth.color;                     // Kleidungsfarbe der Figur
+      else if (k === 'cloth') mat.color = new THREE.Color(0xf6f4ee);
+      else if (k === 'shoes') mat.color = new THREE.Color(0x1e1c1b);
+      else if (k !== 'cover') mat.color = new THREE.Color(0xffffff);
+      const [lo, up] = splitAt(part.geometry, HIP);
+      const a = new THREE.Mesh(lo, mat), b = new THREE.Mesh(up, mat);
+      a.castShadow = b.castShadow = true; mLower.add(a); mHip.add(b);
+      if (k === 'cover') mCover = [a, b];
+    }
+  }
+  const procedural = () => [lowerDress, lowerIzar, upper, torso, rida, ridaIdt, head, hair, khimar, face];
+  let armGroups = [];
   function outfit() {
     const ih = isIhram();
+    const useModel = !!src && (covered || ih); // Frau: immer Modell (Abaya in Kleidungsfarbe); Mann: Modell nur im Ihram
+    mLower.visible = mHip.visible = useModel;
+    if (mCover) for (const m of mCover) m.visible = !idtiba; // Idtiba': rechte Schulter frei
+    for (const a of armGroups) a.visible = !useModel;
+    if (useModel) { for (const m of procedural()) m.visible = false; return; }
     ridaDouble.color.copy(cloth.color);
     lowerIzar.visible = ih; lowerDress.visible = !ih;
     upper.visible = !ih; torso.visible = ih;
@@ -66,6 +100,7 @@ export function createFigure(world, { color = 0xf3f1ea, skin = 0xc68642, ring = 
     const hand = new THREE.Mesh(new THREE.SphereGeometry(0.05, 10, 8), skinM); hand.position.y = -0.6; a.add(hand);
     hip.add(a); return a;
   });
+  armGroups = arms;
   outfit();
   root.traverse((o) => { if (o.isMesh) o.castShadow = true; });
   let ringMesh = null;
@@ -94,7 +129,8 @@ export function createFigure(world, { color = 0xf3f1ea, skin = 0xc68642, ring = 
       swing += dt * (walking > 0.05 ? 7 + walking * 5 : 0);
       const sw = walking > 0.05 ? Math.sin(swing) * 0.45 * Math.min(1, walking) : 0;
       hip.rotation.x = cur.hip;
-      lowerDress.scale.y = lowerIzar.scale.y = 1 - cur.drop;
+      lowerDress.scale.y = lowerIzar.scale.y = mLower.scale.y = 1 - cur.drop;
+      mHip.rotation.x = cur.hip; mHip.position.y = HIP * (1 - cur.drop);
       hip.position.y = 0.9 * (1 - cur.drop);
       arms[0].rotation.x = -cur.arm[0] + sw;
       arms[1].rotation.x = -cur.arm[1] - sw;
@@ -139,7 +175,7 @@ export function resolve(p, r, shapes) {
 // ---------- Spieler: Bewegung + Kamera ----------
 export function createPlayer(ctx, { x = 0, z = 0, heading = 0, color, speed = 1.6, fastSpeed = 2.8, colliders = [], ground = null, camDist = 6.5, camHeight = 2.6 } = {}) {
   const { engine, input } = ctx;
-  const fig = createFigure(engine.world, { color, covered: ctx.profile?.gender === 'f' });
+  const fig = createFigure(engine.world, { color, covered: ctx.profile?.gender === 'f', models: peopleModels() });
   const pos = new THREE.Vector3(x, 0, z);
   const vel = new THREE.Vector3();
   let head = heading, walking = 0, frozen = false;

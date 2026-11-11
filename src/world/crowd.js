@@ -18,6 +18,9 @@ function pickRegion() {
 // „cover“ = Tuchstück über der rechten Schulter (außerhalb des Umrah-Tawaf ist die Schulter bedeckt).
 let MUSLIMA = null, MAN = null;
 const loadParts = (url) => new GLTFLoader().loadAsync(url).then((g) => { const parts = {}; g.scene.traverse((c) => { if (c.isMesh) parts[c.name] = { geometry: c.geometry, material: c.material }; }); return parts; });
+// Für die Spielfigur: die geladenen Modelle (oder null)
+export const peopleModels = () => ({ woman: MUSLIMA, man: MAN });
+
 export function preloadPeople() {
   return Promise.all([
     loadParts('./assets/models/muslima.glb').then((p) => { if (p.dress && p.hijab && p.head) MUSLIMA = p; }).catch(() => {}),
