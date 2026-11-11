@@ -1,4 +1,9 @@
+import { TEXT } from '../content/hajj.js';
+
 const $ = (id) => document.getElementById(id);
+// Einmalige Zeigehinweise (erster Aktionsknopf, erster Halte-Knopf) – im Browser gemerkt
+const seen = (() => { try { return JSON.parse(localStorage.getItem('hp-coach') || '{}'); } catch { return {}; } })();
+const markSeen = (k) => { seen[k] = 1; try { localStorage.setItem('hp-coach', JSON.stringify(seen)); } catch { /* egal */ } };
 
 // Alles, was der Spieler als Text/Knopf sieht.
 export function createUI() {
@@ -8,6 +13,7 @@ export function createUI() {
     goal: $('goal'), goalArrow: $('goalArrow'), goalText: $('goalText'), stick: $('stick'),
     panelToggle: $('panelToggle'), auto: $('autoBtn'),
     choice: $('choice'), choiceQ: $('choiceQ'), choiceOpts: $('choiceOpts'), choiceFb: $('choiceFb'),
+    mission: $('mission'), learn: $('learn'), learnCard: $('learnCard'), coach: $('coach'), coachText: $('coachText'),
   };
   let toastTimer = null, hintTimer = null, promptFn = null, promptKey = '';
 
@@ -35,7 +41,8 @@ export function createUI() {
   new ResizeObserver(layout).observe(hud);
   window.addEventListener('resize', layout);
 
-  el.prompt.addEventListener('click', () => { const f = promptFn; if (f) f(); });
+  el.prompt.addEventListener('click', () => { if (!seen.prompt) { markSeen('prompt'); ui.coach(null); } const f = promptFn; if (f) f(); });
+  el.hold.addEventListener('pointerdown', () => { if (!seen.hold) { markSeen('hold'); ui.coach(null); } });
   window.addEventListener('keydown', (e) => {
     if ((e.code === 'Enter' || e.code === 'KeyF') && !el.prompt.hidden && el.choice.hidden) { e.preventDefault(); el.prompt.click(); }
   });
@@ -68,7 +75,12 @@ export function createUI() {
       layout();
     },
     // Halte-Knopf: für Handlungen, die Zeit brauchen (Gebet, Dua, Schlafen). label=null blendet aus.
-    hold(label) { el.hold.hidden = !label; if (label) el.hold.textContent = label.replace(/^Halten: /, 'Halten:\n'); document.body.classList.toggle('has-hold', !!label); },
+    hold(label) {
+      el.hold.hidden = !label; if (label) el.hold.textContent = label.replace(/^Halten: /, 'Halten:\n');
+      document.body.classList.toggle('has-hold', !!label);
+      if (label && !seen.hold) ui.coach(TEXT.coach.hold, 'hold', '👇');
+      else if (!label && el.coach.className === 'hold') ui.coach(null);
+    },
     // Autopilot-Knopf (optional): show=false blendet aus. onToggle(on) wird beim Antippen gerufen.
     auto(show, on = false, onToggle = null) {
       el.auto.hidden = !show;
@@ -79,10 +91,11 @@ export function createUI() {
     },
     // Aktionsknopf vor Ort. Gleicher key → kein Neuaufbau (verhindert Flackern im Frame-Loop).
     prompt(label, fn, { sunnah = false, key = label } = {}) {
-      if (!label) { if (!el.prompt.hidden) { el.prompt.hidden = true; promptKey = ''; promptFn = null; } return; }
+      if (!label) { if (!el.prompt.hidden) { el.prompt.hidden = true; promptKey = ''; promptFn = null; if (el.coach.className === 'prompt') ui.coach(null); } return; }
       promptFn = fn;
       if (promptKey === key && !el.prompt.hidden) return;
       promptKey = key;
+      if (!seen.prompt) ui.coach(TEXT.coach.prompt, 'prompt', '👇');
       el.prompt.textContent = label;
       el.prompt.classList.toggle('sunnah', sunnah);
       el.prompt.hidden = false;
@@ -111,10 +124,12 @@ export function createUI() {
         el.choiceFb.innerHTML = '';
         el.choiceFb.hidden = true;
         el.choice.hidden = false;
+        let tries = 0;
         options.forEach((o) => {
           const b = document.createElement('button');
           b.type = 'button'; b.innerHTML = o.html;
           b.addEventListener('click', () => {
+            tries++;
             el.choiceFb.hidden = false;
             el.choiceFb.innerHTML = o.why || (o.ok ? 'Richtig.' : 'Nicht ganz – versuch es noch einmal.');
             if (o.ok) {
@@ -122,7 +137,7 @@ export function createUI() {
               [...el.choiceOpts.children].forEach((c) => { if (c !== b) { c.disabled = true; c.classList.add('done'); } });
               const go = document.createElement('button');
               go.type = 'button'; go.className = 'primary'; go.textContent = done; go.style.marginTop = '10px';
-              go.addEventListener('click', () => { el.choice.hidden = true; resolve(o); });
+              go.addEventListener('click', () => { el.choice.hidden = true; resolve({ ...o, tries }); });
               el.choiceFb.appendChild(document.createElement('br'));
               el.choiceFb.appendChild(go);
               go.focus();
@@ -166,7 +181,68 @@ export function createUI() {
     },
     fade(on) { el.fade.classList.toggle('on', on); return new Promise((r) => setTimeout(r, 470)); },
     prayer(p) { return `<div class="ar">${p.ar}</div><p class="tr">${p.tr}</p><p>${p.de}</p>`; },
+    // Aufgabenliste: tasks [{t, s}], state: Array 'open' | 'ok' | 'skip'. Zeigt die aktuelle Aufgabe oben in der Infokarte.
+    mission(tasks, state) {
+      if (!tasks) { el.mission.hidden = true; el.mission.innerHTML = ''; layout(); return; }
+      const curAny = state.findIndex((x) => x === 'open');
+      const doneN = state.filter((x) => x !== 'open').length;
+      const now = curAny < 0 ? 'Alles erledigt ✓' : tasks[curAny].t + (tasks[curAny].s ? ' (Sunnah)' : '');
+      el.mission.hidden = false;
+      el.mission.innerHTML = `<span class="tag">Aufgabe</span><span>${now}</span><span class="n">${doneN}/${tasks.length}</span>`;
+      let list = el.panel.querySelector('.task-list');
+      if (!list) { list = document.createElement('ol'); list.className = 'task-list'; el.mission.after(list); }
+      list.innerHTML = tasks.map((t, i) => `<li class="${state[i] === 'ok' ? 'ok' : state[i] === 'skip' ? 'skip' : i === curAny ? 'now' : ''}">${state[i] === 'ok' ? '✓' : state[i] === 'skip' ? '–' : i === curAny ? '▶' : '○'} ${t.t}${t.s ? ' <span class="s">Sunnah</span>' : ''}</li>`).join('');
+      layout();
+    },
+    // Lernkarte vor der Station: Worum geht es? Warum? Aufgaben, Wusstest du?
+    learnIntro(L, idx, total, st) {
+      return new Promise((resolve) => {
+        el.learnCard.innerHTML = `<div class="k">Station ${idx + 1} von ${total} · ${st.day}</div><h2>${st.title}</h2>
+          <h3>Worum geht es?</h3><p>${L.what}</p>
+          <h3>Warum?</h3><p>${L.why}</p>
+          <h3>Deine Aufgaben</h3><ol>${L.tasks.map((t) => `<li>${t.t}${t.s ? ' <span class="s">· Sunnah (freiwillig)</span>' : ''}</li>`).join('')}</ol>
+          <div class="fact"><b>Wusstest du?</b> ${L.fact}</div>
+          <button class="primary go" type="button">Los geht's</button>`;
+        el.learn.hidden = false;
+        const go = el.learnCard.querySelector('.go');
+        go.addEventListener('click', () => { el.learn.hidden = true; resolve(); });
+        el.learnCard.scrollTop = 0;
+      });
+    },
+    // Lernkarte nach der Station: Zusammenfassung + eine Quizfrage. Gibt true zurück, wenn beim ersten Versuch richtig.
+    learnRecap(L, st) {
+      return new Promise((resolve) => {
+        el.learnCard.innerHTML = `<div class="k">Geschafft · ${st.title} ✓</div><h2>Das hast du gelernt</h2>
+          <ul>${L.recap.map((r) => `<li>${r}</li>`).join('')}</ul>
+          <h3>Quiz</h3><p><b>${L.quiz.q}</b></p><div class="quiz"></div><p class="fb" hidden></p>`;
+        el.learn.hidden = false;
+        el.learnCard.scrollTop = 0;
+        const box = el.learnCard.querySelector('.quiz'), fb = el.learnCard.querySelector('.fb');
+        let tries = 0;
+        [...L.quiz.o].sort(() => Math.random() - 0.5).forEach((o) => {
+          const b = document.createElement('button'); b.type = 'button'; b.innerHTML = o.html;
+          b.addEventListener('click', () => {
+            tries++; fb.hidden = false; fb.textContent = o.why;
+            if (!o.ok) { b.className = 'no'; b.disabled = true; return; }
+            b.className = 'ok';
+            [...box.children].forEach((c) => (c.disabled = true));
+            const go = document.createElement('button'); go.type = 'button'; go.className = 'primary go'; go.textContent = 'Weiter zur nächsten Station';
+            go.addEventListener('click', () => { el.learn.hidden = true; resolve(tries === 1); });
+            el.learnCard.appendChild(go); go.scrollIntoView({ block: 'nearest' });
+          });
+          box.appendChild(b);
+        });
+      });
+    },
+    // Zeigehinweis (Steuerungs-Training). where: 'stick' | 'look' | 'hold' | 'prompt' | 'center'
+    coach(text, where = 'center', hand = '👆') {
+      if (!text) { el.coach.hidden = true; return; }
+      el.coach.className = where; el.coachText.textContent = text;
+      el.coach.querySelector('#coachHand').textContent = hand;
+      el.coach.hidden = false;
+    },
     reset() {
+      ui.mission(null); ui.coach(null); el.learn.hidden = true;
       ui.info(''); ui.actions([]); ui.hold(null); ui.counter(''); ui.prompt(null); ui.goal(null); ui.auto(false);
       el.hint.hidden = true; el.choice.hidden = true; el.stick.classList.remove('off');
     },

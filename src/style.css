@@ -114,3 +114,45 @@ body.has-hold #autoBtn { bottom: calc(var(--sb) + 104px); }
 @media (hover: hover) and (pointer: fine) { #stick:not(.on) { display: none; } }
 @media (min-width: 900px) { #panel { right: auto; width: 520px; } }
 #hold { white-space: pre-line; }
+
+/* Aufgabe (oben in der Infokarte) */
+#mission { display: flex; align-items: baseline; gap: 6px; margin: 0 0 4px; font-weight: 700; color: var(--green); font-size: 15px; }
+#mission .tag { flex: none; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: #7a5716; }
+#mission .n { flex: none; margin-left: auto; font-weight: 600; font-size: 12px; color: var(--muted); }
+#panel:not(.collapsed) .task-list { display: block; }
+.task-list { display: none; list-style: none; margin: 2px 0 8px; padding: 0; font-size: 13.5px; }
+.task-list li { padding: 2px 0; color: var(--muted); }
+.task-list li.now { color: var(--ink); font-weight: 700; }
+.task-list li.ok { color: var(--green); }
+.task-list li.skip { color: #9aa39e; text-decoration: line-through; }
+.task-list .s { font-size: 11px; color: #7a5716; }
+
+/* Lernkarte */
+#learn { position: fixed; inset: 0; z-index: 25; display: grid; place-items: center; padding: 16px var(--sr) 16px var(--sl); background: rgba(8,16,26,.6); }
+.learn-card { width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto; background: var(--ivory); border-radius: 18px; padding: 18px 18px 16px; border: 1px solid var(--gold); box-shadow: 0 10px 40px rgba(0,0,0,.45); }
+.learn-card .k { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: #7a5716; }
+.learn-card h2 { margin: 2px 0 10px; font: 26px/1.15 var(--f-display); }
+.learn-card h3 { margin: 12px 0 4px; font-size: 13px; letter-spacing: .06em; text-transform: uppercase; color: var(--green); }
+.learn-card p { margin: 0 0 6px; }
+.learn-card ol, .learn-card ul { margin: 0; padding-left: 20px; }
+.learn-card li { margin: 2px 0; }
+.learn-card .s { font-size: 11px; color: #7a5716; font-weight: 600; }
+.learn-card .fact { margin-top: 12px; padding: 10px 12px; border-radius: 10px; background: #fff; border-left: 4px solid var(--gold); }
+.learn-card .quiz { margin-top: 14px; display: grid; gap: 8px; }
+.learn-card .quiz button { text-align: left; }
+.learn-card .quiz button.ok { background: #d9efe3; border-color: #2b7558; }
+.learn-card .quiz button.no { background: #f6dedb; border-color: #a3473a; color: #7a2f25; }
+.learn-card .go { width: 100%; margin-top: 14px; padding: 13px; font-size: 16px; }
+.learn-card .fb { margin-top: 8px; font-weight: 600; }
+
+/* Zeigehinweis */
+#coach { position: fixed; z-index: 9; display: flex; align-items: center; gap: 10px; max-width: min(78vw, 340px); padding: 10px 14px; border-radius: 14px; background: #fff6dc; color: #14251f; border: 2px solid #e6c46e; box-shadow: 0 6px 20px rgba(0,0,0,.35); font-weight: 600; pointer-events: none; }
+#coachHand { font-size: 26px; animation: nudge 1.2s ease-in-out infinite; }
+@keyframes nudge { 50% { transform: translateY(-8px); } }
+#coach.stick { left: calc(var(--sl) + 8px); bottom: calc(var(--sb) + 130px); }
+#coach.look { right: var(--sr); top: 45%; }
+#coach.hold { right: var(--sr); bottom: calc(var(--sb) + 110px); }
+#coach.prompt { left: 50%; transform: translateX(-50%); bottom: calc(var(--sb) + 215px); }
+#coach.center { left: 50%; top: 42%; transform: translate(-50%, -50%); }
+#coach.look #coachHand { animation: swipe 1.4s ease-in-out infinite; }
+@keyframes swipe { 0% { transform: translateX(10px); } 50% { transform: translateX(-16px); } 100% { transform: translateX(10px); } }

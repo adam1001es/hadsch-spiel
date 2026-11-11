@@ -32,8 +32,10 @@ export function ending(ctx) {
   ui.el.stick.classList.add('off');
   const done = SUNNAH_LIST.filter(([k]) => ctx.progress.sunnah.has(k));
   ui.counter(`Sunnah: ${done.length} von ${SUNNAH_LIST.length}`);
+  ui.el.panel.classList.remove('collapsed');
   ui.info(`${ui.prayer(ENDING)}
     <p><b>Alle 12 Stationen ✓</b></p>
+    ${ctx.progress.quizN ? `<p><b>Quiz:</b> ${ctx.progress.quizOk} von ${ctx.progress.quizN} Fragen beim ersten Versuch richtig ${ctx.progress.quizOk === ctx.progress.quizN ? '– hervorragend!' : ''}</p>` : ''}
     <ul class="sunnah-list">${SUNNAH_LIST.map(([k, label]) => `<li class="${ctx.progress.sunnah.has(k) ? 'ok' : ''}">${ctx.progress.sunnah.has(k) ? '✓' : '○'} ${label}</li>`).join('')}</ul>
     <p class="tr">Gezählt wird nur, was du wirklich getan hast – Sunnah ist freiwillig.</p>`);
   ui.actions([{ label: 'Nochmal spielen', kind: 'primary', onClick: () => location.reload() }]);

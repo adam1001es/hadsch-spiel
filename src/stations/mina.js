@@ -79,22 +79,25 @@ export function create(ctx, st) {
     ui.info(`<p>${st.intro}</p>`);
     await ui.choice(T.ihramQ, T.ihram);
     player.fig.setColor(0xf6f4ee);
-    ui.toast('Ihram für den Hadsch ✓');
+    ui.toast('Ihram für den Hadsch ✓'); ctx.mission?.done(0);
     ui.info(`<p>${T.note}</p>`);
     await goTo(ctx, flow, marker, T.tentGoal, front.x, front.z);
-    marker.hide();
+    marker.hide(); ctx.mission?.done(1);
     for (const p of T.prayers) {
       if (p.name === 'Fajr') {
         // Übernachten: Zeit läuft, solange gehalten wird
+        ctx.mission?.done(2);
         ui.info(`<p>${T.sleep}: Nacht unter Sternen in Mina.</p>`);
         const from = sky.hour;
         await flow.run(holdAction(ctx, player, { label: T.sleepHold, steps: [{ pose: 'sleep', sec: 5 }], onTick: (k) => sky.setHour(from + (29 - from) * k) }));
+        ctx.mission?.done(3);
       }
       // Zeit bis zum Gebet vorspulen
       await new Promise((r) => sky.animateTo(p.hour, 2.2, r));
       ui.info(`<p>${p.name} · ${String(Math.floor(p.hour % 24)).padStart(2, '0')}:${String(Math.round((p.hour % 1) * 60)).padStart(2, '0')} Uhr</p><p class="tr">${T.note}</p>`);
       await prayerAt(p);
     }
+    ctx.mission?.done(4);
     ui.info(`<p>${T.leave}.</p>`);
     await new Promise((r) => sky.animateTo(30.3, 2, r));
     await goTo(ctx, flow, marker, T.busGoal, 0, 120);
@@ -108,18 +111,18 @@ export function create(ctx, st) {
     ui.info(`<p>${T.hadyInfo}</p>`);
     await promptAt(ctx, flow, T.hady, () => marker.inside(player.pos, 1));
     marker.hide();
-    ui.toast('Opfer bestätigt ✓');
+    ui.toast('Opfer bestätigt ✓'); ctx.mission?.done(0);
     await goTo(ctx, flow, marker, T.barberGoal, barber.x - 1.5, barber.z);
     marker.hide();
     const c = await ui.choice(T.hairQ, T.hair);
     await flow.run(holdAction(ctx, player, { label: c.html.startsWith('Halq') ? 'Halten: rasieren' : 'Halten: kürzen', steps: [{ pose: 'sit', sec: 2.5 }] }));
-    ui.toast(c.html.startsWith('Halq') ? 'Halq ✓' : 'Taqsir ✓');
+    ui.toast(c.html.startsWith('Halq') ? 'Halq ✓' : 'Taqsir ✓'); ctx.mission?.done(1);
     ui.info(`<p>${T.tahallul}</p><p class="tr">${T.order}</p>`);
     await goTo(ctx, flow, marker, T.clothesGoal, front.x, front.z);
     await promptAt(ctx, flow, T.clothes, () => marker.inside(player.pos, 1));
     marker.hide();
     player.fig.setColor(0x6f7f8e);
-    ui.toast('Normale Kleidung ✓');
+    ui.toast('Normale Kleidung ✓'); ctx.mission?.done(2);
     await goTo(ctx, flow, marker, T.busGoal, 0, 120);
     ctx.next();
   }

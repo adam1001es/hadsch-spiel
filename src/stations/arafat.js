@@ -68,7 +68,7 @@ export function create(ctx, st) {
     ui.info(`<p>${T.start}</p>`);
     await flow.until(() => { pointGoal(ui, player, T.boundary, 0, BOUND - 6); return player.pos.z < BOUND - 2; });
     insideArafat = true;
-    ui.toast(T.inside, 2400);
+    ui.toast(T.inside, 2400); ctx.mission?.done(0);
     await goTo(ctx, flow, marker, 'Predigt-Platz', 0, 70);
     await promptAt(ctx, flow, T.sermon, () => marker.inside(player.pos, 1));
     marker.hide();
@@ -77,11 +77,11 @@ export function create(ctx, st) {
     await pray(ctx, flow, 2, 'Halten: Dhuhr');
     ui.toast('Dhuhr ✓');
     await pray(ctx, flow, 2, 'Halten: Asr');
-    ui.toast('Asr ✓');
+    ui.toast('Asr ✓'); ctx.mission?.done(1);
     await new Promise((r) => sky.animateTo(13.25, 2, r));
 
     await goTo(ctx, flow, marker, T.duaGoal, HILL.x - 20, HILL.z + 62);
-    marker.hide();
+    marker.hide(); ctx.mission?.done(2);
     ui.info(`<p>Wuquf: Bitte Allah – stehend oder sitzend, zur Qibla gewandt. Halte „Dua“; die Zeit läuft bis Sonnenuntergang.</p>`);
     await duaFacing(ctx, flow, {
       label: T.dua, sec: 30, tx: QIBLA.x, tz: QIBLA.z,
@@ -96,7 +96,7 @@ export function create(ctx, st) {
         const hh = sky.hour; ui.el.counter.dataset.t = `${Math.floor(hh)}:${String(Math.floor((hh % 1) * 60)).padStart(2, '0')} Uhr`;
       },
     });
-    boundActive = false;
+    boundActive = false; ctx.mission?.done(3);
     ui.info(`<p>Die Sonne ist untergegangen.</p><p class="tr">${T.leave}.</p>`);
     await goTo(ctx, flow, marker, T.busGoal, 0, BOUND + 16);
     ctx.next();

@@ -51,6 +51,7 @@ export function createMarker(world, { color = 0xe6c46e, r = 1.6, height = 14 } =
 // Pfeil oben links: zeigt relativ zur Blickrichtung zum Ziel.
 export function pointGoal(ui, player, text, tx, tz) {
   if (tx == null) { ui.goal(text, null); return; }
+  player.guideTo?.(tx, tz);
   const want = Math.atan2(-(tx - player.pos.x), -(tz - player.pos.z));
   const d = Math.atan2(Math.sin(want - player.viewYaw), Math.cos(want - player.viewYaw));
   const dist = player.distTo(tx, tz);

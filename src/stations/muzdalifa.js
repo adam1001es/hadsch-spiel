@@ -109,24 +109,25 @@ export function create(ctx, st) {
     await pray(ctx, flow, 3, 'Halten: Maghrib');
     ui.toast('Maghrib ✓');
     await pray(ctx, flow, 2, 'Halten: Isha');
-    ui.toast('Isha ✓');
+    ui.toast('Isha ✓'); ctx.mission?.done(0);
 
     ui.info(`<p>${T.stones}</p><p class="tr">${T.stonesInfo}</p>`);
     collecting = true;
     ui.goal('Kiesel antippen (leuchtende Ringe)');
     await flow.until(() => stones >= 7);
     collecting = false; glint.count = 0; auto.finish();
-    ui.toast('7 Steine im Beutel ✓', 2200);
+    ui.toast('7 Steine im Beutel ✓', 2200); ctx.mission?.done(1);
     ui.counter('');
     await goTo(ctx, flow, marker, T.matGoal, free.x, free.z);
     marker.hide();
     const from = sky.hour;
     await flow.run(holdAction(ctx, player, { label: T.sleep, steps: [{ pose: 'sleep', sec: 5 }], onTick: (k) => sky.setHour(from + (29 - from) * k) }));
+    ctx.mission?.done(2);
     await new Promise((r) => sky.animateTo(29.33, 1.5, r));
     ui.info('<p>Morgendämmerung. Fajr beten.</p>');
     player.heading = Math.atan2(QIBLA.x - player.pos.x, QIBLA.z - player.pos.z);
     await pray(ctx, flow, 2, 'Halten: Fajr');
-    ui.toast('Fajr ✓');
+    ui.toast('Fajr ✓'); ctx.mission?.done(3);
 
     // Sunnah: Dhikr am al-Mash'ar al-Haram – oder direkt aufbrechen
     ui.info(`<p>Sunnah: Dhikr und Dua am al-Mash'ar al-Haram bis zur Dämmerung. Dann ${T.leave}.</p>`);
@@ -143,7 +144,7 @@ export function create(ctx, st) {
       if (!dhikr) {
         dhikr = true;
         await duaFacing(ctx, flow, { label: T.dhikr, sec: 5, tx: QIBLA.x, tz: QIBLA.z, onTick: (k) => sky.setHour(29.33 + k * 0.4) });
-        sunnah(ctx, 'mashar'); marker.hide(); ui.toast('Dhikr ✓');
+        sunnah(ctx, 'mashar'); marker.hide(); ui.toast('Dhikr ✓'); ctx.mission?.done(4);
       }
     }
     ctx.next();

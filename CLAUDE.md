@@ -15,6 +15,8 @@ Der Nutzer testet über GitHub Pages (iPhone und Laptop). Er programmiert nicht 
 - Nach dem Push dem Nutzer kurz auf Deutsch sagen, was sich geändert hat und was er testen soll.
 - **Alles muss auf Smartphone, Tablet und Laptop funktionieren** (Hoch- und Querformat, Touch und Maus/Tastatur).
   Vor jedem Commit Layout bei ca. 390×844, 820×1180 und 1440×900 prüfen (z. B. Playwright-Screenshots).
+- **Pädagogisch aufbauen** (Zielgruppe Schüler, siehe `docs/SPIEL.md` 3a): jede Station hat eine Lernkarte in `TEXT.learn`
+  (Aufgaben, Zusammenfassung, Quiz) und meldet erledigte Aufgaben mit `ctx.mission.done(i)`; Ziele immer mit `goTo`/`pointGoal` (Pfeile).
 - Wenn eine Station fertig ist: in `public/anleitung.html` im Array `S` bei dieser Station `done:true` setzen.
 - Keine Inhalte aus `src/content/hajj.js` erfinden oder ändern, ohne dass der Nutzer es verlangt.
 

@@ -86,7 +86,6 @@ export function create(ctx, st) {
 
   ui.info(`<p>${st.intro}</p><p class="tr">${T.start}</p>`);
   ui.goal('Grüne Linie: Schwarzer Stein', null);
-  if (st.kind === 'umrah') setTimeout(() => !flow.dead && ui.hint(TEXT.controls, 4200), 600);
 
   function setInfo(seg) {
     if (seg === segment || done) return;
@@ -98,7 +97,7 @@ export function create(ctx, st) {
   function doIstilam() {
     if (istilamLap === laps || done) return;
     istilamLap = laps; istilamCount++;
-    if (istilamCount >= 7) sunnah(ctx, 'istilam');
+    if (istilamCount >= 7) { sunnah(ctx, 'istilam'); ctx.mission?.done(2); }
     player.fig.pose('istilam'); setTimeout(() => !flow.dead && player.fig.pose('stand'), 900);
     ui.toast('Bismillah, Allahu Akbar');
     ui.prompt(null);
@@ -112,7 +111,7 @@ export function create(ctx, st) {
     if (ctx.progress.sunnah.has('zamzam') && !mZam.visible) return;
     mZam.hide(); ui.prompt(null);
     player.fig.pose('istilam');
-    setTimeout(() => { if (flow.dead) return; player.fig.pose('stand'); ui.toast('Zamzam getrunken'); sunnah(ctx, 'zamzam'); }, 1400);
+    setTimeout(() => { if (flow.dead) return; player.fig.pose('stand'); ui.toast('Zamzam getrunken'); sunnah(ctx, 'zamzam'); ctx.mission?.done(4); }, 1400);
   }
 
   async function after() {
@@ -141,6 +140,7 @@ export function create(ctx, st) {
 
   function finish() {
     auto.finish();
+    ctx.mission?.done(1); if (istilamCount < 7) ctx.mission?.skip(2);
     done = true;
     ui.counter('7 / 7 ✓');
     ui.toast(st.kind === 'wada' ? 'Abschieds-Tawaf vollständig' : 'Tawaf vollständig', 2400);
@@ -166,7 +166,7 @@ export function create(ctx, st) {
         prog = phi - start;
         if (prog < maxProg - 0.35 && player.moving > 0.3) { wrongT += dt; if (wrongT > 0.6) { ui.hint(T.wrongWay); wrongT = -3; } }
         else if (wrongT > 0) wrongT = 0;
-        if (prog > maxProg) maxProg = prog;
+        if (prog > maxProg) { if (maxProg < 0 && prog >= 0) ctx.mission?.done(0); maxProg = prog; }
 
         // Hijr Ismail
         const hij = inHijr(p);
@@ -204,7 +204,7 @@ export function create(ctx, st) {
           }, { sunnah: true });
         } else if (!action && mZam.inside(p, 1)) ui.prompt(T.zamzamDrink, drink, { sunnah: true });
         else if (!action) ui.prompt(null);
-        if (action?.done) { action = null; mMaqam.hide(); sunnah(ctx, 'maqam'); ui.toast('2 Rak\'at gebetet'); }
+        if (action?.done) { action = null; mMaqam.hide(); sunnah(ctx, 'maqam'); ui.toast('2 Rak\'at gebetet'); ctx.mission?.done(3); }
         const target = mMaqam.visible ? [T.maqamGoal, -1.5, d / 2 + 12.2] : mZam.visible ? [T.zamzamGoal, Math.cos(zth) * (zr - 2.5), -Math.sin(zth) * (zr - 2.5)] : [T.exitGoal, mExit.group.position.x, mExit.group.position.z];
         pointGoal(ui, player, target[0], target[1], target[2]);
       }

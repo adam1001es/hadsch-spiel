@@ -40,6 +40,7 @@
   <!-- Infokarte oben: kompakt, antippen klappt sie auf/zu -->
   <section id="panel" class="collapsed">
     <div class="panel-body">
+      <div id="mission" hidden></div>
       <div id="info"></div>
       <div id="actions"></div>
     </div>
@@ -49,6 +50,14 @@
   <!-- Bedienung unten: links Joystick, rechts Halten und Autopilot -->
   <button id="hold" type="button" hidden>Halten</button>
   <button id="autoBtn" type="button" hidden>▶ Autopilot</button>
+
+  <!-- Lernkarte: Einführung vor jeder Station und Zusammenfassung mit Quiz danach -->
+  <section id="learn" hidden aria-live="polite">
+    <div class="learn-card" id="learnCard"></div>
+  </section>
+
+  <!-- Zeigehinweis fürs Steuerungs-Training -->
+  <div id="coach" hidden><span id="coachHand">👆</span><span id="coachText"></span></div>
 
   <div id="fade"></div>
 

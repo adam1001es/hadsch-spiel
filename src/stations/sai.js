@@ -97,7 +97,7 @@ export function create(ctx, st) {
       hillAction = true;
       await duaFacing(ctx, flow, { tx: KAABA_DIR.x, tz: where === 'safa' ? KAABA_DIR.z : KAABA_DIR.z + L, sec: 4, text: T.faceKaaba });
       hillAction = false;
-      duaCount++; if (duaCount >= 2) sunnah(ctx, 'safa');
+      duaCount++; if (duaCount >= 2) sunnah(ctx, 'safa'); if (lap === 0) ctx.mission?.done(0);
       ui.toast('Dua ✓');
       ui.info(`<p>${lap % 2 === 0 ? T.go : T.back}</p>`);
     } }]);
@@ -122,6 +122,7 @@ export function create(ctx, st) {
     hillDua('safa');
     await flow.until(() => lap >= 7);
     auto.finish();
+    ctx.mission?.done(1); ctx.mission?.done(2);
     ui.actions([]);
     if (umrah) {
       ui.info(`<p>Sieben Strecken – du endest auf Marwa.</p><p class="tr">${T.taqsir}</p>`);
@@ -129,7 +130,7 @@ export function create(ctx, st) {
       await promptAt(ctx, flow, T.taqsir, () => marker.inside(player.pos, 1));
       marker.hide();
       await flow.run(holdAction(ctx, player, { label: 'Halten: Haare kürzen', steps: [{ pose: 'bend', sec: 2.2 }] }));
-      ui.toast('Taqsir ✓');
+      ui.toast('Taqsir ✓'); ctx.mission?.done(3);
       ui.info(`<p>${T.umrahDone}</p>`);
     } else {
       ui.info(`<p>${T.hajjDone}</p>`);
@@ -152,7 +153,7 @@ export function create(ctx, st) {
       if (lap < 7) {
         // Ankunft am Hügel
         if (target === 'marwa' && p.z > L / 2 - 4.5) {
-          lap++; target = 'safa';
+          lap++; target = 'safa'; if (lap === 1) ctx.mission?.skip(0);
           ui.toast(`Strecke ${lap} / 7 ✓`, 2200);
           if (lap < 7) { ui.info(`<p>Marwa. ${T.back}</p>`); hillDua('marwa'); }
         } else if (target === 'safa' && p.z < -L / 2 + 4.5) {
@@ -166,6 +167,7 @@ export function create(ctx, st) {
         if (!hillAction) pointGoal(ui, player, target === 'marwa' ? 'Marwa' : 'Safa', target === 'marwa' ? 3.5 : -3.5, target === 'marwa' ? L / 2 - 3 : -L / 2 + 3);
         if (inGreen && player.moving > 0.2) {
           if (greenHintLap !== lap) { greenHintLap = lap; ui.toast(T.green, 2400); if (!player.fast) ui.hint(T.greenHint, 3000); }
+          if (player.fast) ctx.mission?.done(2);
         }
       }
 

@@ -54,22 +54,21 @@ export function create(ctx, st) {
 
   async function run() {
     ui.info(`<p>${st.intro}</p><p class="tr">${T.ghuslInfo}</p>`);
-    ui.hint(TEXT.controls, 4500);
     await goTo(ctx, flow, marker, T.goGhusl, -30, -0.5);
     await promptAt(ctx, flow, T.ghusl, () => marker.inside(player.pos, 1));
     marker.hide();
     await flow.run(holdAction(ctx, player, { label: 'Halten: Ghusl', steps: [{ pose: 'bend', sec: 1.2 }, { pose: 'stand', sec: 0.6 }, { pose: 'bend', sec: 1.2 }] }));
-    ui.toast('Ghusl ✓');
+    ui.toast('Ghusl ✓'); ctx.mission?.done(0);
     await ui.choice(T.clothesQ, T.clothes);
     player.fig.setColor(0xf6f4ee);
-    ui.toast('Ihram angelegt ✓');
+    ui.toast('Ihram angelegt ✓'); ctx.mission?.done(1);
 
     ui.info(`<p>Geh zur Moschee und fasse dort die Absicht.</p>`);
     await goTo(ctx, flow, marker, T.goMosque, 0, -28);
     await promptAt(ctx, flow, T.niyyaPlace, () => marker.inside(player.pos, 1));
     marker.hide();
     await ui.choice(T.niyyaQ, T.niyya);
-    ui.toast('Niyya: Labbaika ʿumratan ✓');
+    ui.toast('Niyya: Labbaika ʿumratan ✓'); ctx.mission?.done(2);
 
     // Talbiyah als Sunnah: Teile in Reihenfolge antippen
     let talbiyahDone = false;
@@ -79,7 +78,7 @@ export function create(ctx, st) {
       await ui.order(T.talbiyahQ, T.talbiyahParts);
       sunnah(ctx, 'talbiyah');
       ui.info(ui.prayer(TALBIYAH));
-      ui.toast('Labbaik ✓');
+      ui.toast('Labbaik ✓'); ctx.mission?.done(3);
       talbiyahDone = true;
     } }, { label: 'Weiter', onClick: () => { ui.actions([]); talbiyahDone = true; } }]);
     await flow.until(() => talbiyahDone);
@@ -93,7 +92,7 @@ export function create(ctx, st) {
         { html: 'Erlaubt', ok: !forbidden, why: !forbidden ? 'Richtig – das ist erlaubt.' : 'Das ist im Ihram verboten.' },
       ]);
     }
-    ui.info(`<p>${T.rulesInfo}</p>`);
+    ui.info(`<p>${T.rulesInfo}</p>`); ctx.mission?.done(4);
 
     await goTo(ctx, flow, marker, T.goBus, 31.5, 18);
     await promptAt(ctx, flow, T.bus, () => marker.inside(player.pos, 1));

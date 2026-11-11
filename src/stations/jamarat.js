@@ -186,6 +186,7 @@ export function create(ctx, st) {
       const k = list[cur], z0 = POS[k];
       valid = 0;
       await goTo(ctx, flow, marker, T.names[k][1], 0, z0 + RIM_R + 3.5);
+      if (firstDay) ctx.mission?.done(0);
       marker.hide();
       ui.info(`<p><b>${T.names[k][1]}</b> – 7 Steine, bei jedem Wurf „Allahu Akbar“.</p><p class="tr">${T.aim}</p>`);
       input.mode = 'throw'; canThrow = true;
@@ -193,19 +194,21 @@ export function create(ctx, st) {
       await flow.until(() => valid >= 7);
       canThrow = false; input.mode = 'look'; arc.visible = false;
       ui.toast(`${T.names[k][1]} ✓`, 2200);
+      ctx.mission?.done(firstDay ? 1 : { ula: 0, wusta: 2, aqaba: 4 }[k]);
       if (k !== 'aqaba') {
         // Sunnah: zur Seite treten und zur Qibla Dua machen
         let choice = null;
         ui.info(`<p>Sunnah: Tritt etwas zur Seite und mache Dua Richtung Qibla.</p>`);
         ui.actions([{ label: T.dua, kind: 'sunnah', onClick: () => { choice = 'dua'; ui.actions([]); } }, { label: T.next, onClick: () => { choice = 'next'; ui.actions([]); } }]);
         await flow.until(() => choice);
+        if (choice === 'next') ctx.mission?.skip(k === 'ula' ? 1 : 3);
         if (choice === 'dua') {
           await goTo(ctx, flow, marker, T.duaGoal, A + 9, z0 - 4);
           marker.hide();
           await duaFacing(ctx, flow, { tx: QIBLA.x, tz: QIBLA.z, sec: 5 });
           ctx.progress.jdua = (ctx.progress.jdua || 0) + 1;
           if (ctx.progress.jdua >= 2) sunnah(ctx, 'jamarat_dua');
-          ui.toast('Dua ✓');
+          ui.toast('Dua ✓'); ctx.mission?.done(k === 'ula' ? 1 : 3);
         }
       }
     }

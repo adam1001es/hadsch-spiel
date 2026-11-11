@@ -30,6 +30,16 @@ Texte, Gebete und Reihenfolge stehen zusätzlich in `src/content/hajj.js` (gleic
 - Startbildschirm: Kamera kreist um die Kaaba bei Nacht. Titel „Hadsch-Pfad“, Hinweis, Knopf „Bismillah – Beginnen“, darunter alle Stationen zum direkten Springen.
 - Testlink je Station: `…/#s1` bis `…/#s12`.
 
+## 3a. Pädagogischer Aufbau (Zielgruppe: Schülerinnen und Schüler)
+Jede Station folgt demselben Muster, damit Lernende sich immer orientieren können:
+1. **Lernkarte vorher**: „Worum geht es?“, „Warum?“, „Deine Aufgaben“ (Sunnah als freiwillig markiert), „Wusstest du?“.
+2. **Steuerungs-Training** (nur beim allerersten Mal): Joystick → Umschauen → Lichtsäule folgen, mit Zeigehinweisen. Beim ersten Aktionsknopf und ersten Halte-Knopf ebenfalls ein kurzer Hinweis.
+3. **Während der Station**: Oben steht immer „Aufgabe: …“ mit Zähler (z. B. 2/6); aufgeklappt zeigt die Karte die ganze Liste mit ✓. Goldene Pfeile am Boden und der Zielpfeil oben führen zum nächsten Ort.
+4. **Wissensfragen** im Ablauf (Kleidung, Niyya, Rak'at …): falsche Antworten werden erklärt.
+5. **Lernkarte nachher**: „Das hast du gelernt“ (3–4 Kernsätze) + eine Quizfrage.
+6. **Endbildschirm**: Sunnah-Auswertung und Quiz-Ergebnis (richtig beim ersten Versuch).
+Alle Lerntexte stehen in `src/content/hajj.js` unter `TEXT.learn` (gleiche Reihenfolge wie die Stationen).
+
 ## 4. Grafik-Stil
 - Realistisch, warmes Licht, Dunst in der Wüste, klare Sternennächte.
 - Tageszeit läuft über `sky.setHour()` / `sky.animateTo()`; nachts schaltet sich künstliches Licht an (`sky.state.artificial = 1`).

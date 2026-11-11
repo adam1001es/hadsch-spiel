@@ -116,6 +116,33 @@ export function createPlayer(ctx, { x = 0, z = 0, heading = 0, color, speed = 1.
   input.yaw = heading; // Kamera hinter der Figur (Blickrichtung = heading)
   const camPos = new THREE.Vector3(), camLook = new THREE.Vector3();
   let first = true;
+
+  // Leitpfeile am Boden: goldene Winkel vom Spieler Richtung Ziel (wandern langsam nach vorn)
+  const GN = 10;
+  const chev = new THREE.Shape(); chev.moveTo(-0.45, -0.2); chev.lineTo(0, 0.25); chev.lineTo(0.45, -0.2); chev.lineTo(0.45, 0.05); chev.lineTo(0, 0.5); chev.lineTo(-0.45, 0.05);
+  const chevG = new THREE.ShapeGeometry(chev); chevG.rotateX(-Math.PI / 2);
+  const guide = new THREE.InstancedMesh(chevG, new THREE.MeshBasicMaterial({ color: 0xf0c35a, transparent: true, opacity: 0.85, depthWrite: false, fog: false }), GN);
+  guide.frustumCulled = false; guide.visible = false; engine.world.add(guide);
+  const gTarget = new THREE.Vector2(); let gFresh = 0, gPhase = 0;
+  const gd = new THREE.Object3D();
+  function updateGuide(dt) {
+    gFresh -= dt; gPhase = (gPhase + dt * 1.2) % 1;
+    if (gFresh <= 0) { guide.visible = false; return; }
+    const dx = gTarget.x - pos.x, dz = gTarget.y - pos.z, dist = Math.hypot(dx, dz);
+    if (dist < 3) { guide.visible = false; return; }
+    guide.visible = true;
+    const ux = dx / dist, uz = dz / dist, ang = Math.atan2(ux, uz);
+    let n = 0;
+    for (let i = 0; i < GN; i++) {
+      const d = 1.4 + (i + gPhase) * 1.5;
+      if (d > dist - 1.5) break;
+      const y = ground ? ground(pos.x + ux * d, pos.z + uz * d) : 0;
+      gd.position.set(pos.x + ux * d, y + 0.06, pos.z + uz * d); gd.rotation.set(0, ang, 0);
+      gd.scale.setScalar(1 - i / (GN * 1.6)); gd.updateMatrix(); guide.setMatrixAt(n++, gd.matrix);
+    }
+    guide.count = n; guide.instanceMatrix.needsUpdate = true;
+  }
+
   const p = {
     fig, pos, colliders,
     auto: null,      // Autopilot-Funktion (dt) → { x, z, fast } oder null
@@ -137,6 +164,8 @@ export function createPlayer(ctx, { x = 0, z = 0, heading = 0, color, speed = 1.
       return Math.abs(d) < tol;
     },
     distTo(tx, tz) { return Math.hypot(tx - pos.x, tz - pos.z); },
+    // Leitpfeile zum Ziel zeigen (muss jeden Frame erneuert werden, sonst blenden sie aus)
+    guideTo(tx, tz) { gTarget.set(tx, tz); gFresh = 0.25; },
     update(dt) {
       input.update(dt);
       const mx = frozen ? 0 : input.move.x, my = frozen ? 0 : input.move.y;
@@ -176,6 +205,7 @@ export function createPlayer(ctx, { x = 0, z = 0, heading = 0, color, speed = 1.
       fig.root.position.copy(pos);
       fig.root.rotation.y = head;
       fig.update(dt, walking);
+      updateGuide(dt);
 
       // Kamera: hinter dem Spieler, Höhe über Pitch
       const pitch = input.pitch;
