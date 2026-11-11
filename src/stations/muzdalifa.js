@@ -4,7 +4,7 @@ import { heightFn, buildTerrain } from '../world/terrain.js';
 import { lamps, mats, mosque, pebbleGeometry } from '../world/props.js';
 import { createCrowd } from '../world/crowd.js';
 import { createPlayer } from '../core/player.js';
-import { createFlow, createMarker, goTo, pray, holdAction, duaFacing, pointGoal, sunnah } from '../core/kit.js';
+import { createFlow, createMarker, goTo, pray, holdAction, duaFacing, pointGoal, sunnah, createAutopilot } from '../core/kit.js';
 
 const T = TEXT.muzdalifa;
 const MASHAR = { x: -20, z: -150 };
@@ -83,9 +83,24 @@ export function create(ctx, st) {
     }
     if (best < 0) return;
     if (player.distTo(pp[best].x, pp[best].z) > 3.2) { ui.hint(T.tooFar, 1800); return; }
-    pp[best].taken = true; pp[best].fly = 0;
-    player.fig.pose('bend'); setTimeout(() => !flow.dead && player.fig.pose('stand'), 500);
+    take(best);
   };
+  function take(i) {
+    pp[i].taken = true; pp[i].fly = 0;
+    player.fig.pose('bend'); setTimeout(() => !flow.dead && player.fig.pose('stand'), 500);
+  }
+  // Autopilot (optional, ab dem 3. Stein): geht zum nächsten Kiesel und hebt ihn auf
+  const nearest = () => { let b = -1, bd = 1e9; for (let i = 0; i < PN; i++) { if (pp[i].taken) continue; const d = player.distTo(pp[i].x, pp[i].z); if (d < bd) { bd = d; b = i; } } return b; };
+  let pickWait = 0;
+  const auto = createAutopilot(ctx, {
+    available: () => collecting && stones >= 2 && stones < 7,
+    steer() { const i = nearest(); if (i < 0 || player.distTo(pp[i].x, pp[i].z) < 0.9) return null; return { x: pp[i].x - player.pos.x, z: pp[i].z - player.pos.z, fast: false }; },
+    tick(dt) {
+      pickWait -= dt;
+      const i = nearest(); if (i < 0 || pickWait > 0) return;
+      if (player.distTo(pp[i].x, pp[i].z) < 1) { take(i); pickWait = 0.8; }
+    },
+  });
 
   async function run() {
     ui.info(`<p>${T.start}</p>`);
@@ -100,7 +115,7 @@ export function create(ctx, st) {
     collecting = true;
     ui.goal('Kiesel antippen (leuchtende Ringe)');
     await flow.until(() => stones >= 7);
-    collecting = false; glint.count = 0;
+    collecting = false; glint.count = 0; auto.finish();
     ui.toast('7 Steine im Beutel ✓', 2200);
     ui.counter('');
     await goTo(ctx, flow, marker, T.matGoal, free.x, free.z);
@@ -141,6 +156,7 @@ export function create(ctx, st) {
     update(dt) {
       time += dt;
       flow.update(dt);
+      auto.update(dt);
       player.update(dt);
       marker.update(dt); mExit.update(dt);
       for (const m of glow) m.emissiveIntensity = sky.art * 1.6 + 0.4;
@@ -154,7 +170,7 @@ export function create(ctx, st) {
           const k = Math.min(1, s.fly);
           tmp.set(s.x + (player.pos.x - s.x) * k, 0.04 + Math.sin(k * Math.PI) * 1.2 + k * 1, s.z + (player.pos.z - s.z) * k);
           dm.position.copy(tmp); dm.scale.setScalar(1.6 * (1 - k * 0.6)); dm.updateMatrix(); pebbles.setMatrixAt(i, dm.matrix);
-          if (k >= 1) { s.fly = -1; dm.scale.setScalar(0); dm.updateMatrix(); pebbles.setMatrixAt(i, dm.matrix); stones++; ui.counter(`Steine ${Math.min(7, stones)} / 7`); }
+          if (k >= 1) { s.fly = -1; dm.scale.setScalar(0); dm.updateMatrix(); pebbles.setMatrixAt(i, dm.matrix); stones++; if (collecting) ui.counter(`Steine ${Math.min(7, stones)} / 7`); }
         } else if (collecting && !s.taken && player.distTo(s.x, s.z) < 5) {
           dm.position.set(s.x, 0.03, s.z); dm.rotation.set(0, 0, 0); dm.scale.setScalar(1 + Math.sin(time * 4 + i) * 0.15); dm.updateMatrix(); glint.setMatrixAt(gi++, dm.matrix);
         }

@@ -28,10 +28,7 @@ html, body { height: 100%; margin: 0; overflow: hidden; background: #0d1a2b; col
 #dots i.now { background: #e6c46e; border-color: #e6c46e; }
 #counter { margin-top: 10px; font: 30px/1 var(--f-display); font-variant-numeric: tabular-nums; }
 
-#toast { position: fixed; z-index: 8; top: calc(var(--hudH, 110px) + 52px); left: 50%; transform: translateX(-50%); background: rgba(20,37,31,.88); color: var(--ivory); padding: 8px 16px; border-radius: 999px; font-weight: 600; pointer-events: none; white-space: nowrap; }
 
-#panel { position: fixed; left: 0; right: 0; bottom: 0; display: flex; gap: 12px; align-items: flex-end; padding: 14px var(--sr) calc(env(safe-area-inset-bottom, 0px) + 14px) var(--sl); background: var(--panel); border-top: 1px solid var(--gold); max-height: 46%; }
-.panel-body { flex: 1; min-width: 0; overflow-y: auto; max-height: 40vh; }
 #info p { margin: 0 0 6px; }
 .ar { font: 22px/1.7 var(--f-ar); direction: rtl; text-align: right; color: var(--green); }
 .ar.big { font-size: 30px; text-align: center; }
@@ -42,8 +39,6 @@ button.primary { background: var(--green); color: var(--ivory); }
 button.sunnah { border-color: var(--gold); color: #7a5716; }
 button.sunnah::after { content: ' · Sunnah'; font-weight: 400; font-size: 12px; }
 button:focus-visible { outline: 3px solid #e6c46e; outline-offset: 2px; }
-#hold { flex: none; width: 88px; height: 88px; border-radius: 50%; background: var(--green); color: var(--ivory); border: 3px solid #e6c46e; touch-action: none; }
-#hold.on { background: var(--green-hi); transform: scale(.96); }
 
 #fade { position: fixed; inset: 0; background: #000; opacity: 0; pointer-events: none; transition: opacity .45s; }
 #fade.on { opacity: 1; }
@@ -65,19 +60,15 @@ button:focus-visible { outline: 3px solid #e6c46e; outline-offset: 2px; }
 #guideClose { position: fixed; z-index: 41; top: calc(env(safe-area-inset-top, 0px) + 10px); right: var(--sr); width: 46px; height: 46px; padding: 0; border-radius: 50%; background: #1d5642; color: #f5f1e6; border: 1.5px solid #e6c46e; font-size: 18px; }
 
 /* Joystick (erscheint unter dem Daumen auf der linken Bildschirmhälfte) */
-#stick { position: fixed; left: calc(var(--sl) + 70px); bottom: calc(var(--panelH, 30vh) + 78px); top: auto; width: 110px; height: 110px; margin: -55px 0 0 -55px; border-radius: 50%; border: 2px solid rgba(245,241,230,.45); background: rgba(20,37,31,.18); pointer-events: none; opacity: .55; transition: opacity .2s; z-index: 5; }
 #stick i { position: absolute; left: 50%; top: 50%; width: 50px; height: 50px; margin: -25px 0 0 -25px; border-radius: 50%; background: rgba(245,241,230,.85); border: 2px solid #e6c46e; box-shadow: 0 2px 8px rgba(0,0,0,.35); }
-#stick.on { bottom: auto; opacity: 1; }
 #stick.off { display: none; }
 @media (hover: hover) and (pointer: fine) { #stick:not(.on) { display: none; } }
 
 /* Ziel-Anzeige oben: Pfeil zeigt die Richtung zum nächsten Ziel */
-#goal { position: fixed; z-index: 6; top: calc(var(--hudH, 110px) + 8px); left: var(--sl); display: flex; align-items: center; gap: 8px; max-width: min(70vw, 420px); padding: 6px 12px 6px 8px; border-radius: 999px; background: rgba(20,37,31,.8); color: var(--ivory); font-weight: 600; font-size: 14px; pointer-events: none; }
 #goalArrow { display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: #e6c46e; color: #14251f; font-size: 14px; transition: transform .15s linear; }
 #hint { position: fixed; z-index: 6; left: 50%; top: 50%; transform: translate(-50%, -50%); max-width: min(86vw, 420px); padding: 10px 16px; border-radius: 12px; background: rgba(20,37,31,.86); color: var(--ivory); text-align: center; pointer-events: none; }
 
 /* Aktionsknopf vor Ort (erscheint, wenn man am richtigen Platz steht) */
-#prompt { position: fixed; z-index: 7; left: 50%; transform: translateX(-50%); bottom: calc(var(--panelH, 30vh) + 16px); background: #e6c46e; color: #14251f; border: 2px solid #fff6dc; border-radius: 999px; padding: 12px 22px; font-size: 16px; box-shadow: 0 4px 16px rgba(0,0,0,.35); animation: pulse 1.6s ease-in-out infinite; white-space: nowrap; }
 #prompt.sunnah::after { content: ' · Sunnah'; font-weight: 400; font-size: 12px; }
 @keyframes pulse { 50% { box-shadow: 0 4px 22px rgba(230,196,110,.9); } }
 
@@ -95,9 +86,31 @@ button:focus-visible { outline: 3px solid #e6c46e; outline-offset: 2px; }
 @keyframes shake { 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
 
 /* Halte-Knopf mit Fortschrittsring */
-#hold { position: relative; }
-#hold.on { box-shadow: 0 0 0 6px rgba(230,196,110,.45); }
-#panel.compact .panel-body { max-height: 22vh; }
-@media (min-width: 900px) { .panel-body { max-width: 900px; } #panel { justify-content: space-between; } }
 .sunnah-list { list-style: none; padding: 0; margin: 4px 0 8px; display: grid; gap: 2px; font-size: 14px; color: var(--muted); }
 .sunnah-list li.ok { color: var(--green); font-weight: 600; }
+
+/* ================= Bedien-Layout (Handy, Tablet, Laptop) =================
+   Oben: HUD → Zielpfeil → Infokarte (kompakt).  Unten links: Joystick.  Unten rechts: Halten, Autopilot.
+   Unten Mitte: Aktionsknopf vor Ort. So bleibt die Mitte des Bildes frei. */
+:root { --sb: max(16px, env(safe-area-inset-bottom, 0px)); }
+#goal { position: fixed; z-index: 6; top: calc(var(--hudH, 110px) + 4px); left: var(--sl); display: flex; align-items: center; gap: 8px; max-width: min(70vw, 420px); padding: 6px 12px 6px 8px; border-radius: 999px; background: rgba(20,37,31,.8); color: var(--ivory); font-weight: 600; font-size: 14px; pointer-events: none; }
+#panel { position: fixed; z-index: 4; top: calc(var(--stackH, 110px) + 8px); left: var(--sl); right: var(--sr); max-width: 560px; display: block; padding: 10px 12px 8px; background: var(--panel); border: 1px solid rgba(169,124,44,.55); border-radius: 14px; box-shadow: 0 4px 18px rgba(0,0,0,.25); cursor: pointer; }
+#panel:empty, #panel.empty { display: none; }
+.panel-body { max-height: 38vh; overflow-y: auto; font-size: 14.5px; }
+#panel.collapsed .panel-body { max-height: 4.4em; overflow: hidden; -webkit-mask-image: linear-gradient(#000 60%, transparent); mask-image: linear-gradient(#000 60%, transparent); }
+#panel.collapsed.has-actions .panel-body { max-height: none; -webkit-mask-image: none; mask-image: none; }
+#panel .ar { font-size: 20px; }
+#panelToggle { display: block; margin: 2px 0 0 auto; padding: 2px 8px; border: 0; font-size: 12px; color: var(--muted); background: transparent; }
+#actions:empty { display: none; }
+#toast { position: fixed; z-index: 8; left: 50%; transform: translateX(-50%); bottom: calc(var(--sb) + 210px); background: rgba(20,37,31,.9); color: var(--ivory); padding: 8px 16px; border-radius: 999px; font-weight: 600; pointer-events: none; white-space: nowrap; max-width: 92vw; overflow: hidden; text-overflow: ellipsis; }
+#prompt { position: fixed; z-index: 7; left: 50%; transform: translateX(-50%); bottom: calc(var(--sb) + 150px); max-width: calc(100vw - 32px); background: #e6c46e; color: #14251f; border: 2px solid #fff6dc; border-radius: 999px; padding: 12px 22px; font-size: 16px; box-shadow: 0 4px 16px rgba(0,0,0,.35); animation: pulse 1.6s ease-in-out infinite; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#hold { position: fixed; z-index: 7; right: var(--sr); bottom: var(--sb); width: 92px; height: 92px; border-radius: 50%; background: var(--green); color: var(--ivory); border: 3px solid #e6c46e; touch-action: none; font-size: 14px; line-height: 1.15; padding: 6px; box-shadow: 0 4px 16px rgba(0,0,0,.35); }
+#hold.on { background: var(--green-hi); transform: scale(.96); box-shadow: 0 0 0 7px rgba(230,196,110,.5); }
+#autoBtn { position: fixed; z-index: 7; right: var(--sr); bottom: var(--sb); padding: 10px 14px; border-radius: 999px; background: rgba(20,37,31,.85); color: #e6c46e; border: 1.5px solid #e6c46e; font-size: 14px; box-shadow: 0 3px 12px rgba(0,0,0,.3); }
+#autoBtn.on { background: #e6c46e; color: #14251f; }
+body.has-hold #autoBtn { bottom: calc(var(--sb) + 104px); }
+#stick { position: fixed; z-index: 5; left: var(--sl); bottom: var(--sb); width: 116px; height: 116px; margin: 0; border-radius: 50%; border: 2px solid rgba(245,241,230,.55); background: rgba(20,37,31,.22); pointer-events: none; opacity: .7; transition: opacity .2s; }
+#stick.on { bottom: auto; margin: -58px 0 0 -58px; opacity: 1; }
+@media (hover: hover) and (pointer: fine) { #stick:not(.on) { display: none; } }
+@media (min-width: 900px) { #panel { right: auto; width: 520px; } }
+#hold { white-space: pre-line; }

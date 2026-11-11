@@ -4,7 +4,7 @@ import { buildHaram } from '../world/haram.js';
 import { createCrowd } from '../world/crowd.js';
 import { RABBANA, TEXT } from '../content/hajj.js';
 import { createPlayer } from '../core/player.js';
-import { createFlow, createMarker, pointGoal, holdAction, rakatSteps, pick, sunnah } from '../core/kit.js';
+import { createFlow, createMarker, pointGoal, holdAction, rakatSteps, pick, sunnah, createAutopilot } from '../core/kit.js';
 
 const TAU = Math.PI * 2;
 const T = TEXT.tawaf;
@@ -130,7 +130,17 @@ export function create(ctx, st) {
     ctx.next();
   }
 
+  // Autopilot (optional, ab Runde 3): läuft außen um Kaaba und Hijr Ismail herum (Radius 14,5 m)
+  const auto = createAutopilot(ctx, {
+    available: () => laps >= 2 && !done,
+    steer() {
+      const p = player.pos, th = Math.atan2(-p.z, p.x) + 0.3, R = 14.5;
+      return { x: R * Math.cos(th) - p.x, z: -R * Math.sin(th) - p.z, fast: st.kind === 'umrah' && laps < 3 };
+    },
+  });
+
   function finish() {
+    auto.finish();
     done = true;
     ui.counter('7 / 7 ✓');
     ui.toast(st.kind === 'wada' ? 'Abschieds-Tawaf vollständig' : 'Tawaf vollständig', 2400);
@@ -143,6 +153,7 @@ export function create(ctx, st) {
       time += dt;
       flow.update(dt);
       for (const m of glow) m.emissiveIntensity = sky.art * 0.55;
+      auto.update(dt);
       player.update(dt);
       action?.update(dt);
       mMaqam.update(dt); mZam.update(dt); mExit.update(dt);

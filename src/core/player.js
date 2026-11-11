@@ -118,6 +118,8 @@ export function createPlayer(ctx, { x = 0, z = 0, heading = 0, color, speed = 1.
   let first = true;
   const p = {
     fig, pos, colliders,
+    auto: null,      // Autopilot-Funktion (dt) → { x, z, fast } oder null
+    onManual: null,  // wird gerufen, wenn man während des Autopilots selbst steuert
     speedMul: 1,
     get heading() { return head; },
     set heading(v) { head = v; },
@@ -138,12 +140,25 @@ export function createPlayer(ctx, { x = 0, z = 0, heading = 0, color, speed = 1.
     update(dt) {
       input.update(dt);
       const mx = frozen ? 0 : input.move.x, my = frozen ? 0 : input.move.y;
-      const amt = Math.min(1, Math.hypot(mx, my));
+      let amt = Math.min(1, Math.hypot(mx, my));
+      // Autopilot: liefert eine Richtung in Weltkoordinaten. Eigene Eingabe hat immer Vorrang (und beendet ihn).
+      let autoDir = null;
+      if (p.auto && !frozen) {
+        if (amt > 0.3) p.onManual?.();
+        else { autoDir = p.auto(dt); if (autoDir) amt = 1; }
+      }
       const yaw = input.yaw + Math.PI; // Kamera schaut in diese Richtung
       // Vorwärts = weg von der Kamera
       const fx = -Math.sin(yaw), fz = -Math.cos(yaw), rx = Math.cos(yaw), rz = -Math.sin(yaw);
-      const sp = (input.fast ? fastSpeed : speed) * p.speedMul;
-      const tx = (fx * -my + rx * mx) * sp, tz = (fz * -my + rz * mx) * sp;
+      const sp = ((autoDir ? autoDir.fast : input.fast) ? fastSpeed : speed) * p.speedMul;
+      let tx = (fx * -my + rx * mx) * sp, tz = (fz * -my + rz * mx) * sp;
+      if (autoDir) {
+        const l = Math.hypot(autoDir.x, autoDir.z) || 1;
+        tx = (autoDir.x / l) * sp; tz = (autoDir.z / l) * sp;
+        // Kamera dreht sich langsam hinter die Figur
+        const want = head, d = Math.atan2(Math.sin(want - input.yaw), Math.cos(want - input.yaw));
+        input.yaw += d * Math.min(1, dt * 1.5);
+      }
       const k = 1 - Math.exp(-dt * 8);
       vel.x += (tx - vel.x) * k; vel.z += (tz - vel.z) * k;
       pos.x += vel.x * dt; pos.z += vel.z * dt;

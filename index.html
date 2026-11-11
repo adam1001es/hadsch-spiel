@@ -37,13 +37,18 @@
     </div>
   </section>
 
-  <section id="panel">
+  <!-- Infokarte oben: kompakt, antippen klappt sie auf/zu -->
+  <section id="panel" class="collapsed">
     <div class="panel-body">
       <div id="info"></div>
       <div id="actions"></div>
     </div>
-    <button id="hold" type="button" hidden>Halten</button>
+    <button id="panelToggle" type="button" aria-label="Text auf- oder zuklappen" hidden>mehr ▾</button>
   </section>
+
+  <!-- Bedienung unten: links Joystick, rechts Halten und Autopilot -->
+  <button id="hold" type="button" hidden>Halten</button>
+  <button id="autoBtn" type="button" hidden>▶ Autopilot</button>
 
   <div id="fade"></div>
 

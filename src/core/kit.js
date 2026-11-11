@@ -185,3 +185,30 @@ export function clearView(v, x, z) {
   if (t > 0.03 && qd < 0.9) return [x + (qx / (qd || 1)) * (0.9 - qd), z + (qz / (qd || 1)) * (0.9 - qd)];
   return [x, z];
 }
+
+// Autopilot (freiwillig): Knopf erscheint erst, wenn available() wahr ist (z. B. nach 2 Runden).
+// steer(dt) → { x, z, fast } Laufrichtung in Weltkoordinaten (oder null = stehen bleiben)
+// tick(dt)  → für Handlungen ohne Laufen (z. B. automatisch werfen); wird nur bei aktivem Autopilot gerufen.
+// Selbst steuern (Joystick) schaltet ihn aus.
+export function createAutopilot(ctx, { available, steer = null, tick = null, label = 'Autopilot' }) {
+  const { ui, player } = ctx;
+  let on = false, shown = false, finished = false;
+  const set = (v) => {
+    on = v;
+    player.auto = on && steer ? steer : null;
+    player.onManual = on ? () => { set(false); ui.toast('Autopilot aus – du gehst selbst'); } : null;
+    ui.auto(true, on, () => set(!on));
+    if (on) ui.toast(`${label} an – du kannst jederzeit selbst übernehmen`, 2400);
+  };
+  return {
+    get on() { return on; },
+    update(dt) {
+      if (finished) return;
+      const av = available();
+      if (av && !shown) { shown = true; ui.auto(true, false, () => set(!on)); ui.toast('Tipp: Autopilot ist jetzt möglich (optional)', 2600); }
+      if (!av && shown) { shown = false; if (on) set(false); ui.auto(false); }
+      if (on) tick?.(dt);
+    },
+    finish() { finished = true; if (on) { on = false; player.auto = null; player.onManual = null; } ui.auto(false); },
+  };
+}

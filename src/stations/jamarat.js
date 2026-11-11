@@ -4,7 +4,7 @@ import { pbr } from '../world/assets.js';
 import { sign } from '../world/props.js';
 import { createCrowd } from '../world/crowd.js';
 import { createPlayer } from '../core/player.js';
-import { createFlow, createMarker, goTo, duaFacing, pointGoal, sunnah, viewLine, clearView } from '../core/kit.js';
+import { createFlow, createMarker, goTo, duaFacing, pointGoal, sunnah, viewLine, clearView, createAutopilot } from '../core/kit.js';
 
 const T = TEXT.jamarat;
 // Jede Dschamra: lange ovale Wand (Stadion-Form, ca. 26 m) in einem Becken mit niedrigem Rand. Wand entlang x.
@@ -152,12 +152,33 @@ export function create(ctx, st) {
 
   // Für automatische Tests: sucht einen treffenden Wurf und führt ihn aus
   ctx.debug = { autoThrow() {
+    // zur Wand drehen
+    const z0 = POS[list[cur]], wx = Math.max(-A, Math.min(A, player.pos.x));
+    input.yaw = Math.atan2(wx - player.pos.x, z0 - player.pos.z);
     for (let dy = 20; dy < window.innerHeight * 0.32; dy += 6) for (const dx of [0, 20, -20, 40, -40]) {
       const { dir, v, el } = launchParams({ dx, dy });
       if (simulate(origin(), dir, v, el, null) === 'hit') { input.onThrow({ dx, dy }); return true; }
     }
     return false;
   } };
+
+  // Autopilot (optional, ab dem 3. Stein bzw. ab der zweiten Dschamra): wirft die übrigen Steine mit „Allahu Akbar“
+  let autoWait = 0;
+  const auto = createAutopilot(ctx, {
+    label: 'Automatisch werfen',
+    steer() {
+      const z0 = POS[list[cur]], p = player.pos;
+      if (segDist(p.x, p.z, z0) < 9) return null;
+      const tz = z0 + Math.sign(p.z - z0 || 1) * (RIM_R + 3);
+      return { x: Math.max(-A, Math.min(A, p.x)) - p.x, z: tz - p.z, fast: false };
+    },
+    available: () => canThrow && (valid >= 2 || cur > 0) && valid < 7,
+    tick(dt) {
+      autoWait -= dt;
+      const flying = stones.some((s) => !s.landed);
+      if (autoWait <= 0 && !flying && valid < 7 && segDist(player.pos.x, player.pos.z, POS[list[cur]]) < 10) { ctx.debug.autoThrow(); autoWait = 1.2; }
+    },
+  });
 
   async function run() {
     ui.info(`<p>${st.intro}</p>`);
@@ -199,6 +220,7 @@ export function create(ctx, st) {
     update(dt) {
       time += dt;
       flow.update(dt);
+      auto.update(dt);
       player.update(dt);
       marker.update(dt);
       // Vorschau beim Zielen

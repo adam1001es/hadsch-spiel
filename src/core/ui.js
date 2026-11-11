@@ -6,17 +6,32 @@ export function createUI() {
     day: $('day'), title: $('title'), dots: $('dots'), counter: $('counter'), info: $('info'), actions: $('actions'),
     hold: $('hold'), toast: $('toast'), fade: $('fade'), panel: $('panel'), prompt: $('prompt'), hint: $('hint'),
     goal: $('goal'), goalArrow: $('goalArrow'), goalText: $('goalText'), stick: $('stick'),
+    panelToggle: $('panelToggle'), auto: $('autoBtn'),
     choice: $('choice'), choiceQ: $('choiceQ'), choiceOpts: $('choiceOpts'), choiceFb: $('choiceFb'),
   };
   let toastTimer = null, hintTimer = null, promptFn = null, promptKey = '';
 
   // Höhe des unteren Panels als CSS-Variable, damit Joystick und Aktionsknopf darüber sitzen
   const hud = document.getElementById('hud');
+  // Höhen von HUD und Zielpfeil → Infokarte sitzt direkt darunter
   const layout = () => {
-    document.documentElement.style.setProperty('--panelH', el.panel.offsetHeight + 'px');
-    document.documentElement.style.setProperty('--hudH', hud.offsetHeight + 'px');
+    const root = document.documentElement.style;
+    root.setProperty('--hudH', hud.offsetHeight + 'px');
+    root.setProperty('--stackH', (hud.offsetHeight + (el.goal.hidden ? 0 : el.goal.offsetHeight + 4)) + 'px');
+    const hasActions = el.actions.childElementCount > 0;
+    el.panel.classList.toggle('has-actions', hasActions);
+    el.panel.classList.toggle('empty', !hasActions && !el.info.textContent.trim());
+    // „mehr“ nur zeigen, wenn der Text länger ist als die kompakte Karte
+    const body = el.panel.querySelector('.panel-body');
+    const long = body.scrollHeight > body.clientHeight + 4 || !el.panel.classList.contains('collapsed');
+    el.panelToggle.hidden = hasActions || !long;
+    el.panelToggle.textContent = el.panel.classList.contains('collapsed') ? 'mehr ▾' : 'weniger ▴';
   };
-  new ResizeObserver(layout).observe(el.panel);
+  // Infokarte antippen: auf-/zuklappen (nicht beim Tippen auf Knöpfe)
+  el.panel.addEventListener('click', (e) => {
+    if (e.target.closest('#actions button')) return;
+    el.panel.classList.toggle('collapsed'); layout();
+  });
   new ResizeObserver(layout).observe(hud);
   window.addEventListener('resize', layout);
 
@@ -37,7 +52,7 @@ export function createUI() {
         el.dots.appendChild(d);
       }
     },
-    info(html) { el.info.innerHTML = html; layout(); },
+    info(html) { if (el.info.innerHTML !== html) { el.info.innerHTML = html; el.panel.classList.add('collapsed'); } layout(); },
     counter(text) { const t = text || ''; if (el.counter.textContent !== t) el.counter.textContent = t; },
     // items: [{ label, onClick, kind: 'primary' | 'sunnah' | '' }]
     actions(items = []) {
@@ -53,7 +68,15 @@ export function createUI() {
       layout();
     },
     // Halte-Knopf: für Handlungen, die Zeit brauchen (Gebet, Dua, Schlafen). label=null blendet aus.
-    hold(label) { el.hold.hidden = !label; if (label) el.hold.textContent = label; layout(); },
+    hold(label) { el.hold.hidden = !label; if (label) el.hold.textContent = label.replace(/^Halten: /, 'Halten:\n'); document.body.classList.toggle('has-hold', !!label); },
+    // Autopilot-Knopf (optional): show=false blendet aus. onToggle(on) wird beim Antippen gerufen.
+    auto(show, on = false, onToggle = null) {
+      el.auto.hidden = !show;
+      if (!show) return;
+      el.auto.classList.toggle('on', on);
+      el.auto.textContent = on ? '⏸ Selbst gehen' : '▶ Autopilot';
+      if (onToggle) el.auto.onclick = () => onToggle();
+    },
     // Aktionsknopf vor Ort. Gleicher key → kein Neuaufbau (verhindert Flackern im Frame-Loop).
     prompt(label, fn, { sunnah = false, key = label } = {}) {
       if (!label) { if (!el.prompt.hidden) { el.prompt.hidden = true; promptKey = ''; promptFn = null; } return; }
@@ -66,10 +89,10 @@ export function createUI() {
     },
     // Ziel-Anzeige: Text + Pfeilwinkel (Radiant, 0 = geradeaus, positiv = rechts)
     goal(text, angle = null) {
-      if (!text) { el.goal.hidden = true; return; }
-      el.goal.hidden = false;
+      if (!text) { if (!el.goal.hidden) { el.goal.hidden = true; layout(); } return; }
+      if (el.goal.hidden) { el.goal.hidden = false; layout(); }
       if (el.goalText.textContent !== text) el.goalText.textContent = text;
-      el.goalArrow.style.visibility = angle == null ? 'hidden' : 'visible';
+      el.goalArrow.style.display = angle == null ? 'none' : '';
       if (angle != null) el.goalArrow.style.transform = `rotate(${angle - Math.PI / 2}rad)`;
     },
     hint(text, ms = 2600) {
@@ -144,7 +167,7 @@ export function createUI() {
     fade(on) { el.fade.classList.toggle('on', on); return new Promise((r) => setTimeout(r, 470)); },
     prayer(p) { return `<div class="ar">${p.ar}</div><p class="tr">${p.tr}</p><p>${p.de}</p>`; },
     reset() {
-      ui.info(''); ui.actions([]); ui.hold(null); ui.counter(''); ui.prompt(null); ui.goal(null);
+      ui.info(''); ui.actions([]); ui.hold(null); ui.counter(''); ui.prompt(null); ui.goal(null); ui.auto(false);
       el.hint.hidden = true; el.choice.hidden = true; el.stick.classList.remove('off');
     },
   };

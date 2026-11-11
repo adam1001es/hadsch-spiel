@@ -21,8 +21,10 @@ Texte, Gebete und Reihenfolge stehen zusätzlich in `src/content/hajj.js` (gleic
 - Am PC: W A S D = Gehen, Umschalt = zügig, Maus ziehen oder ← → = Umschauen, Leertaste = Halten, Enter = Aktionsknopf.
 
 ## 3. Bildschirm
-- Oben: Tag (z. B. „9. Dhul-Hiddscha · Tag von Arafa“), Stationsname, 12 Rauten als Fortschritt, großer Zähler (z. B. „Runde 3 / 7“).
-- Unten: Panel mit Erklärtext, Gebet, Aktionsknöpfen; rechts der Halte-Knopf (nur bei Gebet, Dua, Schlafen). Panel darf max. 46 % der Höhe einnehmen.
+- Oben: Tag (z. B. „9. Dhul-Hiddscha · Tag von Arafa“), Stationsname, 12 Rauten als Fortschritt, großer Zähler (z. B. „Runde 3 / 7“), darunter der Zielpfeil.
+- Darunter eine kompakte Infokarte (Erklärtext, Gebet, Sunnah-Knöpfe); antippen klappt sie auf und zu.
+- Unten links der Joystick, unten rechts der Halte-Knopf und darüber der Autopilot-Knopf, unten Mitte der Aktionsknopf vor Ort. Die Bildmitte bleibt frei.
+- **Autopilot (optional)**: Bei langen Wiederholungen erscheint er erst nach den ersten Durchgängen – Tawaf ab Runde 3, Sa'i ab Strecke 3, Kiesel ab dem 3. Stein, Werfen ab dem 3. Stein (bei weiteren Dschamarat sofort). Selbst steuern schaltet ihn aus. Sunnah-Handlungen (Istilam, Dua) macht er nie selbst.
 - Kurze Meldungen (Toasts) in der Mitte oben, z. B. „Runde 2 ✓“.
 - Zwischen Stationen Überblendung über Schwarz.
 - Startbildschirm: Kamera kreist um die Kaaba bei Nacht. Titel „Hadsch-Pfad“, Hinweis, Knopf „Bismillah – Beginnen“, darunter alle Stationen zum direkten Springen.
