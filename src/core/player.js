@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { izarGeo, torsoGeo, ridaGeo, hairGeo, faceGeo, khimarGeo } from '../world/people.js';
 import { peopleModels } from '../world/crowd.js';
+import { WALK, walkMaterial } from '../world/walk.js';
 
 // Spielfigur mit einfachen Körperhaltungen, freier Bewegung, Kollision und Verfolgerkamera.
 // Figur: Unterkörper (Gewand), Oberkörper + Kopf (Drehpunkt Hüfte), zwei Arme (Drehpunkt Schulter).
@@ -53,7 +54,7 @@ export function createFigure(world, { color = 0xf3f1ea, skin = 0xc68642, ring = 
   // 3D-Modell als Spielfigur (wie die Pilger in der Menge): an der Hüfte geteilt, damit Ruku'/Sujud weiter gehen
   // Je Outfit eine Modell-Variante: Frau (Abaya), Mann im Ihram, Mann im Shalwar Kameez
   const HIP = covered ? 0.9 : 0.95;
-  const variants = {};
+  const variants = {}, walkU = [], PREFIX = { woman: 'w_', ihram: 'm_', kameez: 'k_' };
   let mCover = null;
   function splitAt(geo, h) {
     const g = geo.index ? geo.toNonIndexed() : geo, pos = g.attributes.position, lo = [], up = [];
@@ -75,7 +76,11 @@ export function createFigure(world, { color = 0xf3f1ea, skin = 0xc68642, ring = 
       else if (k === 'shoes') mat.color = new THREE.Color(0x1e1c1b);
       else if (k !== 'cover') mat.color = new THREE.Color(0xffffff);
       const [lo, up] = splitAt(part.geometry, HIP);
-      const a = new THREE.Mesh(lo, mat), b = new THREE.Mesh(up, mat);
+      const matUp = mat.clone(); matUp.color = mat.color;
+      // Gehbewegung wie bei der Menge (Takt über Uniform); oberer Teil ist um HIP verschoben
+      const wp = WALK[PREFIX[id] + k];
+      if (wp) { walkU.push(walkMaterial(mat, wp, { instanced: false, yOff: 0 }), walkMaterial(matUp, wp, { instanced: false, yOff: HIP })); }
+      const a = new THREE.Mesh(lo, mat), b = new THREE.Mesh(up, matUp);
       a.castShadow = b.castShadow = true; mLower.add(a); mHip.add(b);
       if (k === 'cover') mCover = [a, b];
     }
@@ -134,6 +139,9 @@ export function createFigure(world, { color = 0xf3f1ea, skin = 0xc68642, ring = 
       cur.arm[1] += (target.arm[1] - cur.arm[1]) * k;
       swing += dt * (walking > 0.05 ? 7 + walking * 5 : 0);
       const sw = walking > 0.05 ? Math.sin(swing) * 0.45 * Math.min(1, walking) : 0;
+      // Modell-Figur: Beine/Arme im Shader (nur im Stehen/Gehen, nicht beim Beten oder Liegen)
+      const wAmt = walking > 0.05 && cur.hip < 0.2 && cur.drop < 0.05 && cur.lie < 0.05 ? Math.min(1, walking) : 0;
+      for (const u of walkU) { u.uWalk.value.x = swing; u.uWalk.value.y += (wAmt - u.uWalk.value.y) * Math.min(1, dt * 10); }
       hip.rotation.x = cur.hip;
       lowerDress.scale.y = lowerIzar.scale.y = 1 - cur.drop;
       for (const v of Object.values(variants)) { v.mLower.scale.y = 1 - cur.drop; v.mHip.rotation.x = cur.hip; v.mHip.position.y = HIP * (1 - cur.drop); }

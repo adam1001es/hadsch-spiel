@@ -34,6 +34,7 @@ src/
     kaaba.js           Kaaba, Hijr Ismail, Maqam Ibrahim
     haram.js           Masjid al-Haram (Boden, Arkaden, Minarette)
     crowd.js           Menschenmengen per InstancedMesh (Teile je nach Person)
+    walk.js            Gehbewegung ohne Skelett (Beine/Arme im Vertex-Shader, Takt je Figur)
     people.js          Formen (Ihram, Abaya, Khimar, Ghutra …) und Herkunftsregionen mit Hautfarben/Kleidung
     assets.js          Lädt echte CC0-Texturen (pbr) und HDRI-Umgebungslicht
     textures.js        Canvas-Texturen (Hizam-Kalligrafie stilisiert, Tür, Arkaden)
