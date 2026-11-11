@@ -29,14 +29,17 @@ export function createUI() {
     el.panel.classList.toggle('empty', !hasActions && !el.info.textContent.trim());
     // „mehr“ nur zeigen, wenn der Text länger ist als die kompakte Karte
     const body = el.panel.querySelector('.panel-body');
-    const long = body.scrollHeight > body.clientHeight + 4 || !el.panel.classList.contains('collapsed');
-    el.panelToggle.hidden = hasActions || !long;
-    el.panelToggle.textContent = el.panel.classList.contains('collapsed') ? 'mehr ▾' : 'weniger ▴';
+    // Zugeklappt: nur eine Zeile (Aufgabe). Ohne Aufgabe (z. B. Endbildschirm) wird der Text gezeigt.
+    const collapsed = el.panel.classList.contains('collapsed');
+    el.panel.classList.toggle('no-mission', el.mission.hidden);
+    el.panelToggle.hidden = collapsed;
+    el.panelToggle.textContent = 'zuklappen ▴';
+    void body;
   };
   // Infokarte antippen: auf-/zuklappen (nicht beim Tippen auf Knöpfe)
   el.panel.addEventListener('click', (e) => {
     if (e.target.closest('#actions button')) return;
-    el.panel.classList.toggle('collapsed'); layout();
+    el.panel.classList.toggle('collapsed'); el.panel.classList.remove('unread'); layout();
   });
   new ResizeObserver(layout).observe(hud);
   window.addEventListener('resize', layout);
@@ -59,7 +62,8 @@ export function createUI() {
         el.dots.appendChild(d);
       }
     },
-    info(html) { if (el.info.innerHTML !== html) { el.info.innerHTML = html; el.panel.classList.add('collapsed'); } layout(); },
+    // Neuer Text: Karte bleibt klein, ein Punkt zeigt „neu“. Antippen öffnet sie.
+    info(html) { if (el.info.innerHTML !== html) { el.info.innerHTML = html; if (html && el.panel.classList.contains('collapsed')) el.panel.classList.add('unread'); } layout(); },
     counter(text) { const t = text || ''; if (el.counter.textContent !== t) el.counter.textContent = t; },
     // items: [{ label, onClick, kind: 'primary' | 'sunnah' | '' }]
     actions(items = []) {
@@ -188,7 +192,7 @@ export function createUI() {
       const doneN = state.filter((x) => x !== 'open').length;
       const now = curAny < 0 ? 'Alles erledigt ✓' : tasks[curAny].t + (tasks[curAny].s ? ' (Sunnah)' : '');
       el.mission.hidden = false;
-      el.mission.innerHTML = `<span class="tag">Aufgabe</span><span>${now}</span><span class="n">${doneN}/${tasks.length}</span>`;
+      el.mission.innerHTML = `<span class="tag">Aufgabe</span><span>${now}</span><span class="n">${doneN}/${tasks.length} <i class="more">▾</i></span>`;
       let list = el.panel.querySelector('.task-list');
       if (!list) { list = document.createElement('ol'); list.className = 'task-list'; el.mission.after(list); }
       list.innerHTML = tasks.map((t, i) => `<li class="${state[i] === 'ok' ? 'ok' : state[i] === 'skip' ? 'skip' : i === curAny ? 'now' : ''}">${state[i] === 'ok' ? '✓' : state[i] === 'skip' ? '–' : i === curAny ? '▶' : '○'} ${t.t}${t.s ? ' <span class="s">Sunnah</span>' : ''}</li>`).join('');

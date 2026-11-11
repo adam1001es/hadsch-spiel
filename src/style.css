@@ -156,3 +156,15 @@ body.has-hold #autoBtn { bottom: calc(var(--sb) + 104px); }
 #coach.center { left: 50%; top: 42%; transform: translate(-50%, -50%); }
 #coach.look #coachHand { animation: swipe 1.4s ease-in-out infinite; }
 @keyframes swipe { 0% { transform: translateX(10px); } 50% { transform: translateX(-16px); } 100% { transform: translateX(10px); } }
+
+/* Infokarte: zugeklappt nur eine schmale Zeile mit der Aufgabe */
+#panel.collapsed { padding: 7px 12px; }
+#panel.collapsed .panel-body { max-height: none; overflow: visible; -webkit-mask-image: none; mask-image: none; }
+#panel.collapsed:not(.no-mission) #info, #panel.collapsed .task-list { display: none; }
+#panel.collapsed #mission { margin: 0; }
+#panel.collapsed #mission > span:nth-child(2) { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+#panel.collapsed.no-mission #info { max-height: 2.9em; overflow: hidden; }
+#panel:not(.collapsed) #mission .more { display: inline-block; transform: rotate(180deg); }
+#mission .more { font-style: normal; }
+#panel.unread #mission .n::before { content: ''; display: inline-block; width: 8px; height: 8px; margin-right: 5px; border-radius: 50%; background: #c0392b; vertical-align: 1px; }
+#panel.collapsed #actions { margin-top: 6px; }

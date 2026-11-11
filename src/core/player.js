@@ -117,28 +117,47 @@ export function createPlayer(ctx, { x = 0, z = 0, heading = 0, color, speed = 1.
   const camPos = new THREE.Vector3(), camLook = new THREE.Vector3();
   let first = true;
 
-  // Leitpfeile am Boden: goldene Winkel vom Spieler Richtung Ziel (wandern langsam nach vorn)
-  const GN = 10;
+  // Navigation zum Ziel (alles durch die Menge hindurch sichtbar):
+  // 1. großer goldener Richtungspfeil direkt neben der Figur (wie ein Kompass)
+  // 2. leichte Leuchtlinie am Boden bis zum Ziel
+  // 3. Bodenpfeile, die langsam Richtung Ziel wandern
+  const navMat = (opacity) => new THREE.MeshBasicMaterial({ color: 0xffd36a, transparent: true, opacity, depthWrite: false, depthTest: false, fog: false });
+  const GN = 8;
   const chev = new THREE.Shape(); chev.moveTo(-0.45, -0.2); chev.lineTo(0, 0.25); chev.lineTo(0.45, -0.2); chev.lineTo(0.45, 0.05); chev.lineTo(0, 0.5); chev.lineTo(-0.45, 0.05);
   const chevG = new THREE.ShapeGeometry(chev); chevG.rotateX(-Math.PI / 2);
-  const guide = new THREE.InstancedMesh(chevG, new THREE.MeshBasicMaterial({ color: 0xf0c35a, transparent: true, opacity: 0.85, depthWrite: false, fog: false }), GN);
-  guide.frustumCulled = false; guide.visible = false; engine.world.add(guide);
-  const gTarget = new THREE.Vector2(); let gFresh = 0, gPhase = 0;
+  const guide = new THREE.InstancedMesh(chevG, navMat(0.7), GN);
+  guide.frustumCulled = false; guide.renderOrder = 20; engine.world.add(guide);
+  const arrowS = new THREE.Shape();
+  arrowS.moveTo(0, 0.9); arrowS.lineTo(0.5, 0.25); arrowS.lineTo(0.18, 0.25); arrowS.lineTo(0.18, -0.35); arrowS.lineTo(-0.18, -0.35); arrowS.lineTo(-0.18, 0.25); arrowS.lineTo(-0.5, 0.25);
+  const arrowG = new THREE.ShapeGeometry(arrowS); arrowG.rotateX(-Math.PI / 2);
+  const navArrow = new THREE.Mesh(arrowG, navMat(0.95)); navArrow.renderOrder = 21; engine.world.add(navArrow);
+  const lineG = new THREE.PlaneGeometry(0.12, 1); lineG.rotateX(-Math.PI / 2); lineG.translate(0, 0, 0.5);
+  const navLine = new THREE.Mesh(lineG, navMat(0.35)); navLine.renderOrder = 19; engine.world.add(navLine);
+  const gTarget = new THREE.Vector2(); let gFresh = 0, gPhase = 0, gT = 0;
   const gd = new THREE.Object3D();
+  const showNav = (v) => { guide.visible = navArrow.visible = navLine.visible = v; };
+  showNav(false);
   function updateGuide(dt) {
-    gFresh -= dt; gPhase = (gPhase + dt * 1.2) % 1;
-    if (gFresh <= 0) { guide.visible = false; return; }
+    gFresh -= dt; gPhase = (gPhase + dt * 1.2) % 1; gT += dt;
+    if (gFresh <= 0) { showNav(false); return; }
     const dx = gTarget.x - pos.x, dz = gTarget.y - pos.z, dist = Math.hypot(dx, dz);
-    if (dist < 3) { guide.visible = false; return; }
-    guide.visible = true;
+    if (dist < 2.2) { showNav(false); return; }
+    showNav(true);
     const ux = dx / dist, uz = dz / dist, ang = Math.atan2(ux, uz);
+    const gy = (x, z) => (ground ? ground(x, z) : 0) + 0.06;
+    // Richtungspfeil an der Figur, pulsiert leicht
+    navArrow.position.set(pos.x + ux * 1.25, gy(pos.x + ux * 1.25, pos.z + uz * 1.25) + 0.02, pos.z + uz * 1.25);
+    navArrow.rotation.y = ang; navArrow.scale.setScalar(1 + Math.sin(gT * 5) * 0.08);
+    // Leuchtlinie bis zum Ziel (max. 60 m)
+    const len = Math.min(dist - 1.5, 60);
+    navLine.position.set(pos.x + ux * 1.5, gy(pos.x, pos.z), pos.z + uz * 1.5); navLine.rotation.y = ang; navLine.scale.set(1, 1, Math.max(0.1, len - 1.5));
+    // wandernde Bodenpfeile
     let n = 0;
     for (let i = 0; i < GN; i++) {
-      const d = 1.4 + (i + gPhase) * 1.5;
+      const d = 2.6 + (i + gPhase) * 1.8;
       if (d > dist - 1.5) break;
-      const y = ground ? ground(pos.x + ux * d, pos.z + uz * d) : 0;
-      gd.position.set(pos.x + ux * d, y + 0.06, pos.z + uz * d); gd.rotation.set(0, ang, 0);
-      gd.scale.setScalar(1 - i / (GN * 1.6)); gd.updateMatrix(); guide.setMatrixAt(n++, gd.matrix);
+      gd.position.set(pos.x + ux * d, gy(pos.x + ux * d, pos.z + uz * d), pos.z + uz * d); gd.rotation.set(0, ang, 0);
+      gd.scale.setScalar(0.9 - i * 0.05); gd.updateMatrix(); guide.setMatrixAt(n++, gd.matrix);
     }
     guide.count = n; guide.instanceMatrix.needsUpdate = true;
   }
