@@ -7,7 +7,7 @@ import { createStations } from './core/stations.js';
 import { preview } from './stations/tawaf.js';
 import * as content from './content/hajj.js';
 import { progressStore } from './core/progress.js';
-import { preloadPeople, setCrowdCamera } from './world/crowd.js';
+import { preloadPeople, setCrowdCamera, peopleStatus } from './world/crowd.js';
 const peopleReady = preloadPeople(); // 3D-Pilgerinnen im Hintergrund laden
 
 const engine = createEngine(document.getElementById('c'));
@@ -33,6 +33,11 @@ engine.renderer.setAnimationLoop(() => {
 
 const startScreen = document.getElementById('start');
 document.getElementById('disclaimer').textContent = content.DISCLAIMER;
+// Version + Status der 3D-Modelle (hilft beim Testen am iPhone)
+const ver = document.createElement('p'); ver.className = 'small'; ver.id = 'version';
+document.getElementById('disclaimer').after(ver);
+const showVer = () => { ver.textContent = `Version ${__BUILD__} · Pilgerin: ${peopleStatus.woman} · Pilger: ${peopleStatus.man}`; };
+showVer(); peopleReady.then(showVer);
 // Profil (Vorname, Geschlecht, Alter) – nur lokal im Browser gespeichert
 const pf = (() => { try { return JSON.parse(localStorage.getItem('hp-profile') || '{}'); } catch { return {}; } })();
 const pfName = document.getElementById('pfName'), pfAge = document.getElementById('pfAge'), pfForm = document.getElementById('profile');

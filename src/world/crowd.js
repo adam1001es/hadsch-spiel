@@ -21,10 +21,15 @@ const loadParts = (url) => new GLTFLoader().loadAsync(url).then((g) => { const p
 // Für die Spielfigur: die geladenen Modelle (oder null)
 export const peopleModels = () => ({ woman: MUSLIMA, man: MAN });
 
+// Status der Modelle (für die Anzeige auf dem Startbildschirm)
+export const peopleStatus = { woman: 'lädt …', man: 'lädt …' };
+const why = (e) => String(e?.message || e || 'unbekannt').slice(0, 120);
 export function preloadPeople() {
   return Promise.all([
-    loadParts('./assets/models/muslima.glb').then((p) => { if (p.dress && p.hijab && p.head) MUSLIMA = p; }).catch(() => {}),
-    loadParts('./assets/models/man.glb').then((p) => { if (p.cloth && p.skin) MAN = p; }).catch(() => {}),
+    loadParts('./assets/models/muslima.glb').then((p) => { if (p.dress && p.hijab && p.head) { MUSLIMA = p; peopleStatus.woman = 'geladen ✓'; } else peopleStatus.woman = 'Teile fehlen: ' + Object.keys(p).join(','); })
+      .catch((e) => { peopleStatus.woman = 'Fehler: ' + why(e); console.error('muslima.glb', e); }),
+    loadParts('./assets/models/man.glb').then((p) => { if (p.cloth && p.skin) { MAN = p; peopleStatus.man = 'geladen ✓'; } else peopleStatus.man = 'Teile fehlen: ' + Object.keys(p).join(','); })
+      .catch((e) => { peopleStatus.man = 'Fehler: ' + why(e); console.error('man.glb', e); }),
   ]);
 }
 // Kleidfarben der Pilgerinnen: gedeckte dunkle Töne, Weiß/Beige/Creme und Pastell
