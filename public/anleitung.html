@@ -40,7 +40,7 @@ header{display:grid;gap:8px}
 .ctrl{display:flex;gap:8px}
 button{font:600 14px var(--f-b);border:1px solid var(--green);color:var(--green);background:transparent;border-radius:10px;padding:8px 12px;cursor:pointer}
 button.on{background:var(--green);color:var(--surface)}
-button:focus-visible,textarea:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+button:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
 
 /* Tagesleiste */
 .days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}
@@ -73,8 +73,6 @@ button:focus-visible,textarea:focus-visible{outline:3px solid var(--gold);outlin
 .card ol li{margin:2px 0}
 .status{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
 .status.ok{color:var(--ok)} .status.plan{color:var(--muted)}
-textarea{width:100%;box-sizing:border-box;min-height:56px;resize:vertical;font:13px/1.4 var(--f-b);color:var(--ink);background:var(--bg);border:1px dashed var(--gold);border-radius:8px;padding:8px}
-.saved{font-size:11px;color:var(--muted)}
 
 /* Bildschirm */
 .screen{display:grid;grid-template-columns:240px 1fr;gap:24px;align-items:center}
@@ -126,7 +124,7 @@ textarea{width:100%;box-sizing:border-box;min-height:56px;resize:vertical;font:1
     <div class="eyebrow">Übersicht & Anleitung</div>
     <h1>Hadsch-Pfad</h1>
     <div class="ar">لَبَّيْكَ اللَّهُمَّ لَبَّيْكَ</div>
-    <p class="lead">So läuft das Spiel: 12 Stationen an 5 Orten, vom Miqat bis zum Abschieds-Tawaf. Der goldene Punkt auf der Karte wandert die Reise ab. Tippe auf eine Nummer, um zu einer Station zu springen, und schreib deine Ideen direkt in die Karten unten.</p>
+    <p class="lead">So läuft das Spiel: 12 Stationen an 5 Orten, vom Miqat bis zum Abschieds-Tawaf. Der goldene Punkt auf der Karte wandert die Reise ab. Tippe auf eine Nummer, um zu einer Station zu springen.</p>
   </header>
 
   <section aria-labelledby="h-map">
@@ -192,7 +190,7 @@ textarea{width:100%;box-sizing:border-box;min-height:56px;resize:vertical;font:1
 
   <section aria-labelledby="h-st">
     <h2 id="h-st">Alle Stationen</h2>
-    <p class="lead">Grün markiert ist schon spielbar. Die gestrichelten Felder sind für deine Ideen; sie werden in diesem Browser gespeichert, damit du sie später an Claude Code weitergeben kannst.</p>
+    <p class="lead">Grün markiert ist schon spielbar.</p>
     <div class="grid" id="grid" style="margin-top:14px"></div>
   </section>
 
@@ -279,16 +277,12 @@ DAYS.forEach(([a,b,ids])=>{const dv=document.createElement('div');dv.className='
   days.appendChild(dv)});
 
 // Karten
-const store={get(k){try{return localStorage.getItem(k)||''}catch(e){return ''}},set(k,v){try{localStorage.setItem(k,v);return true}catch(e){return false}}};
 const grid=$('grid');
 S.forEach((s,i)=>{const c=document.createElement('article');c.className='card';c.id='card'+i;
   c.innerHTML=`<div class="top"><div class="ic"><svg><use href="#${s.i}"/></svg></div><div><div class="d">${i+1} · ${s.d}</div><h3>${s.t}</h3></div></div>
   <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center"><span class="tag"><svg><use href="#${M[s.m][0]}"/></svg>${M[s.m][1]}</span><span class="status ${s.done?'ok':'plan'}">${s.done?'✓ spielbar':'geplant'}</span></div>
-  <ol>${s.steps.map(x=>`<li>${x}</li>`).join('')}</ol>
-  <textarea id="note${i}" aria-label="Deine Ideen zu ${s.t}" placeholder="Deine Ideen: Was soll man hier sehen, hören, tun?"></textarea><div class="saved" id="sv${i}"></div>`;
-  grid.appendChild(c);
-  const ta=c.querySelector('textarea');ta.value=store.get('hp-note-'+i);
-  ta.addEventListener('input',()=>{$('sv'+i).textContent=store.set('hp-note-'+i,ta.value)?'Gespeichert':'Konnte nicht gespeichert werden'})});
+  <ol>${s.steps.map(x=>`<li>${x}</li>`).join('')}</ol>`;
+  grid.appendChild(c)});
 
 // Animation
 let cur=0,t=0,playing=true,phase='stay',moveT=0;
