@@ -116,6 +116,13 @@ export const TEXT = {
       { html: 'Ein weißes, genähtes Gewand mit Kopfbedeckung', ok: false, why: 'Männer tragen im Ihram keine genähte Kleidung und bedecken den Kopf nicht.' },
       { html: 'Normale Alltagskleidung', ok: false, why: 'Für Männer gilt besondere Kleidung: zwei ungenähte Tücher.' },
     ],
+    clothesQF: 'Was trägt eine Frau im Ihram?',
+    clothesF: [
+      { html: 'Ihre normale bedeckende Kleidung – ohne Niqab und ohne Handschuhe', ok: true, why: 'Richtig. Männer tragen dagegen zwei ungenähte weiße Tücher (Izar und Rida\').' },
+      { html: 'Zwei ungenähte weiße Tücher (Izar und Rida\')', ok: false, why: 'Das ist die Ihram-Kleidung der Männer. Frauen tragen ihre normale bedeckende Kleidung.' },
+      { html: 'Bedeckende Kleidung mit Niqab und Handschuhen', ok: false, why: 'Im Ihram tragen Frauen keinen Niqab und keine Handschuhe.' },
+    ],
+    rulesF: [['Niqab oder Handschuhe tragen', true]],
     goMosque: 'Moschee', niyyaPlace: 'Niyya fassen',
     niyyaQ: 'Mit welcher Absicht beginnst du am Miqat (Hadsch at-Tamattu\')?',
     niyya: [
@@ -137,7 +144,9 @@ export const TEXT = {
     startInfo: 'Du stehst auf Safa. Hadschar lief hier sieben Mal zwischen den Hügeln, auf der Suche nach Wasser für ihren Sohn Ismail – bis Zamzam entsprang.',
     ayah: 'Ayah rezitieren & Dua', duaHill: 'Dua Richtung Kaaba',
     go: 'Lauf Richtung Marwa (Spur links der Mitte).', back: 'Zurück Richtung Safa (Spur rechts der Mitte).',
-    green: 'Grüne Lichter: Hier eilen Männer.', greenHint: 'Im grünen Bereich zügig laufen: Joystick weit ziehen oder Umschalt halten.',
+    green: 'Grüne Lichter: Hier eilen Männer.',
+    greenF: 'Grüne Lichter: Hier eilen Männer – du gehst in deinem Tempo weiter.',
+    taqsirF: 'Frauen kürzen eine Fingerspitzenlänge.', greenHint: 'Im grünen Bereich zügig laufen: Joystick weit ziehen oder Umschalt halten.',
     turn: 'Dua Richtung Kaaba, dann umkehren', faceKaaba: 'Richtung Kaaba (Pfeil)',
     taqsir: 'Haare kürzen (Taqsir)', taqsirGoal: 'Friseur bei Marwa',
     umrahDone: 'Die Umrah ist vollständig. Du verlässt den Ihram bis zum 8. Dhul-Hiddscha.',
@@ -219,6 +228,11 @@ export const TEXT = {
       { html: 'Halq – Kopf rasieren (Männer, besser)', ok: true, why: 'Halq ist für Männer besser. Frauen kürzen eine Fingerspitzenlänge.' },
       { html: 'Taqsir – Haare kürzen', ok: true, why: 'Auch Taqsir ist erlaubt. Frauen kürzen eine Fingerspitzenlänge.' },
     ],
+    hairQF: 'Was machst du beim Haareschneiden als Frau?',
+    hairF: [
+      { html: 'Taqsir – eine Fingerspitzenlänge kürzen', ok: true, why: 'Richtig. Frauen kürzen eine Fingerspitzenlänge.' },
+      { html: 'Halq – den Kopf rasieren', ok: false, why: 'Halq ist für Männer. Frauen kürzen eine Fingerspitzenlänge (Taqsir).' },
+    ],
     tahallul: 'Erstes Tahallul: Alle Ihram-Verbote enden außer der ehelichen Intimität. Normale Kleidung ist erlaubt.',
     order: 'Die Reihenfolge Werfen → Opfer → Rasieren → Tawaf ist Sunnah; Abweichungen sind erlaubt.',
     clothesGoal: 'Zelt: Kleidung wechseln', clothes: 'Normale Kleidung anziehen',
@@ -230,7 +244,7 @@ export const TEXT = {
     {
       what: 'Der Miqat ist die Grenze, an der Pilger den Weihezustand (Ihram) beginnen.',
       why: 'Hier beginnt die Umrah – der erste Teil des Hadsch at-Tamattu\'.',
-      tasks: [{ t: 'Zum Waschhaus gehen und Ghusl nehmen' }, { t: 'Ihram-Kleidung anlegen' }, { t: 'In der Moschee die Absicht (Niyya) fassen' }, { t: 'Die Talbiyah sprechen', s: true }, { t: 'Die Ihram-Verbote kennenlernen' }, { t: 'Zum Bus nach Mekka gehen' }],
+      tasks: [{ t: 'Zum Waschhaus gehen und Ghusl nehmen' }, { t: 'Ihram-Kleidung anlegen', tf: 'Ihram: bedeckende Kleidung (ohne Niqab und Handschuhe)' }, { t: 'In der Moschee die Absicht (Niyya) fassen' }, { t: 'Die Talbiyah sprechen', s: true }, { t: 'Die Ihram-Verbote kennenlernen' }, { t: 'Zum Bus nach Mekka gehen' }],
       fact: 'Männer tragen zwei ungenähte weiße Tücher (Izar und Rida\'), Frauen ihre normale bedeckende Kleidung.',
       recap: ['Ihram ist der Weihezustand – er beginnt am Miqat.', 'Männer tragen zwei ungenähte weiße Tücher.', 'Absicht für die Umrah: „Labbaika ʿumratan“.', 'Im Ihram verboten: z. B. Parfüm, Haare- und Nägelschneiden, Jagen.'],
       quiz: { q: 'Was bedeutet „Ihram“?', o: [{ html: 'Der Weihezustand der Pilger', ok: true, why: 'Richtig! Im Ihram gelten besondere Regeln.' }, { html: 'Der Name einer Moschee in Medina', ok: false, why: 'Nein – Ihram ist der Weihezustand der Pilger.' }, { html: 'Ein Gebet am Abend', ok: false, why: 'Nein – Ihram ist der Weihezustand der Pilger.' }] },
@@ -246,7 +260,7 @@ export const TEXT = {
     {
       what: 'Sa\'i heißt: 7 Strecken zwischen den Hügeln Safa und Marwa.',
       why: 'Erinnerung an Hadschar, die hier Wasser für ihren Sohn Ismail suchte – bis Zamzam entsprang.',
-      tasks: [{ t: 'Auf Safa: Ayah und Dua', s: true }, { t: '7 Strecken laufen (Safa → Marwa = 1, zurück = 2 …)' }, { t: 'Im grünen Bereich eilen (Männer)' }, { t: 'Auf Marwa: Haare kürzen (Taqsir)' }, { t: 'Zum Ausgang gehen' }],
+      tasks: [{ t: 'Auf Safa: Ayah und Dua', s: true }, { t: '7 Strecken laufen (Safa → Marwa = 1, zurück = 2 …)' }, { t: 'Im grünen Bereich eilen (Männer)', tf: 'Grüner Bereich: Männer eilen – du gehst normal' }, { t: 'Auf Marwa: Haare kürzen (Taqsir)', tf: 'Auf Marwa: eine Fingerspitzenlänge kürzen (Taqsir)' }, { t: 'Zum Ausgang gehen' }],
       fact: 'Hin- und Rückweg zählen je als eine Strecke – darum endest du nach 7 Strecken auf Marwa.',
       recap: ['Start auf Safa, Ende auf Marwa.', 'Zwischen den grünen Lichtern eilen Männer.', 'Die Umrah endet mit dem Haarekürzen (Taqsir).'],
       quiz: { q: 'Wo endet der Sa\'i?', o: [{ html: 'Auf Marwa', ok: true, why: 'Richtig! Nach 7 Strecken bist du auf Marwa.' }, { html: 'Auf Safa', ok: false, why: 'Nein – auf Safa beginnt der Sa\'i, er endet auf Marwa.' }, { html: 'An der Kaaba', ok: false, why: 'Nein – er endet auf Marwa.' }] },
@@ -286,7 +300,7 @@ export const TEXT = {
     {
       what: 'Opfer (Hady) und Haare scheren oder kürzen – danach darfst du den Ihram ablegen (erstes Tahallul).',
       why: 'Für den Hadsch at-Tamattu\' ist das Opfer Pflicht; das Fleisch geht an Bedürftige.',
-      tasks: [{ t: 'Am Hady-Schalter das Opfer bestätigen' }, { t: 'Beim Friseur: Halq oder Taqsir' }, { t: 'Normale Kleidung anziehen' }, { t: 'Zum Bus nach Mekka' }],
+      tasks: [{ t: 'Am Hady-Schalter das Opfer bestätigen' }, { t: 'Beim Friseur: Halq oder Taqsir', tf: 'Beim Friseur: eine Fingerspitzenlänge kürzen (Taqsir)' }, { t: 'Normale Kleidung anziehen' }, { t: 'Zum Bus nach Mekka' }],
       fact: 'Die Reihenfolge Werfen → Opfer → Rasieren → Tawaf ist Sunnah – Abweichungen sind erlaubt.',
       recap: ['Hady: Pflicht beim Tamattu\', meist per Gutschein.', 'Männer: Halq (besser) oder Taqsir; Frauen kürzen eine Fingerspitzenlänge.', 'Erstes Tahallul: alle Verbote enden außer der ehelichen Intimität.'],
       quiz: { q: 'Welches Ihram-Verbot gilt nach dem ersten Tahallul noch?', o: [{ html: 'Die eheliche Intimität', ok: true, why: 'Richtig! Sie endet erst mit dem zweiten Tahallul.' }, { html: 'Normale Kleidung zu tragen', ok: false, why: 'Nein – normale Kleidung ist jetzt erlaubt.' }, { html: 'Keines mehr', ok: false, why: 'Doch: Die eheliche Intimität bleibt noch verboten.' }] },
@@ -302,7 +316,7 @@ export const TEXT = {
     {
       what: 'Sa\'i des Hadsch: wieder 7 Strecken von Safa nach Marwa.',
       why: 'Danach endet auch das letzte Ihram-Verbot (zweites Tahallul).',
-      tasks: [{ t: 'Auf Safa: Dua', s: true }, { t: '7 Strecken laufen' }, { t: 'Im grünen Bereich eilen (Männer)' }, { t: 'Zum Ausgang gehen' }],
+      tasks: [{ t: 'Auf Safa: Dua', s: true }, { t: '7 Strecken laufen' }, { t: 'Im grünen Bereich eilen (Männer)', tf: 'Grüner Bereich: Männer eilen – du gehst normal' }, { t: 'Zum Ausgang gehen' }],
       fact: 'Wie bei der Umrah: Start auf Safa, Ende auf Marwa.',
       recap: ['7 Strecken, Start Safa, Ende Marwa.', 'Danach: zweites Tahallul – alle Ihram-Verbote enden.'],
       quiz: { q: 'Wie viele Strecken hat der Sa\'i?', o: [{ html: '7', ok: true, why: 'Richtig!' }, { html: '5', ok: false, why: 'Nein – es sind 7.' }, { html: '3', ok: false, why: 'Nein – es sind 7.' }] },
@@ -325,6 +339,8 @@ export const TEXT = {
     },
   ],
 
+  hello: (n) => n ? `Salam, ${n}!` : 'Salam!',
+  wellDone: (n) => n ? `Gut gemacht, ${n}!` : 'Gut gemacht!',
   coach: {
     stickTouch: 'Lege deinen Daumen unten links auf den Kreis und schiebe ihn nach oben – so gehst du.',
     stickKeys: 'Drücke W (oder ↑), um zu gehen. Mit A und D gehst du seitlich.',

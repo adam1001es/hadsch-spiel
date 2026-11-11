@@ -40,6 +40,13 @@ Jede Station folgt demselben Muster, damit Lernende sich immer orientieren könn
 6. **Endbildschirm**: Sunnah-Auswertung und Quiz-Ergebnis (richtig beim ersten Versuch).
 Alle Lerntexte stehen in `src/content/hajj.js` unter `TEXT.learn` (gleiche Reihenfolge wie die Stationen).
 
+## 3b. Profil (persönlich)
+- Auf dem Startbildschirm: Vorname (optional), „Junge / Mann“ oder „Mädchen / Frau“ (Pflicht), Alter. Nur lokal im Browser gespeichert (`hp-profile`), nichts wird verschickt.
+- Name: Begrüßung auf der ersten Lernkarte, „Gut gemacht, Name!“ nach jeder Station, Urkunde auf dem Endbildschirm.
+- Geschlecht: Figur mit bedecktem Kopf (Frauen); Ihram-Frage und -Verbote in der Frauen-Variante (normale bedeckende Kleidung, ohne Niqab und Handschuhe);
+  kein Raml und kein Eilen im grünen Bereich für Frauen; beim Haareschneiden nur Taqsir (Fingerspitzenlänge). Aufgaben-Varianten in `TEXT.learn` (Feld `tf`).
+- Alter: bis 10 Jahre erscheint der Autopilot einen Durchgang früher.
+
 ## 4. Grafik-Stil
 - Realistisch, warmes Licht, Dunst in der Wüste, klare Sternennächte.
 - Tageszeit läuft über `sky.setHour()` / `sky.animateTo()`; nachts schaltet sich künstliches Licht an (`sky.state.artificial = 1`).

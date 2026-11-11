@@ -23,6 +23,12 @@ export function createStations(ctx) {
   ctx.progress.quizOk = ctx.progress.quizOk || 0;
   ctx.progress.quizN = ctx.progress.quizN || 0;
 
+  // Lernkarte an das Profil anpassen: Aufgaben-Variante für Spielerinnen (tf), Ansprache mit Namen
+  function personal(L) {
+    const f = ctx.profile?.gender === 'f', n = ctx.profile?.name || '';
+    return { ...L, tasks: L.tasks.map((t) => ({ ...t, t: f && t.tf ? t.tf : t.t })), hello: TEXT.hello(n), well: TEXT.wellDone(n) };
+  }
+
   function makeMission(tasks) {
     const state = tasks.map(() => 'open');
     const render = () => ctx.ui.mission(tasks, state);
@@ -67,7 +73,7 @@ export function createStations(ctx) {
     index = i; tutorial = null;
     if (i >= STATIONS.length) { current = info.ending(ctx); ctx.ui.fade(false); return; }
     const st = STATIONS[i];
-    const L = TEXT.learn[i];
+    const L = personal(TEXT.learn[i]);
     ctx.ui.station(i, STATIONS.length, st);
     ctx.mission = makeMission(L.tasks);
     const impl = IMPL[st.id] || info;
@@ -83,7 +89,7 @@ export function createStations(ctx) {
   ctx.next = async () => {
     if (busy) return;
     busy = true;
-    const st = STATIONS[index], L = TEXT.learn[index];
+    const st = STATIONS[index], L = TEXT.learn[index] && personal(TEXT.learn[index]);
     if (st && L) {
       ctx.mission?.finish();
       paused = true;

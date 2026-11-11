@@ -4,7 +4,7 @@ import { heightFn, buildTerrain } from '../world/terrain.js';
 import { tents, lamps, sign } from '../world/props.js';
 import { createCrowd } from '../world/crowd.js';
 import { createPlayer } from '../core/player.js';
-import { createFlow, createMarker, goTo, promptAt, holdAction, pray, viewLine, clearView } from '../core/kit.js';
+import { createFlow, createMarker, goTo, promptAt, holdAction, pray, viewLine, clearView, isFemale } from '../core/kit.js';
 
 // Mina: Zeltstadt im Tal. phase 'd8' (8. Dhul-Hiddscha) oder 'd10' (Opfer & Rasur).
 // Zelte im Raster 10 m, alle 5 Zelte eine Straße (8 m). Das eigene Zelt liegt an einer Straße.
@@ -114,7 +114,7 @@ export function create(ctx, st) {
     ui.toast('Opfer bestätigt ✓'); ctx.mission?.done(0);
     await goTo(ctx, flow, marker, T.barberGoal, barber.x - 1.5, barber.z);
     marker.hide();
-    const c = await ui.choice(T.hairQ, T.hair);
+    const c = isFemale(ctx) ? await ui.choice(T.hairQF, T.hairF) : await ui.choice(T.hairQ, T.hair);
     await flow.run(holdAction(ctx, player, { label: c.html.startsWith('Halq') ? 'Halten: rasieren' : 'Halten: kürzen', steps: [{ pose: 'sit', sec: 2.5 }] }));
     ui.toast(c.html.startsWith('Halq') ? 'Halq ✓' : 'Taqsir ✓'); ctx.mission?.done(1);
     ui.info(`<p>${T.tahallul}</p><p class="tr">${T.order}</p>`);

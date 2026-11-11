@@ -21,7 +21,8 @@ const POSES = {
   bend: { hip: 1.1, drop: 0.25, arm: [1.5, 1.5], lie: 0 },
 };
 
-export function createFigure(world, { color = 0xf3f1ea, skin = 0xc68642, ring = true } = {}) {
+// covered: Kopf mit Tuch bedeckt (Frauen) – Kopf hat dann die Farbe der Kleidung und ist etwas größer (Tuch)
+export function createFigure(world, { color = 0xf3f1ea, skin = 0xc68642, ring = true, covered = false } = {}) {
   const root = new THREE.Group();
   const body = new THREE.Group(); root.add(body);
   const cloth = new THREE.MeshStandardMaterial({ color, roughness: 0.92 });
@@ -30,7 +31,8 @@ export function createFigure(world, { color = 0xf3f1ea, skin = 0xc68642, ring = 
   const hip = new THREE.Group(); hip.position.y = 0.9; body.add(lower, hip);
   const upper = new THREE.Mesh(lathe(UPPER, 24), cloth);
   const headG = new THREE.SphereGeometry(0.105, 20, 14); headG.scale(0.92, 1.12, 1);
-  const head = new THREE.Mesh(headG, skinM); head.position.set(0, 0.7, 0.01);
+  const head = new THREE.Mesh(headG, covered ? cloth : skinM); head.position.set(0, 0.7, 0.01);
+  if (covered) { head.scale.set(1.18, 1.12, 1.18); head.position.y = 0.69; }
   hip.add(upper, head);
   const armG = new THREE.CapsuleGeometry(0.05, 0.5, 4, 10); armG.translate(0, -0.3, 0);
   const arms = [-1, 1].map((side) => {
@@ -109,7 +111,7 @@ export function resolve(p, r, shapes) {
 // ---------- Spieler: Bewegung + Kamera ----------
 export function createPlayer(ctx, { x = 0, z = 0, heading = 0, color, speed = 1.6, fastSpeed = 2.8, colliders = [], ground = null, camDist = 6.5, camHeight = 2.6 } = {}) {
   const { engine, input } = ctx;
-  const fig = createFigure(engine.world, { color });
+  const fig = createFigure(engine.world, { color, covered: ctx.profile?.gender === 'f' });
   const pos = new THREE.Vector3(x, 0, z);
   const vel = new THREE.Vector3();
   let head = heading, walking = 0, frozen = false;

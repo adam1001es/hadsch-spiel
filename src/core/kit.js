@@ -213,3 +213,7 @@ export function createAutopilot(ctx, { available, steer = null, tick = null, lab
     finish() { finished = true; if (on) { on = false; player.auto = null; player.onManual = null; } ui.auto(false); },
   };
 }
+
+// Profil-Hilfen: Spielerin? Autopilot für Jüngere (bis 10 Jahre) einen Durchgang früher.
+export const isFemale = (ctx) => ctx.profile?.gender === 'f';
+export const autoAfter = (ctx, n) => (ctx.profile?.age && ctx.profile.age <= 10 ? Math.max(1, n - 1) : n);

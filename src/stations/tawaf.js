@@ -4,7 +4,7 @@ import { buildHaram } from '../world/haram.js';
 import { createCrowd } from '../world/crowd.js';
 import { RABBANA, TEXT } from '../content/hajj.js';
 import { createPlayer } from '../core/player.js';
-import { createFlow, createMarker, pointGoal, holdAction, rakatSteps, pick, sunnah, createAutopilot } from '../core/kit.js';
+import { createFlow, createMarker, pointGoal, holdAction, rakatSteps, pick, sunnah, createAutopilot, isFemale, autoAfter } from '../core/kit.js';
 
 const TAU = Math.PI * 2;
 const T = TEXT.tawaf;
@@ -23,6 +23,8 @@ export function create(ctx, st) {
   const { glow } = buildHaram(world);
   const { w, d } = KAABA;
   const th0 = KAABA.blackStoneAngle;
+  // Raml: nur Männer, nur im Tawaf der Umrah, Runden 1–3
+  const raml = () => st.kind === 'umrah' && laps < 3 && !isFemale(ctx);
 
   // Grüne Linie vom Schwarzen Stein nach außen
   const lineGeo = new THREE.PlaneGeometry(0.35, 40); lineGeo.rotateX(-Math.PI / 2);
@@ -91,7 +93,7 @@ export function create(ctx, st) {
     if (seg === segment || done) return;
     segment = seg;
     if (seg === 'yemeni') ui.info(`<p>${T.yemeni}</p>${ui.prayer(RABBANA)}`);
-    else if (seg === 'free') ui.info(`<p>${T.free}</p>${st.kind === 'umrah' && laps < 3 ? `<p class="tr">${T.raml}</p>` : ''}`);
+    else if (seg === 'free') ui.info(`<p>${T.free}</p>${raml() ? `<p class="tr">${T.raml}</p>` : ''}`);
   }
 
   function doIstilam() {
@@ -131,11 +133,11 @@ export function create(ctx, st) {
 
   // Autopilot (optional, ab Runde 3): läuft außen um Kaaba und Hijr Ismail herum
   const auto = createAutopilot(ctx, {
-    available: () => laps >= 2 && !done,
+    available: () => laps >= autoAfter(ctx, 2) && !done,
     steer() {
       // nah an der Kaaba (11,8 m), am Hijr Ismail (+x-Seite) weiter außen (bis 14 m); Maqam Ibrahim liegt bei 14,3 m
       const p = player.pos, th = Math.atan2(-p.z, p.x) + 0.3, R = 11.8 + 2.2 * Math.max(0, Math.min(1, (Math.cos(th) - 0.2) / 0.8));
-      return { x: R * Math.cos(th) - p.x, z: -R * Math.sin(th) - p.z, fast: st.kind === 'umrah' && laps < 3 };
+      return { x: R * Math.cos(th) - p.x, z: -R * Math.sin(th) - p.z, fast: raml() };
     },
   });
 
@@ -191,7 +193,7 @@ export function create(ctx, st) {
             // Richtungspfeil zeigt die Laufrichtung (gegen den Uhrzeigersinn, Kaaba links)
             const thA = Math.atan2(-p.z, p.x) + 0.45, rA = Math.max(12, Math.hypot(p.x, p.z));
             player.guideTo(rA * Math.cos(thA), -rA * Math.sin(thA));
-            ui.counter(`Runde ${laps + 1} / 7`); ui.goal(st.kind === 'umrah' && laps < 3 ? `Runde ${laps + 1}: Raml – zügig gehen` : 'Kaaba links halten', null); }
+            ui.counter(`Runde ${laps + 1} / 7`); ui.goal(raml() ? `Runde ${laps + 1}: Raml – zügig gehen` : 'Kaaba links halten', null); }
           const phase = ((prog % TAU) + TAU) % TAU;
           setInfo(maxProg < 0 ? segment : phase > 1.5 * Math.PI ? 'yemeni' : phase > 0.3 ? 'free' : segment);
           // Istilam an der Linie (kurz davor bis kurz danach)

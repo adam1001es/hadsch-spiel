@@ -4,7 +4,7 @@ import { heightFn, buildTerrain } from '../world/terrain.js';
 import { palms, mosque, sign } from '../world/props.js';
 import { createCrowd } from '../world/crowd.js';
 import { createPlayer } from '../core/player.js';
-import { createFlow, createMarker, goTo, promptAt, holdAction, sunnah } from '../core/kit.js';
+import { createFlow, createMarker, goTo, promptAt, holdAction, sunnah, isFemale } from '../core/kit.js';
 
 const T = TEXT.miqat;
 
@@ -59,7 +59,7 @@ export function create(ctx, st) {
     marker.hide();
     await flow.run(holdAction(ctx, player, { label: 'Halten: Ghusl', steps: [{ pose: 'bend', sec: 1.2 }, { pose: 'stand', sec: 0.6 }, { pose: 'bend', sec: 1.2 }] }));
     ui.toast('Ghusl ✓'); ctx.mission?.done(0);
-    await ui.choice(T.clothesQ, T.clothes);
+    if (isFemale(ctx)) await ui.choice(T.clothesQF, T.clothesF); else await ui.choice(T.clothesQ, T.clothes);
     player.fig.setColor(0xf6f4ee);
     ui.toast('Ihram angelegt ✓'); ctx.mission?.done(1);
 
@@ -84,8 +84,10 @@ export function create(ctx, st) {
     await flow.until(() => talbiyahDone);
 
     // Ihram-Verbote: 4 Karten (verboten / erlaubt)
-    const pickRules = [...T.rules].sort(() => Math.random() - 0.5).slice(0, 4);
-    if (!pickRules.some((r) => !r[1])) pickRules[3] = T.rules.find((r) => !r[1]);
+    // Für Spielerinnen: statt der Männer-Regel (Kopf, genähte Kleidung) die Regel zu Niqab und Handschuhen
+    const rules = isFemale(ctx) ? [...T.rules.filter((r) => !r[0].startsWith('Männer')), ...T.rulesF] : T.rules;
+    const pickRules = [...rules].sort(() => Math.random() - 0.5).slice(0, 4);
+    if (!pickRules.some((r) => !r[1])) pickRules[3] = rules.find((r) => !r[1]);
     for (const [txt, forbidden] of pickRules) {
       await ui.choice(`${T.rulesQ}<br><b>${txt}</b>`, [
         { html: 'Verboten', ok: forbidden, why: forbidden ? `Richtig – im Ihram verboten.` : 'Das ist erlaubt – im Ihram sogar erwünscht bzw. normal.' },

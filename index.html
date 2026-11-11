@@ -75,6 +75,18 @@
       <h1>Hadsch-Pfad</h1>
       <p>Die Stationen der Pilgerfahrt in 3D. Gehe selbst: Joystick links (am Laptop W A S D), rechts wischen zum Umschauen.</p>
       <p id="disclaimer" class="small"></p>
+      <!-- Profil: macht das Spiel persönlich. Wird nur auf diesem Gerät gespeichert. -->
+      <form id="profile" autocomplete="off" onsubmit="return false">
+        <label class="pf-row"><span>Dein Vorname</span><input id="pfName" type="text" maxlength="20" placeholder="z. B. Amina oder Yusuf" enterkeyhint="done"></label>
+        <div class="pf-row"><span>Du bist</span>
+          <div class="pf-seg" role="radiogroup" aria-label="Geschlecht">
+            <button type="button" data-g="m" role="radio" aria-checked="false">Junge / Mann</button>
+            <button type="button" data-g="f" role="radio" aria-checked="false">Mädchen / Frau</button>
+          </div>
+        </div>
+        <label class="pf-row"><span>Dein Alter</span><select id="pfAge"></select></label>
+        <p class="small pf-note">Wird nur auf diesem Gerät gespeichert – damit dich das Spiel mit Namen anspricht und die Regeln für dich passen.</p>
+      </form>
       <button id="startBtn" class="primary" type="button">Bismillah – Beginnen</button>
       <div id="jump"></div>
     </div>

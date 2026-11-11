@@ -4,7 +4,7 @@ import { heightFn, buildTerrain } from '../world/terrain.js';
 import { lamps, mats, mosque, pebbleGeometry } from '../world/props.js';
 import { createCrowd } from '../world/crowd.js';
 import { createPlayer } from '../core/player.js';
-import { createFlow, createMarker, goTo, pray, holdAction, duaFacing, pointGoal, sunnah, createAutopilot } from '../core/kit.js';
+import { createFlow, createMarker, goTo, pray, holdAction, duaFacing, pointGoal, sunnah, createAutopilot, autoAfter } from '../core/kit.js';
 
 const T = TEXT.muzdalifa;
 const MASHAR = { x: -20, z: -150 };
@@ -93,7 +93,7 @@ export function create(ctx, st) {
   const nearest = () => { let b = -1, bd = 1e9; for (let i = 0; i < PN; i++) { if (pp[i].taken) continue; const d = player.distTo(pp[i].x, pp[i].z); if (d < bd) { bd = d; b = i; } } return b; };
   let pickWait = 0;
   const auto = createAutopilot(ctx, {
-    available: () => collecting && stones >= 2 && stones < 7,
+    available: () => collecting && stones >= autoAfter(ctx, 2) && stones < 7,
     steer() { const i = nearest(); if (i < 0 || player.distTo(pp[i].x, pp[i].z) < 0.9) return null; return { x: pp[i].x - player.pos.x, z: pp[i].z - player.pos.z, fast: false }; },
     tick(dt) {
       pickWait -= dt;

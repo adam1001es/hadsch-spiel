@@ -4,7 +4,7 @@ import { pbr } from '../world/assets.js';
 import { rock, sign } from '../world/props.js';
 import { createCrowd } from '../world/crowd.js';
 import { createPlayer } from '../core/player.js';
-import { createFlow, createMarker, goTo, promptAt, holdAction, duaFacing, pointGoal, sunnah, viewLine, clearView, createAutopilot } from '../core/kit.js';
+import { createFlow, createMarker, goTo, promptAt, holdAction, duaFacing, pointGoal, sunnah, viewLine, clearView, createAutopilot, isFemale, autoAfter } from '../core/kit.js';
 
 const T = TEXT.sai;
 // Gang entlang z: Safa bei z = −L/2, Marwa bei z = +L/2. Spur Richtung Marwa: x > 0 (links der Mitte, in Laufrichtung).
@@ -105,10 +105,10 @@ export function create(ctx, st) {
 
   // Autopilot (optional, ab Strecke 3): eigene Spur, im grünen Bereich zügig, Spurwechsel nur hinter der Barriere
   const auto = createAutopilot(ctx, {
-    available: () => lap >= 2 && lap < 7,
+    available: () => lap >= autoAfter(ctx, 2) && lap < 7,
     steer() {
       const p = player.pos, lx = target === 'marwa' ? 4 : -4, ez = target === 'marwa' ? L / 2 - 3 : -L / 2 + 3;
-      const fast = p.z > G0 && p.z < G1;
+      const fast = p.z > G0 && p.z < G1 && !isFemale(ctx);
       if (Math.sign(p.x) !== Math.sign(lx)) {
         if (Math.abs(p.z) > 37.5) return { x: lx - p.x, z: 0, fast };            // hinter der Barriere: Spur wechseln
         return { x: 0, z: Math.sign(p.z || 1) * 40 - p.z, fast };                // zurück bis hinter die Barriere
@@ -125,7 +125,7 @@ export function create(ctx, st) {
     ctx.mission?.done(1); ctx.mission?.done(2);
     ui.actions([]);
     if (umrah) {
-      ui.info(`<p>Sieben Strecken – du endest auf Marwa.</p><p class="tr">${T.taqsir}</p>`);
+      ui.info(`<p>Sieben Strecken – du endest auf Marwa.</p><p class="tr">${T.taqsir}${isFemale(ctx) ? ' ' + T.taqsirF : ''}</p>`);
       await goTo(ctx, flow, marker, T.taqsirGoal, -5, L / 2 - 5);
       await promptAt(ctx, flow, T.taqsir, () => marker.inside(player.pos, 1));
       marker.hide();
@@ -166,8 +166,11 @@ export function create(ctx, st) {
         ui.counter(`Strecke ${Math.min(7, lap + 1)} / 7`);
         if (!hillAction) pointGoal(ui, player, target === 'marwa' ? 'Marwa' : 'Safa', target === 'marwa' ? 3.5 : -3.5, target === 'marwa' ? L / 2 - 3 : -L / 2 + 3);
         if (inGreen && player.moving > 0.2) {
-          if (greenHintLap !== lap) { greenHintLap = lap; ui.toast(T.green, 2400); if (!player.fast) ui.hint(T.greenHint, 3000); }
-          if (player.fast) ctx.mission?.done(2);
+          if (isFemale(ctx)) { if (greenHintLap !== lap) { greenHintLap = lap; ui.toast(T.greenF, 2600); } ctx.mission?.done(2); }
+          else {
+            if (greenHintLap !== lap) { greenHintLap = lap; ui.toast(T.green, 2400); if (!player.fast) ui.hint(T.greenHint, 3000); }
+            if (player.fast) ctx.mission?.done(2);
+          }
         }
       }
 

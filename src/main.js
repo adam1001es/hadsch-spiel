@@ -28,7 +28,27 @@ engine.renderer.setAnimationLoop(() => {
 
 const startScreen = document.getElementById('start');
 document.getElementById('disclaimer').textContent = content.DISCLAIMER;
-const begin = (i) => { startScreen.hidden = true; ui.el.stick.classList.remove('off'); current = null; stations.go(i); };
+// Profil (Vorname, Geschlecht, Alter) – nur lokal im Browser gespeichert
+const pf = (() => { try { return JSON.parse(localStorage.getItem('hp-profile') || '{}'); } catch { return {}; } })();
+const pfName = document.getElementById('pfName'), pfAge = document.getElementById('pfAge'), pfForm = document.getElementById('profile');
+pfAge.innerHTML = '<option value="">bitte wählen</option>' + Array.from({ length: 11 }, (_, k) => `<option value="${k + 7}">${k + 7} Jahre</option>`).join('') + '<option value="18">18 oder älter</option>';
+pfName.value = pf.name || ''; pfAge.value = pf.age || '';
+const segBtns = [...document.querySelectorAll('.pf-seg button')];
+const setGender = (g) => { pf.gender = g; segBtns.forEach((b) => b.setAttribute('aria-checked', String(b.dataset.g === g))); pfForm.classList.remove('missing'); };
+segBtns.forEach((b) => b.addEventListener('click', () => setGender(b.dataset.g)));
+if (pf.gender) setGender(pf.gender);
+function readProfile() {
+  const name = pfName.value.trim().replace(/[<>&"]/g, '').slice(0, 20);
+  ctx.profile = { name: name || '', gender: pf.gender || 'm', age: +pfAge.value || 0 };
+  try { localStorage.setItem('hp-profile', JSON.stringify(ctx.profile)); } catch { /* egal */ }
+}
+readProfile();
+
+const begin = (i, check = true) => {
+  if (check && !pf.gender) { pfForm.classList.add('missing'); ui.toast('Bitte wähle aus: Junge/Mann oder Mädchen/Frau', 2600); return; }
+  readProfile();
+  startScreen.hidden = true; ui.el.stick.classList.remove('off'); current = null; stations.go(i);
+};
 ui.el.stick.classList.add('off');
 document.getElementById('startBtn').addEventListener('click', () => begin(0));
 const jump = document.getElementById('jump');
@@ -51,4 +71,4 @@ document.getElementById('guideClose').addEventListener('click', () => { guide.hi
 
 // Direkt zu einer Station springen (zum Testen): …/index.html#s2 öffnet Station 2.
 const m = location.hash.match(/^#s(\d+)$/);
-if (m) begin(Math.max(0, Math.min(content.STATIONS.length - 1, +m[1] - 1)));
+if (m) begin(Math.max(0, Math.min(content.STATIONS.length - 1, +m[1] - 1)), false);

@@ -201,7 +201,7 @@ export function createUI() {
     // Lernkarte vor der Station: Worum geht es? Warum? Aufgaben, Wusstest du?
     learnIntro(L, idx, total, st) {
       return new Promise((resolve) => {
-        el.learnCard.innerHTML = `<div class="k">Station ${idx + 1} von ${total} · ${st.day}</div><h2>${st.title}</h2>
+        el.learnCard.innerHTML = `${idx === 0 && L.hello ? `<p class="hello">${L.hello} Schön, dass du dabei bist.</p>` : ''}<div class="k">Station ${idx + 1} von ${total} · ${st.day}</div><h2>${st.title}</h2>
           <h3>Worum geht es?</h3><p>${L.what}</p>
           <h3>Warum?</h3><p>${L.why}</p>
           <h3>Deine Aufgaben</h3><ol>${L.tasks.map((t) => `<li>${t.t}${t.s ? ' <span class="s">· Sunnah (freiwillig)</span>' : ''}</li>`).join('')}</ol>
@@ -216,7 +216,7 @@ export function createUI() {
     // Lernkarte nach der Station: Zusammenfassung + eine Quizfrage. Gibt true zurück, wenn beim ersten Versuch richtig.
     learnRecap(L, st) {
       return new Promise((resolve) => {
-        el.learnCard.innerHTML = `<div class="k">Geschafft · ${st.title} ✓</div><h2>Das hast du gelernt</h2>
+        el.learnCard.innerHTML = `<div class="k">Geschafft · ${st.title} ✓</div><h2>${L.well || 'Gut gemacht!'}</h2><p>Das hast du gelernt:</p>
           <ul>${L.recap.map((r) => `<li>${r}</li>`).join('')}</ul>
           <h3>Quiz</h3><p><b>${L.quiz.q}</b></p><div class="quiz"></div><p class="fb" hidden></p>`;
         el.learn.hidden = false;

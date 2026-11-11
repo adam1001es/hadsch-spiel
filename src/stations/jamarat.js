@@ -4,7 +4,7 @@ import { pbr } from '../world/assets.js';
 import { sign } from '../world/props.js';
 import { createCrowd } from '../world/crowd.js';
 import { createPlayer } from '../core/player.js';
-import { createFlow, createMarker, goTo, duaFacing, pointGoal, sunnah, viewLine, clearView, createAutopilot } from '../core/kit.js';
+import { createFlow, createMarker, goTo, duaFacing, pointGoal, sunnah, viewLine, clearView, createAutopilot, autoAfter } from '../core/kit.js';
 
 const T = TEXT.jamarat;
 // Jede Dschamra: lange ovale Wand (Stadion-Form, ca. 26 m) in einem Becken mit niedrigem Rand. Wand entlang x.
@@ -172,7 +172,7 @@ export function create(ctx, st) {
       const tz = z0 + Math.sign(p.z - z0 || 1) * (RIM_R + 3);
       return { x: Math.max(-A, Math.min(A, p.x)) - p.x, z: tz - p.z, fast: false };
     },
-    available: () => canThrow && (valid >= 2 || cur > 0) && valid < 7,
+    available: () => canThrow && (valid >= autoAfter(ctx, 2) || cur > 0) && valid < 7,
     tick(dt) {
       autoWait -= dt;
       const flying = stones.some((s) => !s.landed);
