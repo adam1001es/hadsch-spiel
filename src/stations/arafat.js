@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { TEXT, ARAFAT_DHIKR, RABBANA } from '../content/hajj.js';
-import { heightFn, buildTerrain } from '../world/terrain.js';
+import { heightFn, buildTerrain, fbm } from '../world/terrain.js';
 import { tents, trees, sign, rock, bus } from '../world/props.js';
 import { createCrowd } from '../world/crowd.js';
 import { createPlayer } from '../core/player.js';
@@ -19,10 +19,18 @@ export function create(ctx, st) {
 
   const base = heightFn({ r0: 330, r1: 700, amp: 160, sx: 1.3, sz: 1 });
   // Jabal ar-Rahma: felsiger Hügel (ca. 30 m) mit weißer Säule auf der Spitze
-  const hill = (x, z) => { const d = Math.hypot(x - HILL.x, z - HILL.z); return d < 60 ? Math.pow(Math.cos((d / 60) * Math.PI / 2), 1.6) * 30 : 0; };
+  const hill = (x, z) => { const d = Math.hypot(x - HILL.x, z - HILL.z); return d < 60 ? Math.pow(Math.cos((d / 60) * Math.PI / 2), 1.6) * 30 + Math.sin((d / 60) * Math.PI) * (fbm(x * 0.12, z * 0.12) - 0.5) * 3 : 0; }; // felsige Unebenheiten, Gipfel und Fuß bleiben glatt
   const h = (x, z) => base(x, z) + hill(x, z);
   buildTerrain(world, h, 1800, 200);
-  for (let i = 0; i < 14; i++) { const a = i * 2.4, r = 10 + (i % 4) * 9; rock(world, { r: 3 + (i % 3) * 1.5, x: HILL.x + Math.cos(a) * r, y: h(HILL.x + Math.cos(a) * r, HILL.z + Math.sin(a) * r) - 0.5, z: HILL.z + Math.sin(a) * r, sy: 0.6, seed: i, rep: 1.5 }); }
+  // Felsbrocken am Hang; ein Weg von Norden (zur Ebene hin) bleibt frei, damit man bis zur Säule hinaufgehen kann
+  const hillRocks = [];
+  for (let i = 0; i < 14; i++) {
+    const a = i * 2.4, r = 10 + (i % 4) * 9, x = HILL.x + Math.cos(a) * r, z = HILL.z + Math.sin(a) * r;
+    if (Math.abs(x - HILL.x) < 9 && z > HILL.z) continue; // Aufstieg frei halten
+    const rr = 3 + (i % 3) * 1.5;
+    rock(world, { r: rr, x, y: h(x, z) - 0.5, z, sy: 0.6, seed: i, rep: 1.5 });
+    hillRocks.push({ type: 'circle', x, z, r: rr * 0.8 });
+  }
   const pillar = new THREE.Mesh(new THREE.BoxGeometry(1.8, 8, 1.8), new THREE.MeshStandardMaterial({ color: 0xf4f2ec, roughness: 0.6 }));
   pillar.position.set(HILL.x, 30 + 4, HILL.z); pillar.castShadow = true; world.add(pillar);
 
@@ -54,7 +62,7 @@ export function create(ctx, st) {
   let boundActive = true, boundHint = 0;
   const colliders = [
     { type: 'inside', x: 0, z: -40, r: 240 },
-    { type: 'circle', x: HILL.x, z: HILL.z, r: 40 }, coach.collider,
+    ...hillRocks, { type: 'circle', x: HILL.x, z: HILL.z, r: 1.4 }, coach.collider, // Säule auf dem Gipfel; der Berg selbst ist begehbar
     { type: 'fn', fn(p) { if (boundActive && insideArafat && p.z > BOUND - 1) { p.z = BOUND - 1; if (boundHint <= 0) { ui.hint(T.stay); boundHint = 3; } } } },
   ];
   let insideArafat = false;
