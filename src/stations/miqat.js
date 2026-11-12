@@ -19,7 +19,7 @@ export function create(ctx, st) {
   buildTerrain(world, h);
   const glow = [];
   // Moschee mit hohem Minarett, Waschhaus, Palmenhain
-  const mosq = mosqueModel(world, { x: 0, z: -55, glow }); // Eingang bei z ≈ -30
+  const mosq = mosqueModel(world, { x: 0, z: -55, glow }); // Eingang bei z ≈ -33
   const wash = new THREE.Group(); wash.position.set(-30, 0, -6); world.add(wash);
   const wm = new THREE.MeshStandardMaterial({ color: 0xece6da, roughness: 0.8 });
   const wb = new THREE.Mesh(new THREE.BoxGeometry(14, 4, 9), wm); wb.position.y = 2; wb.castShadow = wb.receiveShadow = true; wash.add(wb);

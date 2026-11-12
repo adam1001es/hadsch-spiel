@@ -161,13 +161,25 @@ export function mosque(world, { x = 0, z = 0, ry = 0, w = 40, d = 30, h = 9, min
   return grp;
 }
 
-// Moschee als 3D-Modell: „Medina Baye Mosque“ (papaamady, CC BY 4.0), vereinfacht (~53.000 Dreiecke).
-// Grundfläche ca. 46 × 48,5 m (Mitte im Ursprung, Eingang Richtung +z). Bis das Modell geladen ist, steht die einfache Moschee.
-// Zweite Moschee „M-01 [mosque]“ (Designs Forge, CC BY 4.0): zwei Minarette, gerippte Kuppel, 44 × 44 m (variant: 2).
-export const MOSQUE_SIZE = { hw: 23.5, hd: 24.5 };
-const MOSQUES = { 1: { file: 'mosque.glb', hw: 23.5, hd: 24.5 }, 2: { file: 'mosque2.glb', hw: 22, hd: 22 } };
+// Moschee als 3D-Modell: „M-01 [mosque]“ (Designs Forge, CC BY 4.0): zwei Minarette, gerippte Kuppel,
+// Grundfläche 44 × 44 m (Mitte im Ursprung, Eingang Richtung +z). Bis das Modell geladen ist, steht die einfache Moschee.
+// Feine Steinstruktur ohne UV-Koordinaten: echtes Marmorbild, aus drei Richtungen projiziert (triplanar), dezent beigemischt
+function stoneDetail(mat) {
+  const t = pbr('marble_floor', [1, 1]).map;
+  mat.onBeforeCompile = (sh) => {
+    sh.uniforms.tStone = { value: t };
+    sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vWP; varying vec3 vWN;')
+      .replace('#include <worldpos_vertex>', '#include <worldpos_vertex>\nvWP = (modelMatrix * vec4(transformed, 1.0)).xyz; vWN = normalize(mat3(modelMatrix) * objectNormal);');
+    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform sampler2D tStone; varying vec3 vWP; varying vec3 vWN;')
+      .replace('#include <map_fragment>', `vec3 bw = pow(abs(vWN), vec3(4.0)); bw /= (bw.x + bw.y + bw.z);
+        vec3 st = texture2D(tStone, vWP.zy / 2.5).rgb * bw.x + texture2D(tStone, vWP.xz / 2.5).rgb * bw.y + texture2D(tStone, vWP.xy / 2.5).rgb * bw.z;
+        diffuseColor.rgb *= mix(vec3(1.0), st * 1.25, 0.45);`);
+  };
+  mat.customProgramCacheKey = () => 'stone1';
+}
+const MOSQUES = { 2: { file: 'mosque2.glb', hw: 22, hd: 22 } };
 const mosqueLoads = {};
-export function mosqueModel(world, { x = 0, z = 0, ry = 0, glow = null, variant = 1 } = {}) {
+export function mosqueModel(world, { x = 0, z = 0, ry = 0, glow = null, variant = 2 } = {}) {
   const V = MOSQUES[variant];
   const simple = mosque(world, { x, z, ry, w: 44, d: 44, h: 10, minarets: 2, glow });
   const grp = new THREE.Group(); grp.position.set(x, 0, z); grp.rotation.y = ry; world.add(grp);
@@ -176,6 +188,7 @@ export function mosqueModel(world, { x = 0, z = 0, ry = 0, glow = null, variant 
       if (!o.isMesh) return;
       o.geometry = toCreasedNormals(o.geometry, Math.PI / 6); // Kanten scharf, Kuppeln rund
       o.castShadow = true; o.receiveShadow = true;
+      if (o.material.name === 'stone') stoneDetail(o.material);
       if (o.material.name === 'glass') { o.material.emissive = new THREE.Color(0xffd08a); o.material.emissiveIntensity = 0; }
     });
     return g.scene;
