@@ -37,6 +37,9 @@ function frond(len = 3.2, w = 0.55, seg = 8) {
   g.computeVertexNormals();
   return g;
 }
+// Palmen: 3D-Modell „Palm Trees“ (YadroGames, CC BY 4.0), vier Sorten mit echten Blatt-Bildern (je ca. 600 Dreiecke).
+// Bis das Modell geladen ist, stehen einfache Palmen. Jede Palme bekommt eine Sorte (Index % 4).
+let palmLoad = null;
 export function palms(world, list) {
   const trunk = new THREE.CylinderGeometry(0.18, 0.28, 7, 8); trunk.translate(0, 3.5, 0);
   const parts = [];
@@ -46,8 +49,19 @@ export function palms(world, list) {
     parts.push(f);
   }
   const leaves = mergeGeometries(parts);
-  instanced(world, trunk, new THREE.MeshStandardMaterial({ color: 0x7a5f44, roughness: 1 }), list);
-  instanced(world, leaves, new THREE.MeshStandardMaterial({ color: 0x4f6b35, roughness: 0.9, side: THREE.DoubleSide }), list);
+  const simple = [
+    instanced(world, trunk, new THREE.MeshStandardMaterial({ color: 0x7a5f44, roughness: 1 }), list),
+    instanced(world, leaves, new THREE.MeshStandardMaterial({ color: 0x4f6b35, roughness: 0.9, side: THREE.DoubleSide }), list),
+  ];
+  palmLoad ||= new GLTFLoader().loadAsync('./assets/models/palms.glb').then((g) => g.scene).catch(() => null);
+  palmLoad.then((sc) => {
+    if (!sc || !simple[0].parent) return;
+    for (let v = 1; v <= 4; v++) {
+      const sub = list.filter((_, i) => i % 4 === v - 1); if (!sub.length) continue;
+      sc.getObjectByName('palm' + v).traverse((o) => { if (o.isMesh) instanced(world, o.geometry, o.material, sub); });
+    }
+    for (const m of simple) m.removeFromParent();
+  });
 }
 // Neem-Bäume (Arafat): runde Krone
 export function trees(world, list) {
