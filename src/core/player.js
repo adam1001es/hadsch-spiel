@@ -207,20 +207,21 @@ export function createPlayer(ctx, { x = 0, z = 0, heading = 0, color, speed = 1.
 
   // Navigation zum Ziel: dezente Leuchtwinkel am Boden vor der Figur, die wie ein Lauflicht nach vorne
   // aufleuchten und wieder verblassen (Welle, kurze Pause, nächste Welle). Durch die Menge hindurch sichtbar.
+  const smooth = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
   const GN = 5, G0 = 2.6, GS = 1.5; // Anzahl, Abstand des ersten Winkels zur Figur, Abstand zwischen den Winkeln
   const chevTex = (() => {
     const c = document.createElement('canvas'); c.width = c.height = 128; const g = c.getContext('2d');
     const path = () => { g.beginPath(); g.moveTo(22, 84); g.lineTo(64, 44); g.lineTo(106, 84); };
     g.lineCap = g.lineJoin = 'round';
     // weicher Schatten (Kontrast auf hellem Boden), Leuchten, heller Kern – mit shadowBlur (funktioniert auch in Safari)
-    g.shadowColor = 'rgba(40,28,10,0.55)'; g.shadowBlur = 10; path(); g.strokeStyle = 'rgba(60,42,14,0.25)'; g.lineWidth = 28; g.stroke();
-    g.shadowColor = 'rgba(255,200,90,0.95)'; g.shadowBlur = 10; path(); g.strokeStyle = 'rgba(255,210,110,1)'; g.lineWidth = 19; g.stroke();
-    g.shadowBlur = 0; path(); g.strokeStyle = '#fff8e4'; g.lineWidth = 9; g.stroke();
+    g.shadowColor = 'rgba(40,28,10,0.7)'; g.shadowBlur = 10; path(); g.strokeStyle = 'rgba(60,42,14,0.25)'; g.lineWidth = 28; g.stroke();
+    g.shadowColor = 'rgba(240,215,160,0.8)'; g.shadowBlur = 10; path(); g.strokeStyle = 'rgba(236,212,160,0.85)'; g.lineWidth = 18; g.stroke();
+    g.shadowBlur = 0; path(); g.strokeStyle = '#fbf3e2'; g.lineWidth = 8; g.stroke(); // zurückhaltende Farben: Creme mit leichtem Goldschimmer
     const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
   })();
   const chevG = new THREE.PlaneGeometry(1.6, 1.6); chevG.rotateX(-Math.PI / 2); chevG.rotateY(Math.PI); // Spitze zeigt nach +z (= Richtung ang)
   const chevA = new THREE.InstancedBufferAttribute(new Float32Array(GN), 1); chevG.setAttribute('aA', chevA);
-  const chevM = new THREE.MeshBasicMaterial({ map: chevTex, transparent: true, depthWrite: false, depthTest: false, fog: false });
+  const chevM = new THREE.MeshBasicMaterial({ map: chevTex, transparent: true, depthWrite: false, depthTest: true, fog: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -4 }); // liegt auf dem Boden, Figur und Menschen verdecken die Winkel
   chevM.onBeforeCompile = (sh) => {
     sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute float aA; varying float vA;').replace('#include <begin_vertex>', '#include <begin_vertex>\nvA = aA;');
     sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying float vA;').replace('#include <map_fragment>', '#include <map_fragment>\ndiffuseColor.a *= vA;');
@@ -238,8 +239,11 @@ export function createPlayer(ctx, { x = 0, z = 0, heading = 0, color, speed = 1.
     if (gVis < 0.01) { guide.visible = false; return; }
     guide.visible = true;
     const ux = dx / (dist || 1), uz = dz / (dist || 1), ang = Math.atan2(ux, uz);
-    const gy = (x, z) => (ground ? ground(x, z) : 0) + 0.05;
-    const CYCLE = 2.0, wave = (gT % CYCLE) / 1.3; // 1,3 s Welle, dann 0,7 s Pause
+    const gy = (x, z) => (ground ? ground(x, z) : 0) + 0.08;
+    const CYCLE = 4.2, wave = (gT % CYCLE) / 2.6; // langsame Welle (2,6 s), dann 1,6 s Pause
+    // Auf dem richtigen Weg (Blick/Gehrichtung zum Ziel) nur noch ganz schwach
+    const fx = Math.sin(head), fz = Math.cos(head), onWay = smooth(0.75, 0.96, fx * ux + fz * uz) * (walking > 0.3 ? 1 : 0.6);
+    const strength = gVis * (1 - 0.8 * onWay) * 0.95;
     let n = 0;
     for (let i = 0; i < GN; i++) {
       const k = wave * (GN + 1.5) - i; // jeder Winkel leuchtet kurz nach seinem Vorgänger auf
@@ -248,7 +252,7 @@ export function createPlayer(ctx, { x = 0, z = 0, heading = 0, color, speed = 1.
       if (d > dist - 1.2) break;
       gd.position.set(pos.x + ux * d, gy(pos.x + ux * d, pos.z + uz * d), pos.z + uz * d); gd.rotation.set(0, ang, 0);
       gd.scale.setScalar(0.85 + a * 0.15); gd.updateMatrix(); guide.setMatrixAt(n, gd.matrix);
-      chevA.setX(n, a * gVis * (1 - i * 0.07)); n++;
+      chevA.setX(n, a * strength * (1 - i * 0.07)); n++;
     }
     guide.count = n; guide.instanceMatrix.needsUpdate = true; chevA.needsUpdate = true;
   }
