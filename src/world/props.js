@@ -147,6 +147,46 @@ export function mats(world, list) {
   return m;
 }
 
+// Teppiche mit Bordüre und Muster (Canvas-Textur, vier Farbstellungen) und je ein Kissen am Kopfende (+z lokal).
+// list: [x, z, ry]; Teppich 2 × 3 m (lange Seite lokal z). Gibt nichts zurück.
+export function carpets(world, list) {
+  const PAL = [['#7e2a22', '#d9b56a', '#1f2f4a'], ['#22405f', '#d8c9a0', '#8a2a24'], ['#4f3a24', '#e0c48a', '#2e5a4a'], ['#5a1f3a', '#cfae6a', '#24453a']];
+  const geo = new THREE.BoxGeometry(2, 0.03, 3); geo.translate(0, 0.015, 0);
+  const cush = new THREE.BoxGeometry(0.55, 0.13, 0.38, 3, 2, 3); { const p = cush.attributes.position; for (let i = 0; i < p.count; i++) { const x = p.getX(i), z = p.getZ(i); p.setY(i, p.getY(i) * (1 - (x * x) / 0.12 - (z * z) / 0.06) + 0.065); } cush.computeVertexNormals(); }
+  PAL.forEach(([base, line, mid], v) => {
+    const c = document.createElement('canvas'); c.width = 256; c.height = 384; const g = c.getContext('2d');
+    g.fillStyle = base; g.fillRect(0, 0, 256, 384);
+    g.strokeStyle = line; g.lineWidth = 10; g.strokeRect(14, 14, 228, 356); g.lineWidth = 3; g.strokeRect(30, 30, 196, 324);
+    g.fillStyle = mid; for (let i = 0; i < 12; i++) { g.fillRect(36 + (i % 2) * 6, 40 + i * 26, 8, 8); g.fillRect(212 - (i % 2) * 6, 40 + i * 26, 8, 8); }
+    g.save(); g.translate(128, 192); g.fillStyle = line; g.beginPath(); g.moveTo(0, -90); g.lineTo(52, 0); g.lineTo(0, 90); g.lineTo(-52, 0); g.closePath(); g.fill();
+    g.fillStyle = mid; g.beginPath(); g.moveTo(0, -66); g.lineTo(36, 0); g.lineTo(0, 66); g.lineTo(-36, 0); g.closePath(); g.fill(); g.restore();
+    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4;
+    const sub = list.filter((_, i) => i % 4 === v); if (!sub.length) return;
+    const m = new THREE.InstancedMesh(geo, [null, null, new THREE.MeshStandardMaterial({ map: t, roughness: 1 }), null, null, null].map((x) => x || new THREE.MeshStandardMaterial({ color: base, roughness: 1 })), sub.length);
+    sub.forEach(([x, z, ry], i) => { dummy.position.set(x, 0, z); dummy.rotation.set(0, ry, 0); dummy.scale.setScalar(1); dummy.updateMatrix(); m.setMatrixAt(i, dummy.matrix); });
+    m.receiveShadow = true; world.add(m);
+  });
+  const cm = new THREE.InstancedMesh(cush, new THREE.MeshStandardMaterial({ roughness: 0.9 }), list.length), col = new THREE.Color();
+  const CC = [0xe9e2d2, 0xc9b48a, 0x9a3a2e, 0x2f4f6a, 0xd8c7a0];
+  list.forEach(([x, z, ry], i) => { dummy.position.set(x + Math.sin(ry) * 1.2, 0.03, z + Math.cos(ry) * 1.2); dummy.rotation.set(0, ry, 0); dummy.updateMatrix(); cm.setMatrixAt(i, dummy.matrix); cm.setColorAt(i, col.setHex(CC[(i * 7) % CC.length])); });
+  cm.castShadow = true; cm.receiveShadow = true; world.add(cm);
+}
+
+// Kiesfeld („Becken“): flache Mulde mit Kiesboden (echtes Kiesbild, Poly Haven CC0) und niedrigem Steinrand.
+// Gibt die Positionen für einzelne, aufsammelbare Kiesel zurück (dicht verteilt im Feld).
+export function gravelBasin(world, { x, z, rx = 5, rz = 4, ry = 0, n = 200 }) {
+  const grp = new THREE.Group(); grp.position.set(x, 0, z); grp.rotation.y = ry; world.add(grp);
+  const disc = new THREE.Mesh(new THREE.CircleGeometry(1, 40).rotateX(-Math.PI / 2), new THREE.MeshStandardMaterial({ ...pbr('pebbles', [rx / 1.2, rz / 1.2]), roughness: 1 }));
+  disc.scale.set(rx, 1, rz); disc.position.y = 0.025; disc.receiveShadow = true; grp.add(disc);
+  // Rand aus flachen Steinen
+  const rim = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(0.22, 0).scale(1.4, 0.55, 1), new THREE.MeshStandardMaterial({ color: 0x8a7f72, roughness: 0.95, flatShading: true }), 64);
+  for (let i = 0; i < 64; i++) { const a = (i / 64) * Math.PI * 2; dummy.position.set(Math.cos(a) * (rx + 0.15), 0.08, Math.sin(a) * (rz + 0.15)); dummy.rotation.set(0, -a + Math.random() * 0.4, 0); dummy.scale.setScalar(0.8 + Math.random() * 0.5); dummy.updateMatrix(); rim.setMatrixAt(i, dummy.matrix); }
+  rim.castShadow = true; rim.receiveShadow = true; grp.add(rim);
+  const pts = [], c = Math.cos(ry), sn = Math.sin(ry);
+  for (let i = 0; i < n; i++) { const a = Math.random() * Math.PI * 2, r = Math.sqrt(Math.random()) * 0.92; const lx = Math.cos(a) * r * rx, lz = Math.sin(a) * r * rz; pts.push([x + lx * c + lz * sn, z - lx * sn + lz * c]); }
+  return pts;
+}
+
 // Einfache weiße Moschee mit Kuppel und Minarett(en)
 export function mosque(world, { x = 0, z = 0, ry = 0, w = 40, d = 30, h = 9, minarets = 1, glow = null } = {}) {
   const grp = new THREE.Group(); grp.position.set(x, 0, z); grp.rotation.y = ry; world.add(grp);

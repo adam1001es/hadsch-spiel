@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { TEXT } from '../content/hajj.js';
 import { heightFn, buildTerrain } from '../world/terrain.js';
-import { lamps, mats, mosqueModel, pebbleGeometry } from '../world/props.js';
+import { lamps, carpets, gravelBasin, mosqueModel, pebbleGeometry } from '../world/props.js';
 import { createCrowd } from '../world/crowd.js';
 import { createPlayer } from '../core/player.js';
 import { createFlow, createMarker, goTo, pray, holdAction, duaFacing, pointGoal, sunnah, createAutopilot, autoAfter } from '../core/kit.js';
@@ -21,35 +21,55 @@ export function create(ctx, st) {
   buildTerrain(world, h);
   const glow = [];
   const mosq = mosqueModel(world, { x: MASHAR.x, z: MASHAR.z - 25, glow, variant: 2 }); // zwei Minarette wie die Moschee al-Mash'ar al-Haram
-  const ll = [];
-  for (let x = -120; x <= 120; x += 20) for (let z = -120; z <= 120; z += 24) ll.push([x + 3, 0, z]);
+  // Geordnetes Lager: Blöcke aus Teppichen (je 4 Reihen × 8), dazwischen Wege mit Laternen.
+  // Teppich: lange Seite entlang x (Blick zur Qibla nach Westen), Kissen am Ostende.
+  // Kiesfelder („Becken“) liegen frei zwischen den Blöcken; nur dort gibt es Steine.
+  const BASINS = [
+    { x: 11, z: 2, rx: 5, rz: 3.6, ry: 0.3 }, { x: -12, z: -8, rx: 4.6, rz: 3.4, ry: -0.4 }, { x: 13, z: -34, rx: 5.2, rz: 3.8, ry: 0.1 },
+    { x: -14, z: 34, rx: 4.8, rz: 3.5, ry: 0.5 }, { x: 40, z: 60, rx: 5, rz: 4, ry: 0 }, { x: -42, z: -70, rx: 5, rz: 4, ry: 0.2 },
+  ];
+  const RW = 3, RD = 2, GAPX = 1.2, GAPZ = 0.35, ROWS = 4, PER = 8; // Teppich 3 × 2 m (x × z)
+  const BW = ROWS * RW + (ROWS - 1) * GAPX, BD = PER * RD + (PER - 1) * GAPZ, ROAD = 8;
+  const clearAt = (x, z, m) => Math.hypot(x, z - 6) < 9 + m || Math.abs(x) < 4 + m // Startplatz, Hauptweg
+    || BASINS.some((q) => Math.hypot((x - q.x) / (q.rx + 2.5 + m), (z - q.z) / (q.rz + 2.5 + m)) < 1)
+    || (z < -128 + m && Math.abs(x - MASHAR.x) < 40);
+  const rugs = [], ll = [];
+  for (let bx = -118; bx + BW < 118; bx += BW + ROAD) for (let bz = -130; bz + BD < 118; bz += BD + ROAD) {
+    ll.push([bx - ROAD / 2, 0, bz - ROAD / 2, Math.PI / 4]);
+    for (let r = 0; r < ROWS; r++) for (let k = 0; k < PER; k++) {
+      const x = bx + RW / 2 + r * (RW + GAPX), z = bz + RD / 2 + k * (RD + GAPZ);
+      if (Math.hypot(x, z) > 160 || clearAt(x, z, 0)) continue;
+      rugs.push([x, z, Math.PI / 2]); // lange Seite entlang x, Kissen nach +x (Osten)
+    }
+  }
   lamps(world, ll, glow);
   // Warmes Laternenlicht nahe dem Spieler
   const warm = new THREE.PointLight(0xffc27a, 40, 34, 1.5); warm.position.set(3, 8.5, 8); world.add(warm);
-
-  // Matten mit schlafenden Pilgern
-  const ml = [], free = { x: 6, z: -10 };
-  for (let i = 0; i < 260; i++) {
-    const x = (Math.random() - 0.5) * 200, z = (Math.random() - 0.5) * 200;
-    if (Math.hypot(x, z) < 6 || Math.hypot(x - free.x, z - free.z) < 3) continue;
-    ml.push([x, z, Math.random() * Math.PI]);
-  }
-  ml.push([free.x, free.z, 0]);
-  mats(world, ml);
-  const N = Math.min(ml.length - 1, engine.isMobile ? 220 : 260);
+  // eigener Schlafplatz: freier Teppich nahe dem Start
+  let fi = 0; rugs.forEach((r, i) => { if (Math.hypot(r[0] - 8, r[1] + 14) < Math.hypot(rugs[fi][0] - 8, rugs[fi][1] + 14)) fi = i; });
+  const free = { x: rugs[fi][0], z: rugs[fi][1] };
+  carpets(world, rugs);
+  // Pilger auf den Teppichen: schlafen (Kopf auf dem Kissen), sitzen oder beten Richtung Qibla (Westen)
+  // belegte Teppiche: in der Nähe des Starts fast alle, weiter weg nur jeder zweite bis dritte
+  const spots = rugs.filter((r, i) => i !== fi && (Math.hypot(r[0], r[1]) < 45 || (i * 7) % 5 < 2)).sort((a, b) => Math.hypot(a[0], a[1]) - Math.hypot(b[0], b[1]));
+  const N = Math.min(spots.length, engine.isMobile ? 260 : 380);
   const crowd = createCrowd(world, N, { ihram: true });
-  for (let i = 0; i < N; i++) { const [x, z, r] = ml[i]; crowd.set(i, x - Math.sin(r) * 0.8, 0.22, z - Math.cos(r) * 0.8, r + Math.PI, 1, Math.PI / 2); }
+  for (let i = 0; i < N; i++) {
+    const [x, z] = spots[i], kind = (i * 37) % 10;
+    if (kind < 5) crowd.set(i, x + 0.9, 0.24, z, -Math.PI / 2, 1, Math.PI / 2);          // liegt, Kopf am Kissen (Osten)
+    else if (kind < 8) crowd.set(i, x + 0.6, 0.03, z, -Math.PI / 2, 0.62);             // sitzt auf den Fersen, Blick zur Qibla
+    else crowd.set(i, x + 0.8, 0.03, z, -Math.PI / 2, 1);                              // steht im Gebet
+  }
   crowd.commit();
 
-  // Kiesel rund um den Startplatz
-  const PN = 140;
-  const pebbles = new THREE.InstancedMesh(pebbleGeometry(), new THREE.MeshStandardMaterial({ color: 0x8c8274, roughness: 0.9 }), PN);
+  // Kiesel nur in den Kiesfeldern (dicht), dunkelgrau wie die Steine von Muzdalifa
   const pp = [], dm = new THREE.Object3D(), col = new THREE.Color();
+  for (const q of BASINS) for (const [x, z] of gravelBasin(world, { ...q, n: 170 })) pp.push({ x, z, taken: false, fly: -1 });
+  const PN = pp.length;
+  const pebbles = new THREE.InstancedMesh(pebbleGeometry(), new THREE.MeshStandardMaterial({ color: 0x8c8274, roughness: 0.9 }), PN);
   for (let i = 0; i < PN; i++) {
-    const a = Math.random() * Math.PI * 2, r = 1.5 + Math.sqrt(Math.random()) * 16;
-    pp.push({ x: Math.cos(a) * r, z: 4 + Math.sin(a) * r, taken: false, fly: -1 });
-    dm.position.set(pp[i].x, 0.04, pp[i].z); dm.rotation.set(0, Math.random() * 6, 0); dm.scale.setScalar(1.6); dm.updateMatrix();
-    pebbles.setMatrixAt(i, dm.matrix); pebbles.setColorAt(i, col.setHSL(0.08, 0.1, 0.35 + Math.random() * 0.2));
+    dm.position.set(pp[i].x, 0.05, pp[i].z); dm.rotation.set(0, Math.random() * 6, 0); dm.scale.setScalar(0.8 + Math.random() * 0.5); dm.updateMatrix();
+    pebbles.setMatrixAt(i, dm.matrix); pebbles.setColorAt(i, col.setHSL(0.08, 0.07, 0.38 + Math.random() * 0.22));
   }
   pebbles.castShadow = true; world.add(pebbles);
   // Leuchtring um nahe Kiesel, damit man sie findet
@@ -113,8 +133,13 @@ export function create(ctx, st) {
 
     ui.info(`<p>${T.stones}</p><p class="tr">${T.stonesInfo}</p>`);
     collecting = true;
-    ui.goal('Kiesel antippen (leuchtende Ringe)');
-    await flow.until(() => stones >= 7);
+    ui.goal('Zu einem Kiesfeld gehen und Kiesel antippen');
+    await flow.until(() => {
+      // Weg zum nächsten Kiesfeld zeigen, solange man nicht in einem steht
+      let bq = BASINS[0], bd = 1e9; for (const q of BASINS) { const d = player.distTo(q.x, q.z); if (d < bd) { bd = d; bq = q; } }
+      if (bd > Math.max(bq.rx, bq.rz) + 0.5) pointGoal(ui, player, 'Kiesfeld', bq.x, bq.z); else ui.goal('Kiesel antippen (leuchtende Ringe)');
+      return stones >= 7;
+    });
     collecting = false; glint.count = 0; auto.finish();
     ui.toast('7 Steine im Beutel ✓', 2200); ctx.mission?.done(1);
     ui.counter('');
@@ -173,7 +198,7 @@ export function create(ctx, st) {
           tmp.set(s.x + (player.pos.x - s.x) * k, 0.04 + Math.sin(k * Math.PI) * 1.2 + k * 1, s.z + (player.pos.z - s.z) * k);
           dm.position.copy(tmp); dm.scale.setScalar(1.6 * (1 - k * 0.6)); dm.updateMatrix(); pebbles.setMatrixAt(i, dm.matrix);
           if (k >= 1) { s.fly = -1; dm.scale.setScalar(0); dm.updateMatrix(); pebbles.setMatrixAt(i, dm.matrix); stones++; if (collecting) ui.counter(`Steine ${Math.min(7, stones)} / 7`); }
-        } else if (collecting && !s.taken && player.distTo(s.x, s.z) < 5) {
+        } else if (collecting && !s.taken && gi < 14 && player.distTo(s.x, s.z) < 3.2) {
           dm.position.set(s.x, 0.03, s.z); dm.rotation.set(0, 0, 0); dm.scale.setScalar(1 + Math.sin(time * 4 + i) * 0.15); dm.updateMatrix(); glint.setMatrixAt(gi++, dm.matrix);
         }
       }

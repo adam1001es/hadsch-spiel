@@ -9,6 +9,7 @@ Sie wurden für das Spiel eingefärbt bzw. verkleinert.
 | `kiswa_diff/nor/rough.jpg` | Textur `floral_jacquard` (1K) | auf Schwarz eingefärbt (Webmuster der Kiswa) |
 | `desert_*.jpg` | `gravelly_sand` (1K) | Wüstenkies in der Ebene (Gelände) |
 | `granite_*.jpg` | `dry_riverbed_rock` (1K) | Granitfels an Hängen und Bergen (Gelände) |
+| `pebbles_*.jpg` | `river_small_rocks` (1K) | Kiesfelder in Muzdalifa |
 | `../hdri/night.hdr` | HDRI `st_peters_square_night` (1K) | – (Umgebungslicht bei Nacht) |
 | `../hdri/day.hdr` | HDRI `kloofendal_43d_clear_puresky` (1K) | – (Umgebungslicht am Tag) |
 | `../sky/sky_day.jpg` | HDRI `kloofendal_43d_clear_puresky` (Tonemapped JPG, obere Hälfte, 4096 px) | – (sichtbarer Himmel am Tag) |
