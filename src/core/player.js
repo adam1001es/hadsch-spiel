@@ -82,7 +82,9 @@ export function createFigure(world, { color = 0xf3f1ea, skin = 0xc68642, ring = 
       else if (k !== 'cover') mat.color = new THREE.Color(0xffffff);
       // Gehen, Armhaltung, Knien und Verbeugen (weich gebeugt an der Hüfte) im Shader
       const wp = WALK[PREFIX[id] + k] || { hip: 0 };
-      walkU.push(walkMaterial(mat, wp, { instanced: false, groupHip: HIP, body: true, faceKey: PREFIX[id] + k, group: PREFIX[id][0] }));
+      const wu = walkMaterial(mat, wp, { instanced: false, groupHip: HIP, body: true, faceKey: PREFIX[id] + k, group: PREFIX[id][0] });
+      wu.eAdd = id === 'woman' ? 0.35 : 0; // Pilgerin: Unterarme hängen im Modell gerade → Ellbogen etwas mehr beugen
+      walkU.push(wu);
       const a = new THREE.Mesh(part.geometry, mat);
       a.castShadow = true; grp.add(a);
       if (k === 'cover') mCover = [a];
@@ -146,7 +148,7 @@ export function createFigure(world, { color = 0xf3f1ea, skin = 0xc68642, ring = 
       // Modell-Figur: Beine/Arme im Shader (nur im Stehen/Gehen, nicht beim Beten oder Liegen)
       const wAmt = walking > 0.05 && cur.hip < 0.2 && cur.drop < 0.05 && cur.lie < 0.05 ? Math.min(1, walking) : 0;
       const kn = Math.min(1, cur.drop / 0.55); // Knien statt Stauchen
-      for (const u of walkU) { u.uWalk.value.x = swing; u.uWalk.value.y += (wAmt - u.uWalk.value.y) * Math.min(1, dt * 10); u.uWalk.value.z = kn; u.uArm.value.set(cur.m[0], cur.m[1]); u.uElbow.value.set(cur.e[0], cur.e[1]); }
+      for (const u of walkU) { u.uWalk.value.x = swing; u.uWalk.value.y += (wAmt - u.uWalk.value.y) * Math.min(1, dt * 10); u.uWalk.value.z = kn; u.uArm.value.set(cur.m[0], cur.m[1]); u.uElbow.value.set(cur.e[0] + u.eAdd * Math.min(1, cur.m[0] * 2), cur.e[1] + u.eAdd * Math.min(1, cur.m[1] * 2)); }
       hip.rotation.x = cur.hip;
       lowerDress.scale.y = lowerIzar.scale.y = 1 - cur.drop;
       const sink = (HIP - 0.2) * Math.min(1, cur.drop / 0.55);
