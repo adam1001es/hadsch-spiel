@@ -1,5 +1,9 @@
 // Übersetzung (sq): deutscher Quelltext → Übersetzung. Erzeugt aus den Spieltexten; fehlende Einträge bleiben deutsch.
 export default {
+"Ton an": "Zëri i ndezur",
+"Ton aus": "Zëri i fikur",
+"Ton an oder aus": "Ndiz ose fik zërin",
+"Ton an/aus": "Zëri ndiz/fik",
 "(Sunnah)": "(sunet)",
 "10. Dhul-Hiddscha": "10 Dhul-Hixhxhe",
 "10. Dhul-Hiddscha · Yaum an-Nahr": "10 Dhul-Hixhxhe · Kurban Bajrami (Jeumun-Nahr)",

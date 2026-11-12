@@ -1,5 +1,9 @@
 // Übersetzung (fa): deutscher Quelltext → Übersetzung. Erzeugt aus den Spieltexten; fehlende Einträge bleiben deutsch.
 export default {
+"Ton an": "صدا روشن",
+"Ton aus": "صدا خاموش",
+"Ton an oder aus": "روشن یا خاموش کردن صدا",
+"Ton an/aus": "صدا روشن/خاموش",
 "(Sunnah)": "(سنت)",
 "10. Dhul-Hiddscha": "۱۰ ذی‌الحجه",
 "10. Dhul-Hiddscha · Yaum an-Nahr": "۱۰ ذی‌الحجه · عید قربان (یوم النحر)",

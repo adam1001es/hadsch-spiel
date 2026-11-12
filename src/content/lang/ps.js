@@ -1,5 +1,9 @@
 // Übersetzung (ps): deutscher Quelltext → Übersetzung. Erzeugt aus den Spieltexten; fehlende Einträge bleiben deutsch.
 export default {
+"Ton an": "غږ چالان",
+"Ton aus": "غږ بند",
+"Ton an oder aus": "غږ چالان یا بند کړه",
+"Ton an/aus": "غږ چالان/بند",
 "(Sunnah)": "(سنت)",
 "10. Dhul-Hiddscha": "د ذوالحجې ۱۰مه",
 "10. Dhul-Hiddscha · Yaum an-Nahr": "د ذوالحجې ۱۰مه · د لوی اختر ورځ (یوم النحر)",

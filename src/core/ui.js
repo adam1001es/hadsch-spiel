@@ -77,7 +77,7 @@ export function createUI() {
           if (!ok || !a.isConnected) return;
           const b = document.createElement('button'); b.type = 'button'; b.className = 'play'; b.setAttribute('aria-label', 'Anhören'); b.textContent = '▶';
           b.onclick = (e) => { e.stopPropagation(); playAudio(a.dataset.audio); }; a.prepend(b);
-          if (settings.recite) playAudio(a.dataset.audio);
+          if (settings.recite) playAudio(a.dataset.audio, null, { auto: true });
         }));
       }
       layout();

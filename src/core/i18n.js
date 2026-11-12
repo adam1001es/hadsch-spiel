@@ -156,7 +156,8 @@ export async function hasAudio(name) {
   return audioOk.get(name);
 }
 let player = null;
-export function playAudio(name, onEnd) {
+export function playAudio(name, onEnd, { auto = false } = {}) {
+  if (auto && !settings.voice) return null; // Ton aus: nichts automatisch abspielen (▶ geht immer)
   stopSpeaking();
   if (player) { player.pause(); player = null; }
   player = new Audio(`./assets/audio/${name}.mp3`); player.onended = () => onEnd && onEnd(); player.play().catch(() => {});

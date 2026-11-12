@@ -1,5 +1,9 @@
 // Übersetzung (bs): deutscher Quelltext → Übersetzung. Erzeugt aus den Spieltexten; fehlende Einträge bleiben deutsch.
 export default {
+"Ton an": "Zvuk uključen",
+"Ton aus": "Zvuk isključen",
+"Ton an oder aus": "Zvuk uključi ili isključi",
+"Ton an/aus": "Zvuk uklj./isklj.",
 "(Sunnah)": "(sunnet)",
 "10. Dhul-Hiddscha": "10. zul-hidždže",
 "10. Dhul-Hiddscha · Yaum an-Nahr": "10. zul-hidždže · Kurban-bajram (Jevmun-nahr)",

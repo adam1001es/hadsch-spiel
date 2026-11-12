@@ -1,5 +1,9 @@
 // Übersetzung (tr): deutscher Quelltext → Übersetzung. Erzeugt aus den Spieltexten; fehlende Einträge bleiben deutsch.
 export default {
+"Ton an": "Ses açık",
+"Ton aus": "Ses kapalı",
+"Ton an oder aus": "Sesi aç veya kapat",
+"Ton an/aus": "Ses aç/kapat",
 "(Sunnah)": "(Sünnet)",
 "10. Dhul-Hiddscha": "10 Zilhicce",
 "10. Dhul-Hiddscha · Yaum an-Nahr": "10 Zilhicce · Kurban Bayramı (Yevm-i Nahr)",

@@ -8,7 +8,7 @@ import { preview } from './stations/tawaf.js';
 import * as content from './content/hajj.js';
 import { progressStore } from './core/progress.js';
 import { preloadPeople, setCrowdCamera, peopleStatus } from './world/crowd.js';
-import { initI18n, LANGS, settings, saveSettings, lang, unlockVoice, voiceAvailable, speak, stopSpeaking } from './core/i18n.js';
+import { initI18n, LANGS, settings, saveSettings, lang, unlockVoice, voiceAvailable, speak, stopSpeaking, stopAudio } from './core/i18n.js';
 initI18n();
 addEventListener('pointerdown', unlockVoice, { once: true, capture: true });
 const peopleReady = preloadPeople(); // 3D-Pilgerinnen im Hintergrund laden
@@ -109,7 +109,11 @@ function langButtons(host) {
 langButtons(document.getElementById('setLang')); langButtons(document.getElementById('startLang'));
 const setVoice = document.getElementById('setVoice'), setRecite = document.getElementById('setRecite'), voiceNote = document.getElementById('setVoiceNote');
 setVoice.checked = settings.voice; setRecite.checked = settings.recite;
-setVoice.addEventListener('change', () => { settings.voice = setVoice.checked; saveSettings(); if (!settings.voice) stopSpeaking(); else speak('So klingt die Stimme.'); });
+const soundBtn = document.getElementById('soundBtn');
+const setSound = (on) => { settings.voice = on; saveSettings(); setVoice.checked = on; soundBtn.setAttribute('aria-pressed', String(on)); if (!on) { stopSpeaking(); stopAudio(); } };
+soundBtn.setAttribute('aria-pressed', String(settings.voice));
+soundBtn.addEventListener('click', () => { const on = !settings.voice; setSound(on); if (on) speak('So klingt die Stimme.'); ui.toast(on ? 'Ton an' : 'Ton aus', 1200); });
+setVoice.addEventListener('change', () => { setSound(setVoice.checked); if (settings.voice) speak('So klingt die Stimme.'); });
 setRecite.addEventListener('change', () => { settings.recite = setRecite.checked; saveSettings(); });
 const rateBtns = [...document.querySelectorAll('#setRate button')];
 const markRate = () => rateBtns.forEach((b) => b.setAttribute('aria-pressed', String(Math.abs(+b.dataset.r - settings.rate) < 0.01)));

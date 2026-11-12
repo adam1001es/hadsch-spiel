@@ -1,5 +1,9 @@
 // Übersetzung (ce): deutscher Quelltext → Übersetzung. Erzeugt aus den Spieltexten; fehlende Einträge bleiben deutsch.
 export default {
+"Ton an": "Аз латийна",
+"Ton aus": "Аз дӀайайина",
+"Ton an oder aus": "Аз лато я дӀайайа",
+"Ton an/aus": "Аз лато/дӀайайа",
 "(Sunnah)": "(суннат)",
 "10. Dhul-Hiddscha": "Зуль-Хьиджан 10-гӀа де",
 "10. Dhul-Hiddscha · Yaum an-Nahr": "Зуль-Хьиджан 10-гӀа де · Къурбан-ДезгӀа (Йавм ан-Нахьр)",

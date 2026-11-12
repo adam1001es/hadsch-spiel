@@ -1,5 +1,9 @@
 // Übersetzung (ar): deutscher Quelltext → Übersetzung. Erzeugt aus den Spieltexten; fehlende Einträge bleiben deutsch.
 export default {
+"Ton an": "الصوت مفعَّل",
+"Ton aus": "الصوت متوقف",
+"Ton an oder aus": "تشغيل الصوت أو إيقافه",
+"Ton an/aus": "الصوت تشغيل/إيقاف",
 "(Sunnah)": "(سنة)",
 "10. Dhul-Hiddscha": "10 ذو الحجة",
 "10. Dhul-Hiddscha · Yaum an-Nahr": "10 ذو الحجة · يوم النحر",

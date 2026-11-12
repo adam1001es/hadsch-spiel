@@ -222,3 +222,9 @@ html[data-rtl] body { font-family: Vazirmatn, Figtree, system-ui, sans-serif; }
 html[data-rtl] #panel, html[data-rtl] #choice, html[data-rtl] #goal, html[data-rtl] #hint, html[data-rtl] #toast, html[data-rtl] #mission,
 html[data-rtl] #start .card, html[data-rtl] #learnCard, html[data-rtl] .set-card, html[data-rtl] #coach { direction: rtl; }
 html[data-rtl] .tr { direction: ltr; text-align: left; }
+
+/* Ton an/aus (unter dem Zahnrad) */
+#soundBtn { position: fixed; z-index: 30; top: calc(env(safe-area-inset-top, 0px) + 112px); right: var(--sr); width: 40px; height: 40px; padding: 0; border-radius: 50%; display: grid; place-items: center; background: rgba(20, 37, 31, .7); color: #e6c46e; border: 1.5px solid rgba(230,196,110,.8); box-shadow: 0 2px 10px rgba(0,0,0,.3); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+#soundBtn svg { width: 21px; height: 21px; }
+#soundBtn .on { display: none; } #soundBtn[aria-pressed="true"] .on { display: block; } #soundBtn[aria-pressed="true"] .off { display: none; }
+#soundBtn[aria-pressed="false"] { color: rgba(230,196,110,.65); }

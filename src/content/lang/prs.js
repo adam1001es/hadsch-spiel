@@ -1,5 +1,9 @@
 // Übersetzung (prs): deutscher Quelltext → Übersetzung. Erzeugt aus den Spieltexten; fehlende Einträge bleiben deutsch.
 export default {
+"Ton an": "آواز روشن",
+"Ton aus": "آواز خاموش",
+"Ton an oder aus": "روشن یا خاموش کردن آواز",
+"Ton an/aus": "آواز روشن/خاموش",
 "(Sunnah)": "(سنت)",
 "10. Dhul-Hiddscha": "۱۰ ذی‌الحجه",
 "10. Dhul-Hiddscha · Yaum an-Nahr": "۱۰ ذی‌الحجه · عید قربان (یوم النحر)",

@@ -1,5 +1,9 @@
 // Übersetzung (en): deutscher Quelltext → Übersetzung. Erzeugt aus den Spieltexten; fehlende Einträge bleiben deutsch.
 export default {
+"Ton an": "Sound on",
+"Ton aus": "Sound off",
+"Ton an oder aus": "Sound on or off",
+"Ton an/aus": "Sound on/off",
 "(Sunnah)": "(Sunnah)",
 "10. Dhul-Hiddscha": "10th Dhul-Hijjah",
 "10. Dhul-Hiddscha · Yaum an-Nahr": "10th Dhul-Hijjah · Yawm an-Nahr",
