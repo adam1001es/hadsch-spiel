@@ -27,3 +27,7 @@ Hizam-Kalligrafie und Türornamente werden bewusst stilisiert per Canvas gezeich
 | `hizam_a.jpg`, `hizam_b.jpg`, `kiswa_panels.png`, `sitara.jpg` (+ `_mr.jpg`), `kaaba_stone.jpg` (+ `_bump.jpg`) | Texturen aus „Holy Kaaba – Mecca – Low Poly“ von **haidarzafermoayad**, https://sketchfab.com/3d-models/holy-kaaba-mecca-low-poly-08ea4704d00c40419094487e9646648d, Lizenz **CC BY 4.0** (http://creativecommons.org/licenses/by/4.0/) | zugeschnitten, 2× vergrößert, geschärft; `_mr.jpg` = selbst erzeugte Metall-/Rauheitsmaske für die Goldfäden |
 
 Nur die Texturen werden verwendet, nicht die Geometrie des Modells. Steinsockel und Marmorleiste sind nach dem Vorbild des Modells nachgebaut.
+
+## Islamische Muster (`patterns/`)
+
+„Islamic patterns“ von **GhalebR**, https://skfb.ly/oKpZY, Lizenz **CC BY 4.0**. Die 3D-Platten wurden frontal gerendert und als Bilder gespeichert: `pattern_N.png` (Form mit Transparenz) und `pattern_N_nor.jpg` (Relief, aus der Form berechnet). Genutzt für Gitterfenster, Friese und Deckenleuchten (Sa'i, Miqat).

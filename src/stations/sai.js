@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { TEXT, SAFA_AYAH } from '../content/hajj.js';
 import { pbr } from '../world/assets.js';
 import { rock, sign } from '../world/props.js';
+import { patternMat, ornamentPanel, ornamentBand } from '../world/ornament.js';
 import { createCrowd } from '../world/crowd.js';
 import { createPlayer } from '../core/player.js';
 import { createFlow, createMarker, goTo, promptAt, holdAction, duaFacing, pointGoal, sunnah, viewLine, clearView, createAutopilot, isFemale, autoAfter } from '../core/kit.js';
@@ -25,12 +26,13 @@ export function create(ctx, st) {
   floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; world.add(floor);
   const ceil = new THREE.Mesh(new THREE.PlaneGeometry(W, L + 16), new THREE.MeshStandardMaterial({ color: 0xf1ede4, roughness: 0.8, side: THREE.DoubleSide }));
   ceil.rotation.x = Math.PI / 2; ceil.position.y = H; world.add(ceil);
-  const panelMat = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xfff4dc, emissiveIntensity: 1.4 });
+  // Deckenleuchten mit Sternmuster (leuchtendes Gitter) statt weißer Quadrate
+  const lampPattern = patternMat(3, { color: 0xffffff, emissive: 0xfff4dc }); lampPattern.emissiveIntensity = 1.5;
   const greenMat = new THREE.MeshStandardMaterial({ color: 0x9fffc4, emissive: 0x2bff88, emissiveIntensity: 2.2 });
   for (let z = -L / 2; z < L / 2; z += 6) {
     for (const x of [-5, 5]) {
       const green = z > G0 - 1 && z < G1 + 1;
-      const p = new THREE.Mesh(new THREE.PlaneGeometry(green ? 8 : 3.4, green ? 0.5 : 3.4), green ? greenMat : panelMat);
+      const p = new THREE.Mesh(new THREE.PlaneGeometry(green ? 8 : 3.4, green ? 0.5 : 3.4), green ? greenMat : lampPattern);
       p.rotation.x = Math.PI / 2; p.position.set(x, H - 0.02, z); world.add(p);
     }
   }
@@ -48,6 +50,14 @@ export function create(ctx, st) {
       const cap = new THREE.Mesh(new THREE.BoxGeometry(1.3, 0.5, 1.3), archMat); cap.position.set(sx * (W / 2 - 0.6), H - 1.5, z); world.add(cap);
     }
   }
+  // Islamische Verzierungen: Gitterfenster zwischen den Säulen (von hinten beleuchtet), goldener Fries unter der Decke,
+  // Medaillons an den Stirnwänden neben den Schildern
+  for (const sx of [-1, 1]) {
+    for (let z = -L / 2 + 3.75, k = 0; z < L / 2; z += 7.5, k++) ornamentPanel(world, { x: sx * (W / 2 - 0.16), y: 4.4, z, ry: -sx * Math.PI / 2, w: 3, h: 3, i: k % 2 ? 3 : 2 });
+    ornamentBand(world, { x: sx * (W / 2 - 0.02), y: H - 1.05, z: 0, ry: -sx * Math.PI / 2, len: L + 16, h: 0.7 });
+  }
+  for (const s2 of [-1, 1]) for (const mx of [-6.2, 6.2]) ornamentPanel(world, { x: mx, y: 6.5, z: s2 * (L / 2 + 7.97), ry: s2 > 0 ? Math.PI : 0, w: 2.8, h: 2.8, i: 1, back: 0x6b5a3e, backGlow: 0.25 });
+
   // Mittelbarriere mit Säulen (trennt die Laufrichtungen)
   const barrierMat = new THREE.MeshStandardMaterial({ color: 0xbfb6a4, roughness: 0.5 });
   const bar = new THREE.Mesh(new THREE.BoxGeometry(0.8, 1.1, 72), barrierMat); bar.position.set(0, 0.55, 0); bar.castShadow = true; world.add(bar);
