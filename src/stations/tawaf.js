@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { buildKaaba, KAABA } from '../world/kaaba.js';
-import { buildHaram } from '../world/haram.js';
+import { buildHaram, matafRadius } from '../world/haram.js';
 import { createCrowd } from '../world/crowd.js';
 import { RABBANA, TEXT } from '../content/hajj.js';
 import { createPlayer } from '../core/player.js';
@@ -53,6 +53,7 @@ export function create(ctx, st) {
     { type: 'box', x: 0, z: 0, hw: w / 2 + 0.25, hd: d / 2 + 0.25 },
     { type: 'circle', x: -1.5, z: d / 2 + 9, r: 1.0 },
     { type: 'inside', x: 0, z: 0, r: 48 },
+    { type: 'fn', fn(p, r) { const d = Math.hypot(p.x, p.z), m = matafRadius(p.x, p.z) - 1.2 - r; if (d > m) { p.x *= m / d; p.z *= m / d; } } }, // nicht in die Säulen der Arkaden
     { type: 'fn', fn(p, r) {
       const dx = p.x - hx, dz = p.z, dd = Math.hypot(dx, dz), a = Math.atan2(dz, dx);
       if (Math.abs(a) > Math.PI / 3 || dd < 6.6 - r || dd > 7.4 + r) return;
@@ -225,7 +226,8 @@ export function create(ctx, st) {
       for (let i = 0; i < N; i++) {
         aa[i] += av[i] * dt;
         const a = aa[i];
-        let x = ar[i] * Math.cos(a), z = -ar[i] * Math.sin(a);
+        const rr = Math.min(ar[i], matafRadius(Math.cos(a), -Math.sin(a)) - 1.6);
+        let x = rr * Math.cos(a), z = -rr * Math.sin(a);
         const dx = x - p.x, dz = z - p.z, dd = Math.hypot(dx, dz);
         if (dd < 1.1) { x = p.x + (dx / (dd || 1)) * 1.1; z = p.z + (dz / (dd || 1)) * 1.1; }
         else {
@@ -257,7 +259,7 @@ export function preview(ctx) {
     update(dt) {
       t += dt;
       for (const m of glow) m.emissiveIntensity = sky.art * 0.55;
-      for (let i = 0; i < N; i++) { aa[i] += av[i] * dt; crowd.set(i, ar[i] * Math.cos(aa[i]), 0, -ar[i] * Math.sin(aa[i]), Math.atan2(-Math.sin(aa[i]), -Math.cos(aa[i]))); }
+      for (let i = 0; i < N; i++) { aa[i] += av[i] * dt; const rr = Math.min(ar[i], matafRadius(Math.cos(aa[i]), -Math.sin(aa[i])) - 1.6); crowd.set(i, rr * Math.cos(aa[i]), 0, -rr * Math.sin(aa[i]), Math.atan2(-Math.sin(aa[i]), -Math.cos(aa[i]))); }
       crowd.commit();
       engine.camera.position.set(Math.cos(t * 0.05) * 48, 16, Math.sin(t * 0.05) * 48);
       engine.camera.lookAt(0, 7, 0);
