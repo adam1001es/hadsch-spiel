@@ -46,13 +46,13 @@ export function walkMaterial(mat, p, { instanced = true, yOff = 0, groupHip = 0.
   if (!p) return null;
   const P = { hip: 0, legAmp: 0, lift: 0, shy: 1.38, armX: 9, armAmp: 0, armMinY: 0.55, fold: true, ...p };
   const H = P.hip || groupHip, KN = H * 0.5, SEAT = 0.2; // Kniehöhe, Sitzhöhe der Hüfte beim Knien
-  const uniforms = { uWalk: { value: new THREE.Vector3(0, 0, 0) }, uArm: { value: new THREE.Vector2(0, 0) }, uElbow: { value: new THREE.Vector2(0, 0) }, uBody: { value: new THREE.Vector2(0, 0) }, uFace: { value: new THREE.Vector3(1, 1, 1) } };
+  const uniforms = { uWalk: { value: new THREE.Vector3(0, 0, 0) }, uArm: { value: new THREE.Vector2(0, 0) }, uElbow: { value: new THREE.Vector2(0, 0) }, uBody: { value: new THREE.Vector2(0, 0) }, uKnee: { value: new THREE.Vector2(0, 0) }, uFace: { value: new THREE.Vector3(1, 1, 1) } };
   mat.onBeforeCompile = (sh) => {
     Object.assign(sh.uniforms, uniforms);
     if (P.trim) patchTrim(sh);
     sh.vertexShader = sh.vertexShader
       .replace('#include <common>', `#include <common>
-${instanced ? 'attribute vec3 aWalk;' : 'uniform vec3 uWalk; uniform vec2 uArm; uniform vec2 uElbow; uniform vec2 uBody;'}
+${instanced ? 'attribute vec3 aWalk;' : 'uniform vec3 uWalk; uniform vec2 uArm; uniform vec2 uElbow; uniform vec2 uBody; uniform vec2 uKnee;'}
 ${P.armAttr ? 'attribute float armW;' : ''}
 ${face ? (instanced ? 'attribute vec3 aFace;' : 'uniform vec3 uFace;') : ''}
 vec3 walkRot(vec3 v, vec2 piv, float a) { float c = cos(a), s = sin(a); float dy = v.y - piv.x, dz = v.z - piv.y; return vec3(v.x, piv.x + dz * s + dy * c, piv.y + dz * c - dy * s); }`)
@@ -68,15 +68,18 @@ ${face ? `{ // Gesichtsform: Breite (x), Länge (y), Kinnpartie (z) – nur ober
   vec3 wk = ${instanced ? 'aWalk' : 'uWalk'};
   float kneel = wk.z, amt = wk.y * (1.0 - kneel);
   ${instanced ? 'vec2 armP = vec2(0.45 * kneel); vec2 elbP = vec2(0.6 * kneel);' : 'vec2 armP = uArm; vec2 elbP = uElbow;'}
-  if (amt > 0.001 || kneel > 0.001 || armP.x + armP.y + elbP.x + elbP.y > 0.001${body ? ' || uBody.x > 0.001' : ''}) {
+  if (amt > 0.001 || kneel > 0.001 || armP.x + armP.y + elbP.x + elbP.y > 0.001${body ? ' || uBody.x > 0.001 || abs(uKnee.x) + abs(uKnee.y) > 0.001' : ''}) {
     vec3 v = transformed; v.y += ${f(yOff)};
     float sideF = clamp(v.x / 0.07, -1.0, 1.0);
     float sw = sin(wk.x);
     bool isArm = ${P.armAttr ? 'armW > 0.02' : `abs(v.x) > ${f(P.armX)} && v.y < ${f(P.shy + 0.06)} && v.y > ${f(P.armMinY)}`};
     if (v.y < ${f(P.hip)} && !isArm) {
       float w = clamp((${f(P.hip)} - v.y) / ${f(H)}, 0.0, 1.0);
-      ${P.fold ? `if (v.y < ${f(KN)}) v = walkRot(v, vec2(${f(KN)}, 0.0), 3.14159 * kneel); // Unterschenkel zurückklappen` : ''}
-      v = walkRot(v, vec2(${f(P.hip)}, 0.0), ${f(P.legAmp)} * amt * sw * sideF + 1.5708 * kneel ${P.fold ? '' : '* 0.9'});
+      // Knien in zwei Teilen: Oberschenkel um die Hüfte nach vorn (th), Unterschenkel am Knie zurück (fo),
+      // weicher Übergang am Knie. Kleidung wird genauso gefaltet (wie ein Gewand beim Sitzen auf den Fersen).
+      ${body ? 'float th = uKnee.x, fo = uKnee.y;' : 'float th = 1.5708 * kneel, fo = -3.14159 * kneel;'}
+      if (fo != 0.0 && v.y < ${f(KN + 0.05)}) v = walkRot(v, vec2(${f(KN)}, 0.0), fo * smoothstep(${f(KN + 0.05)}, ${f(KN - 0.05)}, v.y));
+      v = walkRot(v, vec2(${f(P.hip)}, 0.0), ${f(P.legAmp)} * amt * sw * sideF + th);
       v.y += ${f(P.lift)} * amt * max(0.0, cos(wk.x) * sign(sideF)) * abs(sideF) * w;
     }
     if (isArm) {
@@ -97,7 +100,7 @@ ${face ? `{ // Gesichtsform: Breite (x), Länge (y), Kinnpartie (z) – nur ober
   }
 }`);
   };
-  const key = 'walk4' + JSON.stringify(P) + instanced + yOff + groupHip + body + face + group;
+  const key = 'walk5' + JSON.stringify(P) + instanced + yOff + groupHip + body + face + group;
   mat.customProgramCacheKey = () => key;
   return uniforms;
 }

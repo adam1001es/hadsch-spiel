@@ -16,8 +16,8 @@ const POSES = {
   stand: { hip: 0, drop: 0, arm: [0.05, 0.05], lie: 0, m: [0, 0], e: [0, 0] },
   walk: { hip: 0.06, drop: 0, arm: [0.05, 0.05], lie: 0, m: [0, 0], e: [0, 0] },
   ruku: { hip: 1.45, drop: 0, arm: [1.35, 1.35], lie: 0, m: [1.35, 1.35], e: [0, 0] },
-  sujud: { hip: 1.75, drop: 0.62, arm: [2.6, 2.6], lie: 0, m: [1.6, 1.6], e: [0.5, 0.5] },
-  sit: { hip: 0.05, drop: 0.55, arm: [0.5, 0.5], lie: 0, m: [0.55, 0.55], e: [0.55, 0.55] },
+  sujud: { hip: 2.15, drop: 0.62, arm: [2.6, 2.6], lie: 0, m: [1.6, 1.6], e: [0.5, 0.5], th: 0.35 }, // Knie am Boden, Oberschenkel fast senkrecht
+  sit: { hip: 0.05, drop: 0.55, arm: [0.5, 0.5], lie: 0, m: [0.55, 0.55], e: [0.55, 0.55], th: 1.5708 }, // auf den Fersen sitzen
   dua: { hip: 0.08, drop: 0, arm: [1.15, 1.15], lie: 0, m: [0.5, 0.5], e: [1.45, 1.45] },
   istilam: { hip: 0.05, drop: 0, arm: [1.9, 0.2], lie: 0, m: [1.75, 0.05], e: [0.15, 0] },
   drink: { hip: 0.05, drop: 0, arm: [1.6, 0.1], lie: 0, m: [0.75, 0.05], e: [2.05, 0] },
@@ -143,7 +143,7 @@ export function createFigure(world, { color = 0xf3f1ea, skin = 0xc68642, ring = 
   }
   world.add(root);
 
-  const cur = { hip: 0, drop: 0, arm: [0, 0], lie: 0, m: [0, 0], e: [0, 0] };
+  const cur = { hip: 0, drop: 0, arm: [0, 0], lie: 0, m: [0, 0], e: [0, 0], th: 0 };
   let target = POSES.stand, swing = 0;
   return {
     root, cloth, skinM,
@@ -169,8 +169,12 @@ export function createFigure(world, { color = 0xf3f1ea, skin = 0xc68642, ring = 
       for (const u of walkU) { u.uWalk.value.x = swing; u.uWalk.value.y += (wAmt - u.uWalk.value.y) * Math.min(1, dt * 10); u.uWalk.value.z = kn; u.uArm.value.set(cur.m[0], cur.m[1]); u.uElbow.value.set(cur.e[0] + u.eAdd * Math.min(1, cur.m[0] * 2), cur.e[1] + u.eAdd * Math.min(1, cur.m[1] * 2)); }
       hip.rotation.x = cur.hip;
       lowerDress.scale.y = lowerIzar.scale.y = 1 - cur.drop;
-      const sink = (HIP - 0.2) * Math.min(1, cur.drop / 0.55);
-      for (const u of walkU) u.uBody.value.set(cur.hip, sink);
+      // Beine: Oberschenkel-Winkel th, Unterschenkel liegt immer waagerecht nach hinten (fo = -π/2 - th);
+      // Hüfthöhe: auf den Fersen ca. 0,2 m, mit fast senkrechten Oberschenkeln (Sujud) ca. 0,53 m
+      cur.th += ((target.th || 0) - cur.th) * k;
+      const th = cur.th * kn, fo = (-Math.PI / 2 - cur.th) * kn;
+      const sink = (HIP - (0.2 + 0.33 * Math.cos(cur.th))) * kn;
+      for (const u of walkU) { u.uBody.value.set(cur.hip, sink); u.uKnee.value.set(th, fo); }
       hip.position.y = 0.9 * (1 - cur.drop);
       arms[0].rotation.x = -cur.arm[0] + sw;
       arms[1].rotation.x = -cur.arm[1] - sw;
