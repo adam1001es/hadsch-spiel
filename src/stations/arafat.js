@@ -131,7 +131,7 @@ export function create(ctx, st) {
       player.update(dt);
       marker.update(dt);
       marker.group.position.y = h(marker.group.position.x, marker.group.position.z);
-      if (ui.el.counter.dataset.t) { ui.el.counter.textContent = ui.el.counter.dataset.t; }
+      if (ui.el.counter.dataset.t) ui.counter(ui.el.counter.dataset.t);
     },
     dispose() { flow.dispose(); delete ui.el.counter.dataset.t; },
   };

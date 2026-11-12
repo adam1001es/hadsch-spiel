@@ -8,6 +8,9 @@ import { preview } from './stations/tawaf.js';
 import * as content from './content/hajj.js';
 import { progressStore } from './core/progress.js';
 import { preloadPeople, setCrowdCamera, peopleStatus } from './world/crowd.js';
+import { initI18n, LANGS, settings, saveSettings, lang, unlockVoice, voiceAvailable, speak, stopSpeaking } from './core/i18n.js';
+initI18n();
+addEventListener('pointerdown', unlockVoice, { once: true, capture: true });
 const peopleReady = preloadPeople(); // 3D-Pilgerinnen im Hintergrund laden
 
 const engine = createEngine(document.getElementById('c'));
@@ -91,3 +94,33 @@ document.getElementById('guideClose').addEventListener('click', () => { guide.hi
 // Direkt zu einer Station springen (zum Testen): …/index.html#s2 öffnet Station 2.
 const m = location.hash.match(/^#s(\d+)$/);
 if (m) begin(Math.max(0, Math.min(content.STATIONS.length - 1, +m[1] - 1)), false);
+
+// ---------- Einstellungen: Sprache, Vorlesen, Tempo, Rezitation ----------
+const setBox = document.getElementById('settings');
+function langButtons(host) {
+  host.innerHTML = '';
+  for (const L of LANGS) {
+    const b = document.createElement('button'); b.type = 'button'; b.textContent = L.name; b.dataset.noi18n = '';
+    b.setAttribute('aria-pressed', String(L.code === lang().code));
+    b.addEventListener('click', () => { if (L.code === lang().code) return; settings.lang = L.code; saveSettings(); location.reload(); });
+    host.appendChild(b);
+  }
+}
+langButtons(document.getElementById('setLang')); langButtons(document.getElementById('startLang'));
+const setVoice = document.getElementById('setVoice'), setRecite = document.getElementById('setRecite'), voiceNote = document.getElementById('setVoiceNote');
+setVoice.checked = settings.voice; setRecite.checked = settings.recite;
+setVoice.addEventListener('change', () => { settings.voice = setVoice.checked; saveSettings(); if (!settings.voice) stopSpeaking(); else speak('Die Aufgaben werden jetzt vorgelesen.'); });
+setRecite.addEventListener('change', () => { settings.recite = setRecite.checked; saveSettings(); });
+const rateBtns = [...document.querySelectorAll('#setRate button')];
+const markRate = () => rateBtns.forEach((b) => b.setAttribute('aria-pressed', String(Math.abs(+b.dataset.r - settings.rate) < 0.01)));
+rateBtns.forEach((b) => b.addEventListener('click', () => { settings.rate = +b.dataset.r; saveSettings(); markRate(); speak('So klingt die Stimme.'); }));
+markRate();
+document.getElementById('setBtn').addEventListener('click', () => {
+  input.holding = false;
+  // Hinweis, wenn das Gerät keine Stimme für diese Sprache hat
+  const ok = voiceAvailable();
+  voiceNote.hidden = ok; voiceNote.textContent = 'Für diese Sprache hat dein Gerät keine Vorlese-Stimme. Die Texte erscheinen trotzdem übersetzt.';
+  setBox.hidden = false;
+});
+document.getElementById('setClose').addEventListener('click', () => { setBox.hidden = true; });
+setBox.addEventListener('click', (e) => { if (e.target === setBox) setBox.hidden = true; });

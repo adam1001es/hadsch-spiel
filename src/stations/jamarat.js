@@ -235,7 +235,7 @@ export function create(ctx, st) {
         player.heading = Math.atan2(dir.x, dir.z);
       } else arc.visible = false;
       if (canThrow) ui.counter(`Steine ${valid} / 7`);
-      else if (ui.el.counter.textContent.startsWith('Steine')) ui.counter('');
+      else if ((ui.counterRaw || '').startsWith('Steine')) ui.counter('');
       // Steine fliegen
       for (const s of stones) {
         if (s.landed) continue;

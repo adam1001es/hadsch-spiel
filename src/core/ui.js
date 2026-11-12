@@ -1,4 +1,11 @@
-import { TEXT } from '../content/hajj.js';
+import { TEXT, TALBIYAH, RABBANA, SAFA_AYAH, ARAFAT_DHIKR, ENDING } from '../content/hajj.js';
+import { speak, hasAudio, playAudio, settings } from './i18n.js';
+
+// Aufnahmen zu den arabischen Texten (public/assets/audio/<name>.mp3; ohne Datei kein Abspielknopf)
+const AUDIO = new Map([[TALBIYAH, 'talbiyah'], [RABBANA, 'rabbana'], [SAFA_AYAH, 'safa'], [ARAFAT_DHIKR, 'arafat_dhikr'], [ENDING, 'ending']]);
+// Vorlesen: sichtbaren (übersetzten) Text eines Elements ohne arabische Gebetszeilen
+const spoken = (node) => { const c = node.cloneNode(true); c.querySelectorAll('.ar,.tr,button').forEach((x) => x.remove()); return c.textContent; };
+const later = (fn) => setTimeout(fn, 40); // nach der Übersetzung (MutationObserver)
 
 const $ = (id) => document.getElementById(id);
 // Einmalige Zeigehinweise (erster Aktionsknopf, erster Halte-Knopf) – im Browser gemerkt
@@ -16,6 +23,7 @@ export function createUI() {
     mission: $('mission'), learn: $('learn'), learnCard: $('learnCard'), coach: $('coach'), coachText: $('coachText'),
   };
   let toastTimer = null, hintTimer = null, promptFn = null, promptKey = '';
+  let rawInfo = null, rawGoal = null, rawCounter = null; // zuletzt gesetzte (deutsche) Texte – angezeigt wird ggf. die Übersetzung
 
   // Höhe des unteren Panels als CSS-Variable, damit Joystick und Aktionsknopf darüber sitzen
   const hud = document.getElementById('hud');
@@ -63,8 +71,22 @@ export function createUI() {
       }
     },
     // Neuer Text: Karte bleibt klein, ein Punkt zeigt „neu“. Antippen öffnet sie.
-    info(html) { if (el.info.innerHTML !== html) { el.info.innerHTML = html; if (html && el.panel.classList.contains('collapsed')) el.panel.classList.add('unread'); } layout(); },
-    counter(text) { const t = text || ''; if (el.counter.textContent !== t) el.counter.textContent = t; },
+    info(html) {
+      if (rawInfo !== html) {
+        rawInfo = html; el.info.innerHTML = html; if (html && el.panel.classList.contains('collapsed')) el.panel.classList.add('unread');
+        // Abspielknopf an arabischen Gebeten, wenn eine Aufnahme vorhanden ist (automatisch abspielen, wenn eingestellt)
+        el.info.querySelectorAll('.ar[data-audio]').forEach((a) => hasAudio(a.dataset.audio).then((ok) => {
+          if (!ok || !a.isConnected) return;
+          const b = document.createElement('button'); b.type = 'button'; b.className = 'play'; b.setAttribute('aria-label', 'Anhören'); b.textContent = '▶';
+          b.onclick = (e) => { e.stopPropagation(); playAudio(a.dataset.audio); }; a.prepend(b);
+          if (settings.recite) playAudio(a.dataset.audio);
+        }));
+        if (html && !el.info.querySelector('.ar[data-audio]')) later(() => speak(spoken(el.info)));
+      }
+      layout();
+    },
+    get counterRaw() { return rawCounter; },
+    counter(text) { const t = text || ''; if (rawCounter !== t) { rawCounter = t; el.counter.textContent = t; } },
     // items: [{ label, onClick, kind: 'primary' | 'sunnah' | '' }]
     actions(items = []) {
       el.actions.innerHTML = '';
@@ -106,14 +128,14 @@ export function createUI() {
     },
     // Ziel-Anzeige: Text + Pfeilwinkel (Radiant, 0 = geradeaus, positiv = rechts)
     goal(text, angle = null) {
-      if (!text) { if (!el.goal.hidden) { el.goal.hidden = true; layout(); } return; }
+      if (!text) { rawGoal = null; if (!el.goal.hidden) { el.goal.hidden = true; layout(); } return; }
       if (el.goal.hidden) { el.goal.hidden = false; layout(); }
-      if (el.goalText.textContent !== text) el.goalText.textContent = text;
+      if (rawGoal !== text) { rawGoal = text; el.goalText.textContent = text; later(() => speak(el.goalText.textContent, { interrupt: false })); }
       el.goalArrow.style.display = angle == null ? 'none' : '';
       if (angle != null) el.goalArrow.style.transform = `rotate(${angle - Math.PI / 2}rad)`;
     },
     hint(text, ms = 2600) {
-      el.hint.textContent = text; el.hint.hidden = false;
+      el.hint.textContent = text; el.hint.hidden = false; later(() => speak(el.hint.textContent));
       clearTimeout(hintTimer); hintTimer = setTimeout(() => (el.hint.hidden = true), ms);
     },
     toast(text, ms = 1800) {
@@ -123,7 +145,7 @@ export function createUI() {
     // Wissensfrage. options: [{ html, ok: bool, why: 'Erklärung' }]. Falsche Antworten werden erklärt, nicht bestraft.
     choice(question, options, { done = 'Weiter' } = {}) {
       return new Promise((resolve) => {
-        el.choiceQ.innerHTML = question;
+        el.choiceQ.innerHTML = question; later(() => speak(el.choiceQ.textContent));
         el.choiceOpts.innerHTML = '';
         el.choiceFb.innerHTML = '';
         el.choiceFb.hidden = true;
@@ -156,7 +178,7 @@ export function createUI() {
     // Reihenfolge-Rätsel: Teile in der richtigen Reihenfolge antippen.
     order(question, parts) {
       return new Promise((resolve) => {
-        el.choiceQ.innerHTML = question;
+        el.choiceQ.innerHTML = question; later(() => speak(el.choiceQ.textContent));
         el.choiceOpts.innerHTML = '';
         el.choiceFb.hidden = false;
         el.choiceFb.innerHTML = '';
@@ -184,7 +206,7 @@ export function createUI() {
       });
     },
     fade(on) { el.fade.classList.toggle('on', on); return new Promise((r) => setTimeout(r, 470)); },
-    prayer(p) { return `<div class="ar">${p.ar}</div><p class="tr">${p.tr}</p><p>${p.de}</p>`; },
+    prayer(p) { const a = AUDIO.get(p); return `<div class="ar"${a ? ` data-audio="${a}"` : ''}>${p.ar}</div><p class="tr">${p.tr}</p><p>${p.de}</p>`; },
     // Aufgabenliste: tasks [{t, s}], state: Array 'open' | 'ok' | 'skip'. Zeigt die aktuelle Aufgabe oben in der Infokarte.
     mission(tasks, state) {
       if (!tasks) { el.mission.hidden = true; el.mission.innerHTML = ''; layout(); return; }

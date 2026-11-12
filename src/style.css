@@ -197,3 +197,28 @@ body.has-hold #autoBtn { bottom: calc(var(--sb) + 104px); }
 .st-list button { text-align: left; display: flex; gap: 8px; align-items: baseline; padding: 9px 12px; }
 .st-list button .d { font-size: 11px; color: var(--muted); font-weight: 400; margin-left: auto; text-align: right; }
 .st-list button.now { background: #fff6dc; border-color: var(--gold); }
+
+/* Einstellungen (Zahnrad unter dem Kartenknopf) */
+#setBtn { position: fixed; z-index: 30; top: calc(env(safe-area-inset-top, 0px) + 64px); right: var(--sr); width: 40px; height: 40px; padding: 0; border-radius: 50%; display: grid; place-items: center; background: rgba(20, 37, 31, .7); color: #e6c46e; border: 1.5px solid rgba(230,196,110,.8); box-shadow: 0 2px 10px rgba(0,0,0,.3); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+#setBtn svg { width: 21px; height: 21px; }
+#settings { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; background: rgba(6,12,20,.55); padding: 16px; }
+#settings[hidden] { display: none; }
+.set-card { width: min(440px, 100%); max-height: 88vh; overflow: auto; background: #f7f2e7; color: #1f2a24; border-radius: 18px; padding: 16px 18px 12px; box-shadow: 0 12px 40px rgba(0,0,0,.4); }
+.set-head { display: flex; justify-content: space-between; align-items: center; font-size: 18px; margin-bottom: 8px; }
+.set-head button { background: none; border: 0; font-size: 20px; color: #4a4a40; padding: 4px 8px; }
+.set-row { display: flex; flex-direction: column; gap: 6px; padding: 10px 0; border-top: 1px solid rgba(0,0,0,.08); font-size: 15px; }
+.set-sw { flex-direction: row; justify-content: space-between; align-items: center; }
+.set-sw input { width: 22px; height: 22px; accent-color: #2f6b55; }
+.set-langs, .start-lang { display: flex; flex-wrap: wrap; gap: 6px; }
+.set-langs button, .start-lang button, .set-seg button { border: 1px solid rgba(0,0,0,.15); background: #fff; border-radius: 999px; padding: 6px 11px; font-size: 14px; color: #1f2a24; }
+.set-langs button[aria-pressed="true"], .start-lang button[aria-pressed="true"], .set-seg button[aria-pressed="true"] { background: #2f6b55; color: #fff; border-color: #2f6b55; }
+.set-seg { display: flex; gap: 6px; }
+.start-lang { justify-content: center; margin-bottom: 10px; }
+.start-lang button { padding: 4px 9px; font-size: 13px; background: rgba(255,255,255,.75); }
+#info .ar[data-audio] { position: relative; }
+#info button.play { margin-inline-end: 8px; width: 30px; height: 30px; border-radius: 50%; border: 1px solid #c9a45a; background: #fff8e6; color: #7a5a1c; font-size: 13px; vertical-align: middle; }
+/* Rechts-nach-links-Sprachen (Arabisch, Farsi, Dari, Paschtu) */
+html[data-rtl] body { font-family: Vazirmatn, Figtree, system-ui, sans-serif; }
+html[data-rtl] #panel, html[data-rtl] #choice, html[data-rtl] #goal, html[data-rtl] #hint, html[data-rtl] #toast, html[data-rtl] #mission,
+html[data-rtl] #start .card, html[data-rtl] #learnCard, html[data-rtl] .set-card, html[data-rtl] #coach { direction: rtl; }
+html[data-rtl] .tr { direction: ltr; text-align: left; }

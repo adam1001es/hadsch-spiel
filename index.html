@@ -30,7 +30,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="mobile-web-app-capable" content="yes" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Amiri&family=Figtree:wght@400;600&family=Marcellus&display=swap" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Amiri&family=Figtree:wght@400;600&family=Marcellus&family=Vazirmatn:wght@400;600&display=swap" />
   <link rel="stylesheet" href="./src/style.css" />
 </head>
 <body>
@@ -85,6 +85,21 @@
 
   <div id="fade"></div>
 
+  <!-- Einstellungen: Sprache, Vorlesen, Rezitation -->
+  <button id="setBtn" type="button" aria-label="Einstellungen" title="Einstellungen">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.6 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.6-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+  </button>
+  <section id="settings" hidden>
+    <div class="set-card">
+      <div class="set-head"><b>Einstellungen</b><button id="setClose" type="button" aria-label="Schließen">✕</button></div>
+      <div class="set-row"><span>Sprache</span><div id="setLang" class="set-langs"></div></div>
+      <label class="set-row set-sw"><span>Aufgaben vorlesen</span><input id="setVoice" type="checkbox"></label>
+      <p id="setVoiceNote" class="small" hidden></p>
+      <div class="set-row"><span>Tempo der Stimme</span><div class="set-seg" id="setRate"><button type="button" data-r="0.85">langsam</button><button type="button" data-r="1">normal</button><button type="button" data-r="1.15">schnell</button></div></div>
+      <label class="set-row set-sw"><span>Arabische Gebete automatisch abspielen</span><input id="setRecite" type="checkbox"></label>
+      <p class="small">Arabische Gebete und Ayat erklingen nur als echte Aufnahme (▶), nie als Computerstimme.</p>
+    </div>
+  </section>
   <button id="guideBtn" type="button" aria-label="Übersicht und Anleitung öffnen" title="Übersicht & Anleitung">
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6.5l6-2.5 6 2.5 6-2.5v13.5l-6 2.5-6-2.5-6 2.5z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 4v13.5M15 6.5V20" stroke="currentColor" stroke-width="1.8"/></svg>
   </button>
@@ -95,6 +110,7 @@
 
   <section id="start" class="screen">
     <div class="card">
+      <div id="startLang" class="start-lang"></div>
       <div class="ar big">لَبَّيْكَ اللَّهُمَّ لَبَّيْكَ</div>
       <h1>Hadsch-Pfad</h1>
       <p>Die Stationen der Pilgerfahrt in 3D. Gehe selbst: Joystick links (am Laptop W A S D), rechts wischen zum Umschauen.</p>
