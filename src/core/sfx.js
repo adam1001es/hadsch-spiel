@@ -3,7 +3,7 @@
 // sanfter Klang bei Sonnenauf- und -untergang. Alles bewusst leise und kurz. Folgt dem Ton-Knopf (settings.voice).
 import { settings } from './i18n.js';
 
-let ac = null, master = null, noiseBuf = null;
+let ac = null, master = null, noiseBuf = null, keepAlive = null;
 function ctx() {
   if (!ac) {
     try {
@@ -14,10 +14,26 @@ function ctx() {
       const d = noiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
     } catch { ac = null; }
   }
-  if (ac && ac.state === 'suspended') ac.resume().catch(() => {});
+  if (ac && ac.state !== 'running') ac.resume().catch(() => {});
   return ac;
 }
-export const unlockSfx = () => ctx();
+export const audioCtx = () => ctx();
+export const audioOut = () => (ctx(), master);
+
+// iPhone: Ton erst nach einer Berührung erlaubt, und im Lautlos-Modus ist Web Audio stumm.
+// Darum bei jeder Berührung (bis es läuft): Kontext fortsetzen, einen stillen Ton spielen,
+// die Audio-Sitzung auf „Wiedergabe“ stellen (Safari 17+) und ein stilles, endloses <audio> starten (ältere iOS).
+const SILENT = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=';
+function unlock() {
+  try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch { /* egal */ }
+  const c = ctx(); if (!c) return;
+  try { const b = c.createBuffer(1, 1, 22050), src = c.createBufferSource(); src.buffer = b; src.connect(c.destination); src.start(0); } catch { /* egal */ }
+  if (!keepAlive) { try { keepAlive = new Audio(SILENT); keepAlive.loop = true; keepAlive.setAttribute('playsinline', ''); keepAlive.volume = 0.01; keepAlive.play().catch(() => { keepAlive = null; }); } catch { keepAlive = null; } }
+  if (c.state === 'running') for (const ev of EVENTS) removeEventListener(ev, unlock, true);
+}
+const EVENTS = ['pointerdown', 'pointerup', 'touchend', 'click', 'keydown'];
+for (const ev of EVENTS) addEventListener(ev, unlock, true);
+export const unlockSfx = () => unlock();
 const on = () => settings.voice && ctx();
 
 function noise(t0, dur, { type = 'bandpass', freq = 1000, q = 1, gain = 0.2, attack = 0.005, rate = 1 } = {}) {

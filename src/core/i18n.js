@@ -19,6 +19,7 @@ export const LANGS = [
   { code: 'prs', name: 'دری (افغانستان)', rtl: true, voice: ['fa-AF', 'prs', 'fa-IR', 'fa'] },
 ];
 
+import { audioCtx, audioOut } from './sfx.js';
 const KEY = 'hp-settings';
 const DEF = { lang: '', voice: true, rate: 1, recite: true, v: 3 };
 export const settings = (() => {
@@ -119,11 +120,22 @@ export const voiceAvailable = (L = lang()) => VOICED.includes(L.code);
 const clipHash = (s) => { let h = 0x811c9dc5; for (const ch of norm(s)) { h ^= ch.codePointAt(0); h = Math.imul(h, 16777619) >>> 0; } return h.toString(16).padStart(8, '0'); };
 let manifest = null;
 const loadManifest = () => (manifest ||= voiceAvailable() ? fetch(`./assets/voice/${lang().code}/index.json`).then((r) => r.json()).then((a) => new Set(a)).catch(() => new Set()) : Promise.resolve(new Set()));
-let clip = null, unlocked = false, lastKey = '', lastAt = 0;
-// iOS: Audio erst nach einer Berührung erlaubt → beim ersten Tippen einmal stumm abspielen
-export function unlockVoice() {
-  if (unlocked) return; unlocked = true; loadManifest();
-  try { const a = new Audio(); a.muted = true; a.play().catch(() => {}); } catch { /* egal */ }
+// Wiedergabe über Web Audio (läuft auf dem iPhone nach der ersten Berührung auch ohne neue Berührung und im Lautlos-Modus)
+const buffers = new Map();
+function loadClip(url) {
+  if (!buffers.has(url)) buffers.set(url, fetch(url).then((r) => r.arrayBuffer()).then((ab) => new Promise((res, rej) => audioCtx().decodeAudioData(ab, res, rej))).catch(() => null));
+  return buffers.get(url);
+}
+let clip = null, lastKey = '', lastAt = 0;
+export function unlockVoice() { loadManifest(); }
+function playUrl(url, rate = 1, onEnd) {
+  const c = audioCtx(); if (!c) return null;
+  return loadClip(url).then((buf) => {
+    if (!buf) return null;
+    const src = c.createBufferSource(); src.buffer = buf; src.playbackRate.value = rate;
+    const g = c.createGain(); g.gain.value = 0.9; src.connect(g).connect(audioOut());
+    src.onended = () => { if (clip === src) clip = null; onEnd && onEnd(); }; src.start(); return src;
+  });
 }
 // key = deutscher Quelltext (z. B. „Waschhaus“); gespielt wird die Aufnahme in der gewählten Sprache
 export async function speak(key, { interrupt = true } = {}) {
@@ -133,11 +145,12 @@ export async function speak(key, { interrupt = true } = {}) {
   const set = await loadManifest(), h = clipHash(k);
   if (!set.has(h)) return;
   lastKey = k; lastAt = performance.now();
-  if (clip && !interrupt && !clip.ended && !clip.paused) return;
-  if (clip) clip.pause();
-  clip = new Audio(`./assets/voice/${lang().code}/${h}.mp3`); clip.playbackRate = settings.rate || 1; clip.play().catch(() => {});
+  if (clip && !interrupt) return;
+  stopSpeaking();
+  const src = await playUrl(`./assets/voice/${lang().code}/${h}.mp3`, settings.rate || 1);
+  if (src) clip = src;
 }
-export const stopSpeaking = () => { if (clip) { clip.pause(); clip = null; } };
+export const stopSpeaking = () => { if (clip) { try { clip.stop(); } catch { /* schon zu Ende */ } clip = null; } };
 
 // ---------- Rezitation / Aufnahmen (arabische Texte) ----------
 // Aufnahmen liegen in public/assets/audio/<name>.mp3 (z. B. talbiyah.mp3). Fehlt eine Datei, erscheint kein Abspielknopf.
@@ -149,9 +162,8 @@ export async function hasAudio(name) {
 let player = null;
 export function playAudio(name, onEnd, { auto = false } = {}) {
   if (auto && !settings.voice) return null; // Ton aus: nichts automatisch abspielen (▶ geht immer)
-  stopSpeaking();
-  if (player) { player.pause(); player = null; }
-  player = new Audio(`./assets/audio/${name}.mp3`); player.onended = () => onEnd && onEnd(); player.play().catch(() => {});
-  return player;
+  stopSpeaking(); stopAudio();
+  playUrl(`./assets/audio/${name}.mp3`, 1, onEnd)?.then((src) => { player = src; });
+  return true;
 }
-export const stopAudio = () => { if (player) { player.pause(); player = null; } };
+export const stopAudio = () => { if (player) { try { player.stop(); } catch { /* egal */ } player = null; } };
