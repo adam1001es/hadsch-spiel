@@ -205,49 +205,52 @@ export function createPlayer(ctx, { x = 0, z = 0, heading = 0, color, speed = 1.
   const camPos = new THREE.Vector3(), camLook = new THREE.Vector3();
   let first = true;
 
-  // Navigation zum Ziel (alles durch die Menge hindurch sichtbar):
-  // 1. großer goldener Richtungspfeil direkt neben der Figur (wie ein Kompass)
-  // 2. leichte Leuchtlinie am Boden bis zum Ziel
-  // 3. Bodenpfeile, die langsam Richtung Ziel wandern
-  const navMat = (opacity) => new THREE.MeshBasicMaterial({ color: 0xffd36a, transparent: true, opacity, depthWrite: false, depthTest: false, fog: false });
-  const GN = 8;
-  const chev = new THREE.Shape(); chev.moveTo(-0.45, -0.2); chev.lineTo(0, 0.25); chev.lineTo(0.45, -0.2); chev.lineTo(0.45, 0.05); chev.lineTo(0, 0.5); chev.lineTo(-0.45, 0.05);
-  const chevG = new THREE.ShapeGeometry(chev); chevG.rotateX(-Math.PI / 2); chevG.rotateY(Math.PI); // Spitze zeigt nach +z (= Richtung ang)
-  const guide = new THREE.InstancedMesh(chevG, navMat(0.7), GN);
+  // Navigation zum Ziel: dezente Leuchtwinkel am Boden vor der Figur, die wie ein Lauflicht nach vorne
+  // aufleuchten und wieder verblassen (Welle, kurze Pause, nächste Welle). Durch die Menge hindurch sichtbar.
+  const GN = 5, G0 = 2.6, GS = 1.5; // Anzahl, Abstand des ersten Winkels zur Figur, Abstand zwischen den Winkeln
+  const chevTex = (() => {
+    const c = document.createElement('canvas'); c.width = c.height = 128; const g = c.getContext('2d');
+    const path = () => { g.beginPath(); g.moveTo(22, 84); g.lineTo(64, 44); g.lineTo(106, 84); };
+    g.lineCap = g.lineJoin = 'round';
+    // weicher Schatten (Kontrast auf hellem Boden), Leuchten, heller Kern – mit shadowBlur (funktioniert auch in Safari)
+    g.shadowColor = 'rgba(40,28,10,0.55)'; g.shadowBlur = 10; path(); g.strokeStyle = 'rgba(60,42,14,0.25)'; g.lineWidth = 28; g.stroke();
+    g.shadowColor = 'rgba(255,200,90,0.95)'; g.shadowBlur = 10; path(); g.strokeStyle = 'rgba(255,210,110,1)'; g.lineWidth = 19; g.stroke();
+    g.shadowBlur = 0; path(); g.strokeStyle = '#fff8e4'; g.lineWidth = 9; g.stroke();
+    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
+  })();
+  const chevG = new THREE.PlaneGeometry(1.6, 1.6); chevG.rotateX(-Math.PI / 2); chevG.rotateY(Math.PI); // Spitze zeigt nach +z (= Richtung ang)
+  const chevA = new THREE.InstancedBufferAttribute(new Float32Array(GN), 1); chevG.setAttribute('aA', chevA);
+  const chevM = new THREE.MeshBasicMaterial({ map: chevTex, transparent: true, depthWrite: false, depthTest: false, fog: false });
+  chevM.onBeforeCompile = (sh) => {
+    sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute float aA; varying float vA;').replace('#include <begin_vertex>', '#include <begin_vertex>\nvA = aA;');
+    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying float vA;').replace('#include <map_fragment>', '#include <map_fragment>\ndiffuseColor.a *= vA;');
+  };
+  const guide = new THREE.InstancedMesh(chevG, chevM, GN);
   guide.frustumCulled = false; guide.renderOrder = 20; engine.world.add(guide);
-  const arrowS = new THREE.Shape();
-  arrowS.moveTo(0, 0.9); arrowS.lineTo(0.5, 0.25); arrowS.lineTo(0.18, 0.25); arrowS.lineTo(0.18, -0.35); arrowS.lineTo(-0.18, -0.35); arrowS.lineTo(-0.18, 0.25); arrowS.lineTo(-0.5, 0.25);
-  const arrowG = new THREE.ShapeGeometry(arrowS); arrowG.rotateX(-Math.PI / 2); arrowG.rotateY(Math.PI);
-  const navArrow = new THREE.Mesh(arrowG, navMat(0.95)); navArrow.renderOrder = 21; engine.world.add(navArrow);
-  const lineG = new THREE.PlaneGeometry(0.12, 1); lineG.rotateX(-Math.PI / 2); lineG.translate(0, 0, 0.5);
-  const navLine = new THREE.Mesh(lineG, navMat(0.35)); navLine.renderOrder = 19; engine.world.add(navLine);
-  const gTarget = new THREE.Vector2(); let gFresh = 0, gPhase = 0, gT = 0;
+  const gTarget = new THREE.Vector2(); let gFresh = 0, gT = 0, gVis = 0;
   const gd = new THREE.Object3D();
-  const showNav = (v) => { guide.visible = navArrow.visible = navLine.visible = v; };
-  showNav(false);
+  guide.visible = false;
   function updateGuide(dt) {
-    gFresh -= dt; gPhase = (gPhase + dt * 1.2) % 1; gT += dt;
-    if (gFresh <= 0) { showNav(false); return; }
+    gFresh -= dt; gT += dt;
     const dx = gTarget.x - pos.x, dz = gTarget.y - pos.z, dist = Math.hypot(dx, dz);
-    if (dist < 2.2) { showNav(false); return; }
-    showNav(true);
-    const ux = dx / dist, uz = dz / dist, ang = Math.atan2(ux, uz);
-    const gy = (x, z) => (ground ? ground(x, z) : 0) + 0.06;
-    // Richtungspfeil an der Figur, pulsiert leicht
-    navArrow.position.set(pos.x + ux * 1.25, gy(pos.x + ux * 1.25, pos.z + uz * 1.25) + 0.02, pos.z + uz * 1.25);
-    navArrow.rotation.y = ang; navArrow.scale.setScalar(1 + Math.sin(gT * 5) * 0.08);
-    // Leuchtlinie bis zum Ziel (max. 60 m)
-    const len = Math.min(dist - 1.5, 60);
-    navLine.position.set(pos.x + ux * 1.5, gy(pos.x, pos.z), pos.z + uz * 1.5); navLine.rotation.y = ang; navLine.scale.set(1, 1, Math.max(0.1, len - 1.5));
-    // wandernde Bodenpfeile
+    const want = gFresh > 0 && dist >= 2.2 ? 1 : 0;
+    gVis += (want - gVis) * Math.min(1, dt * 4); // sanft ein- und ausblenden
+    if (gVis < 0.01) { guide.visible = false; return; }
+    guide.visible = true;
+    const ux = dx / (dist || 1), uz = dz / (dist || 1), ang = Math.atan2(ux, uz);
+    const gy = (x, z) => (ground ? ground(x, z) : 0) + 0.05;
+    const CYCLE = 2.0, wave = (gT % CYCLE) / 1.3; // 1,3 s Welle, dann 0,7 s Pause
     let n = 0;
     for (let i = 0; i < GN; i++) {
-      const d = 2.6 + (i + gPhase) * 1.8;
-      if (d > dist - 1.5) break;
+      const k = wave * (GN + 1.5) - i; // jeder Winkel leuchtet kurz nach seinem Vorgänger auf
+      const a = k > 0 && k < 2 ? Math.sin((k / 2) * Math.PI) : 0;
+      const d = G0 + i * GS + Math.max(0, Math.min(2, k)) * 0.18; // gleitet beim Leuchten ein Stück nach vorn
+      if (d > dist - 1.2) break;
       gd.position.set(pos.x + ux * d, gy(pos.x + ux * d, pos.z + uz * d), pos.z + uz * d); gd.rotation.set(0, ang, 0);
-      gd.scale.setScalar(0.9 - i * 0.05); gd.updateMatrix(); guide.setMatrixAt(n++, gd.matrix);
+      gd.scale.setScalar(0.85 + a * 0.15); gd.updateMatrix(); guide.setMatrixAt(n, gd.matrix);
+      chevA.setX(n, a * gVis * (1 - i * 0.07)); n++;
     }
-    guide.count = n; guide.instanceMatrix.needsUpdate = true;
+    guide.count = n; guide.instanceMatrix.needsUpdate = true; chevA.needsUpdate = true;
   }
 
   const p = {
