@@ -109,7 +109,7 @@ function langButtons(host) {
 langButtons(document.getElementById('setLang')); langButtons(document.getElementById('startLang'));
 const setVoice = document.getElementById('setVoice'), setRecite = document.getElementById('setRecite'), voiceNote = document.getElementById('setVoiceNote');
 setVoice.checked = settings.voice; setRecite.checked = settings.recite;
-setVoice.addEventListener('change', () => { settings.voice = setVoice.checked; saveSettings(); if (!settings.voice) stopSpeaking(); else speak('Die Aufgaben werden jetzt vorgelesen.'); });
+setVoice.addEventListener('change', () => { settings.voice = setVoice.checked; saveSettings(); if (!settings.voice) stopSpeaking(); else speak('So klingt die Stimme.'); });
 setRecite.addEventListener('change', () => { settings.recite = setRecite.checked; saveSettings(); });
 const rateBtns = [...document.querySelectorAll('#setRate button')];
 const markRate = () => rateBtns.forEach((b) => b.setAttribute('aria-pressed', String(Math.abs(+b.dataset.r - settings.rate) < 0.01)));

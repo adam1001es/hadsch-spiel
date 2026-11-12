@@ -64,7 +64,7 @@ export default {
 "Auf einer Matte schlafen": "په یوه فرش ویده شه",
 "Auf welcher Seite ist die Kaaba beim Tawaf?": "په طواف کې کعبه په کوم لوري وي؟",
 "Aufgabe": "دنده",
-"Aufgaben vorlesen": "دندې په غږ ولوله",
+"Ziele ansagen (Stimme)": "موخې په غږ اعلان کړه",
 "Ausgang": "وتون",
 "Automatisch werfen": "په خپله وغورځوه",
 "Autopilot": "خپلواک لارښود",

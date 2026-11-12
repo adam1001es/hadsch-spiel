@@ -20,8 +20,14 @@ export const LANGS = [
 ];
 
 const KEY = 'hp-settings';
-const DEF = { lang: '', voice: true, rate: 1, recite: true };
-export const settings = (() => { try { return { ...DEF, ...JSON.parse(localStorage.getItem(KEY) || '{}') }; } catch { return { ...DEF }; } })();
+const DEF = { lang: '', voice: false, rate: 1, recite: true, v: 2 };
+export const settings = (() => {
+  try {
+    const st = { ...DEF, ...JSON.parse(localStorage.getItem(KEY) || '{}') };
+    if (st.v !== 2) { st.voice = false; st.v = 2; } // Vorlesen ist jetzt standardmäßig aus (nur Zielansagen, wenn eingeschaltet)
+    return st;
+  } catch { return { ...DEF }; }
+})();
 export function saveSettings() { try { localStorage.setItem(KEY, JSON.stringify(settings)); } catch { /* privat */ } }
 export const lang = () => LANGS.find((l) => l.code === settings.lang) || LANGS[0];
 
@@ -132,7 +138,7 @@ export function unlockVoice() {
 let lastSaid = '', lastAt = 0;
 export function speak(text, { interrupt = true } = {}) {
   if (!settings.voice || !synth) return;
-  const s = norm(String(text || '').replace(/<[^>]+>/g, ' ').replace(/[✓✋➤▾▸•·]/g, ' ').replace(/[؀-ۿ]+[^A-Za-zÄÖÜäöüß]*/g, (m) => (lang().rtl ? m : ' ')));
+  const s = norm(String(t(text) || '').replace(/<[^>]+>/g, ' ').replace(/[✓✋➤▾▸•·]/g, ' ').replace(/[؀-ۿ]+[^A-Za-zÄÖÜäöüß]*/g, (m) => (lang().rtl ? m : ' ')));
   if (!s || (s === lastSaid && performance.now() - lastAt < 4000)) return;
   const L = lang(), v = voiceFor(L); if (!v) return;
   lastSaid = s; lastAt = performance.now();

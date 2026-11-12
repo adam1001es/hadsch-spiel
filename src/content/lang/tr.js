@@ -64,7 +64,7 @@ export default {
 "Auf einer Matte schlafen": "Bir hasır üzerinde uyu",
 "Auf welcher Seite ist die Kaaba beim Tawaf?": "Tavafta Kâbe hangi taraftadır?",
 "Aufgabe": "Görev",
-"Aufgaben vorlesen": "Görevleri sesli oku",
+"Ziele ansagen (Stimme)": "Hedefleri sesli bildir",
 "Ausgang": "Çıkış",
 "Automatisch werfen": "Otomatik at",
 "Autopilot": "Otopilot",

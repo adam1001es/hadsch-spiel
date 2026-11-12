@@ -64,7 +64,7 @@ export default {
 "Auf einer Matte schlafen": "Spavaj na prostirci",
 "Auf welcher Seite ist die Kaaba beim Tawaf?": "S koje strane je Kaba tokom tavafa?",
 "Aufgabe": "Zadatak",
-"Aufgaben vorlesen": "Čitaj zadatke naglas",
+"Ziele ansagen (Stimme)": "Najavi ciljeve (glas)",
 "Ausgang": "Izlaz",
 "Automatisch werfen": "Baci automatski",
 "Autopilot": "Autopilot",

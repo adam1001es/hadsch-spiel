@@ -3,8 +3,6 @@ import { speak, hasAudio, playAudio, settings } from './i18n.js';
 
 // Aufnahmen zu den arabischen Texten (public/assets/audio/<name>.mp3; ohne Datei kein Abspielknopf)
 const AUDIO = new Map([[TALBIYAH, 'talbiyah'], [RABBANA, 'rabbana'], [SAFA_AYAH, 'safa'], [ARAFAT_DHIKR, 'arafat_dhikr'], [ENDING, 'ending']]);
-// Vorlesen: sichtbaren (übersetzten) Text eines Elements ohne arabische Gebetszeilen
-const spoken = (node) => { const c = node.cloneNode(true); c.querySelectorAll('.ar,.tr,button').forEach((x) => x.remove()); return c.textContent; };
 const later = (fn) => setTimeout(fn, 40); // nach der Übersetzung (MutationObserver)
 
 const $ = (id) => document.getElementById(id);
@@ -23,7 +21,7 @@ export function createUI() {
     mission: $('mission'), learn: $('learn'), learnCard: $('learnCard'), coach: $('coach'), coachText: $('coachText'),
   };
   let toastTimer = null, hintTimer = null, promptFn = null, promptKey = '';
-  let rawInfo = null, rawGoal = null, rawCounter = null; // zuletzt gesetzte (deutsche) Texte – angezeigt wird ggf. die Übersetzung
+  let rawInfo = null, rawGoal = null, rawCounter = null, goalName = null; // zuletzt gesetzte (deutsche) Texte – angezeigt wird ggf. die Übersetzung
 
   // Höhe des unteren Panels als CSS-Variable, damit Joystick und Aktionsknopf darüber sitzen
   const hud = document.getElementById('hud');
@@ -81,7 +79,6 @@ export function createUI() {
           b.onclick = (e) => { e.stopPropagation(); playAudio(a.dataset.audio); }; a.prepend(b);
           if (settings.recite) playAudio(a.dataset.audio);
         }));
-        if (html && !el.info.querySelector('.ar[data-audio]')) later(() => speak(spoken(el.info)));
       }
       layout();
     },
@@ -128,14 +125,19 @@ export function createUI() {
     },
     // Ziel-Anzeige: Text + Pfeilwinkel (Radiant, 0 = geradeaus, positiv = rechts)
     goal(text, angle = null) {
-      if (!text) { rawGoal = null; if (!el.goal.hidden) { el.goal.hidden = true; layout(); } return; }
+      if (!text) { rawGoal = null; goalName = null; if (!el.goal.hidden) { el.goal.hidden = true; layout(); } return; }
       if (el.goal.hidden) { el.goal.hidden = false; layout(); }
-      if (rawGoal !== text) { rawGoal = text; el.goalText.textContent = text; later(() => speak(el.goalText.textContent, { interrupt: false })); }
+      if (rawGoal !== text) {
+        rawGoal = text; el.goalText.textContent = text;
+        // Minimale Sprachnavigation: nur das neue Ziel ansagen (ohne Meterangabe), nicht bei jeder Entfernungsänderung
+        const name = text.split(' · ')[0];
+        if (name !== goalName) { goalName = name; later(() => speak(el.goalText.textContent.split(' · ')[0], { interrupt: false })); }
+      }
       el.goalArrow.style.display = angle == null ? 'none' : '';
       if (angle != null) el.goalArrow.style.transform = `rotate(${angle - Math.PI / 2}rad)`;
     },
     hint(text, ms = 2600) {
-      el.hint.textContent = text; el.hint.hidden = false; later(() => speak(el.hint.textContent));
+      el.hint.textContent = text; el.hint.hidden = false;
       clearTimeout(hintTimer); hintTimer = setTimeout(() => (el.hint.hidden = true), ms);
     },
     toast(text, ms = 1800) {
@@ -145,7 +147,7 @@ export function createUI() {
     // Wissensfrage. options: [{ html, ok: bool, why: 'Erklärung' }]. Falsche Antworten werden erklärt, nicht bestraft.
     choice(question, options, { done = 'Weiter' } = {}) {
       return new Promise((resolve) => {
-        el.choiceQ.innerHTML = question; later(() => speak(el.choiceQ.textContent));
+        el.choiceQ.innerHTML = question;
         el.choiceOpts.innerHTML = '';
         el.choiceFb.innerHTML = '';
         el.choiceFb.hidden = true;
@@ -178,7 +180,7 @@ export function createUI() {
     // Reihenfolge-Rätsel: Teile in der richtigen Reihenfolge antippen.
     order(question, parts) {
       return new Promise((resolve) => {
-        el.choiceQ.innerHTML = question; later(() => speak(el.choiceQ.textContent));
+        el.choiceQ.innerHTML = question;
         el.choiceOpts.innerHTML = '';
         el.choiceFb.hidden = false;
         el.choiceFb.innerHTML = '';

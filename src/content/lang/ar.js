@@ -64,7 +64,7 @@ export default {
 "Auf einer Matte schlafen": "نَمْ على سجادة",
 "Auf welcher Seite ist die Kaaba beim Tawaf?": "في أي جهة تكون الكعبة أثناء الطواف؟",
 "Aufgabe": "المهمة",
-"Aufgaben vorlesen": "قراءة المهام بصوت عالٍ",
+"Ziele ansagen (Stimme)": "إعلان الوجهات (صوت)",
 "Ausgang": "المخرج",
 "Automatisch werfen": "الرمي تلقائيًا",
 "Autopilot": "القيادة الآلية",

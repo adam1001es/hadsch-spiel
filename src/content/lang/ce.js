@@ -64,7 +64,7 @@ export default {
 "Auf einer Matte schlafen": "Истангахь вижа",
 "Auf welcher Seite ist die Kaaba beim Tawaf?": "ТӀавафехь КаӀба муьлхачу агӀор ю?",
 "Aufgabe": "ДӀадахкар",
-"Aufgaben vorlesen": "ДӀадахкарш хьалха еша",
+"Ziele ansagen (Stimme)": "Ӏалашонаш аьзнашца ала",
 "Ausgang": "Арадаларан неӀ",
 "Automatisch werfen": "Шен-шена кхосса",
 "Autopilot": "Автопилот",

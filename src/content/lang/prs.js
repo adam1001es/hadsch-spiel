@@ -64,7 +64,7 @@ export default {
 "Auf einer Matte schlafen": "روی بستر بخواب",
 "Auf welcher Seite ist die Kaaba beim Tawaf?": "در طواف کعبه در کدام طرف است؟",
 "Aufgabe": "وظیفه",
-"Aufgaben vorlesen": "خواندن وظایف با آواز",
+"Ziele ansagen (Stimme)": "اعلام مقصدها (آواز)",
 "Ausgang": "خروجی",
 "Automatisch werfen": "پرتاب خودکار",
 "Autopilot": "رهنمای خودکار",

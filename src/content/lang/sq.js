@@ -64,7 +64,7 @@ export default {
 "Auf einer Matte schlafen": "Fli në një shtrojë",
 "Auf welcher Seite ist die Kaaba beim Tawaf?": "Në cilën anë është Qabja gjatë tavafit?",
 "Aufgabe": "Detyra",
-"Aufgaben vorlesen": "Lexo detyrat me zë",
+"Ziele ansagen (Stimme)": "Njofto destinacionet (zë)",
 "Ausgang": "Dalja",
 "Automatisch werfen": "Gjuaj automatikisht",
 "Autopilot": "Autopilot",

@@ -64,7 +64,7 @@ export default {
 "Auf einer Matte schlafen": "Sleep on a mat",
 "Auf welcher Seite ist die Kaaba beim Tawaf?": "On which side is the Kaaba during Tawaf?",
 "Aufgabe": "Task",
-"Aufgaben vorlesen": "Read tasks aloud",
+"Ziele ansagen (Stimme)": "Announce destinations (voice)",
 "Ausgang": "Exit",
 "Automatisch werfen": "Throw automatically",
 "Autopilot": "Autopilot",
