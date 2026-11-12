@@ -20,7 +20,7 @@ export function create(ctx, st) {
   const h = heightFn({ r0: 260, r1: 620, amp: 150 });
   buildTerrain(world, h);
   const glow = [];
-  const mosq = mosqueModel(world, { x: MASHAR.x, z: MASHAR.z - 28, glow });
+  const mosq = mosqueModel(world, { x: MASHAR.x, z: MASHAR.z - 25, glow, variant: 2 }); // zwei Minarette wie die Moschee al-Mash'ar al-Haram
   const ll = [];
   for (let x = -120; x <= 120; x += 20) for (let z = -120; z <= 120; z += 24) ll.push([x + 3, 0, z]);
   lamps(world, ll, glow);
