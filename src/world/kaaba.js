@@ -5,12 +5,16 @@ import { pbr, texture } from './assets.js';
 // Ausrichtung im Spiel: Schwarzer Stein an Ecke (-x,+z), Tür auf der +z-Seite, Hijr Ismail an der +x-Seite.
 export const KAABA = { w: 12, d: 10.5, h: 13.1, blackStoneAngle: (5 * Math.PI) / 4 };
 
+// Stärke der Goldstickerei (Farbverstärkung R, G, B) und ihres Eigenleuchtens
+const GOLD_BOOST = [2.3, 1.95, 1.15], GOLD_GLOW = 0.7;
+
 export function buildKaaba(world) {
   const { w, d, h } = KAABA;
   const y0 = 0.4; // Bezugshöhe für Band, Tür und Vorhang
 
   // Kiswa: schwarzer, gemusterter Webstoff (echte Stofftextur, eingefärbt). Eine Kachel = 3 m, Ornamente ca. 0,75 m.
-  const kiswaMat = (len) => new THREE.MeshStandardMaterial({ ...pbr('kiswa', [len / 3, h / 4.5]), roughness: 1, normalScale: new THREE.Vector2(0.9, 0.9) });
+  // Samtiger Glanz (sheen), damit das eingewebte Muster im Licht sichtbar wird
+  const kiswaMat = (len) => new THREE.MeshPhysicalMaterial({ ...pbr('kiswa', [len / 3, h / 4.5]), roughness: 0.9, normalScale: new THREE.Vector2(1.3, 1.3), sheen: 1, sheenColor: new THREE.Color(0x4a4744), sheenRoughness: 0.45 });
   const sideX = kiswaMat(d), sideZ = kiswaMat(w);
   const top = new THREE.MeshStandardMaterial({ color: 0x141414, roughness: 0.9 });
   // Kiswa beginnt erst über dem Steinsockel (wie im Modell); Oberkante bleibt bei h + y0
@@ -47,6 +51,10 @@ export function buildKaaba(world) {
     map: texture(`${name}.${extra.png ? 'png' : 'jpg'}`, { repeat }),
     metalnessMap: texture(`${name}_mr.jpg`, { repeat, color: false }), roughnessMap: texture(`${name}_mr.jpg`, { repeat, color: false }),
     metalness: 1, roughness: 1, ...(extra.png ? { transparent: false, alphaTest: 0.45 } : {}),
+    // Goldfäden kräftig und warm: Farbe über 1 verstärkt (schwarzer Stoff bleibt schwarz), dazu leichtes Eigenleuchten
+    // wie unter den Flutlichtern im Haram
+    color: new THREE.Color(GOLD_BOOST[0], GOLD_BOOST[1], GOLD_BOOST[2]),
+    emissive: new THREE.Color(1.0, 0.78, 0.38), emissiveMap: texture(`${name}.${extra.png ? 'png' : 'jpg'}`, { repeat }), emissiveIntensity: GOLD_GLOW,
   });
   const bandH = 1.0, bandY = y0 + h * 0.68;
   const hizamA = embroidered('hizam_a'), hizamB = embroidered('hizam_b'), panels = embroidered('kiswa_panels', [1, 1], { png: true });
@@ -61,9 +69,9 @@ export function buildKaaba(world) {
   }
 
   // Tür (Bab al-Kaaba): massives Gold, ca. 2 m über dem Boden
-  const goldMat = new THREE.MeshStandardMaterial({ color: 0xe8c068, metalness: 1, roughness: 0.3 });
+  const goldMat = new THREE.MeshStandardMaterial({ color: 0xf5c955, metalness: 1, roughness: 0.28, emissive: 0x6b4a12, emissiveIntensity: 0.6 });
   const dt = goldDoor();
-  const doorMat = new THREE.MeshStandardMaterial({ map: dt.map, bumpMap: dt.bump, bumpScale: 2.5, metalness: 1, roughness: 0.3 });
+  const doorMat = new THREE.MeshStandardMaterial({ map: dt.map, bumpMap: dt.bump, bumpScale: 2.5, metalness: 1, roughness: 0.28, color: new THREE.Color(1.25, 1.1, 0.8), emissive: 0x6b4a12, emissiveIntensity: 0.6 });
   const door = new THREE.Mesh(new THREE.BoxGeometry(2.4, 4.0, 0.18), [goldMat, goldMat, goldMat, goldMat, doorMat, goldMat]);
   door.position.set(-w / 2 + 3.2, y0 + 2.2 + 2.0, d / 2 + 0.07); world.add(door);
   // Sitara: bestickter Vorhang vor der Tür (Textur aus demselben CC-BY-Modell)
