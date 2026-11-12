@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { TEXT, ARAFAT_DHIKR, RABBANA } from '../content/hajj.js';
 import { heightFn, buildTerrain, fbm } from '../world/terrain.js';
 import { tents, trees, sign, rock, bus } from '../world/props.js';
@@ -44,7 +45,16 @@ export function create(ctx, st) {
   const tr = [];
   for (let i = 0; i < 140; i++) { const x = (Math.random() - 0.5) * 360, z = -150 + Math.random() * 240; if (Math.abs(x) > 8 && Math.hypot(x - HILL.x, z - HILL.z) > 65) tr.push([x, h(x, z), z, Math.random() * 6, 0.8 + Math.random() * 0.6]); }
   trees(world, tr);
-  const umb = new THREE.InstancedMesh(new THREE.ConeGeometry(1.1, 0.4, 10, 1, true).translate(0, 2.1, 0), new THREE.MeshStandardMaterial({ color: 0xf6f6f2, roughness: 0.7, side: THREE.DoubleSide }), 120);
+  // Sonnenschirme der Pilger: weißes/silbernes Dach mit 8 Bahnen und Rippen, Stange bis zum Boden, kleine Spitze
+  const UMB = Math.min(160, engine.isMobile ? 110 : 160);
+  const umbTop = new THREE.ConeGeometry(1.1, 0.42, 8, 1, true).translate(0, 2.1, 0);
+  const umbRibs = mergeGeometries([...Array(8)].map((_, k) => new THREE.CylinderGeometry(0.012, 0.012, 1.18, 4).rotateZ(Math.PI / 2 - 0.36).translate(0.55, 2.1, 0).rotateY(k * Math.PI / 4 + Math.PI / 8)));
+  const umbPole = mergeGeometries([new THREE.CylinderGeometry(0.018, 0.018, 2.35, 6).translate(0, 1.17, 0), new THREE.CylinderGeometry(0.03, 0.03, 0.14, 6).translate(0, 2.38, 0), new THREE.CylinderGeometry(0.03, 0.03, 0.22, 6).translate(0, 0.35, 0)]);
+  const umbTex = (() => { const c = document.createElement('canvas'); c.width = 256; c.height = 32; const g = c.getContext('2d'); for (let k = 0; k < 8; k++) { g.fillStyle = k % 2 ? '#f4f4f0' : '#e2e4e6'; g.fillRect(k * 32, 0, 32, 32); } const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t; })();
+  const umb = new THREE.InstancedMesh(umbTop, new THREE.MeshStandardMaterial({ map: umbTex, roughness: 0.55, metalness: 0.15, side: THREE.DoubleSide }), UMB);
+  const umbR = new THREE.InstancedMesh(umbRibs, new THREE.MeshStandardMaterial({ color: 0x8e9296, metalness: 0.6, roughness: 0.4 }), UMB);
+  const umbP = new THREE.InstancedMesh(umbPole, new THREE.MeshStandardMaterial({ color: 0x4a4d52, metalness: 0.5, roughness: 0.45 }), UMB);
+  umb.castShadow = true; umb.name = 'umbrellas';
   const dm = new THREE.Object3D();
 
   // Pilger: viele sitzend, einige stehend in Dua
@@ -54,9 +64,10 @@ export function create(ctx, st) {
     let x, z; do { x = (Math.random() - 0.5) * 380; z = -170 + Math.random() * 260; } while (Math.abs(x) < 5 || Math.hypot(x - HILL.x, z - HILL.z) < 25);
     const sit = Math.random() < 0.6;
     crowd.set(i, x, h(x, z), z, Math.PI / 2 + (Math.random() - 0.5) * 0.6, sit ? 0.62 : 1);
-    if (i < 120) { dm.position.set(x, h(x, z), z); dm.updateMatrix(); umb.setMatrixAt(i, dm.matrix); }
+    // Schirm neben sitzenden Pilgern (Stange steht seitlich, Dach beschattet die Person)
+    if (i < UMB) { dm.position.set(x + 0.45, h(x + 0.45, z), z); dm.rotation.set(0.12, Math.random() * 6, 0); dm.updateMatrix(); umb.setMatrixAt(i, dm.matrix); umbR.setMatrixAt(i, dm.matrix); umbP.setMatrixAt(i, dm.matrix); }
   }
-  crowd.commit(); world.add(umb);
+  crowd.commit(); world.add(umb, umbR, umbP);
 
   const coach = bus(world, 6.2, BOUND + 16, 0); // Reisebus hinter der Grenze
   let boundActive = true, boundHint = 0;

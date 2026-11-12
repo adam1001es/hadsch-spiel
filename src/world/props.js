@@ -15,13 +15,57 @@ function instanced(world, geo, mat, list, { shadow = true } = {}) {
 }
 
 // Mina-Zelte: weiße, feuerfeste Zelte mit Pyramidendach auf quadratischem Grundriss (8 × 8 m)
+// Zelte wie in Mina/Arafat: weiße Stoffwände mit Nähten und Eingang, Pyramidendach mit Nahtlinien,
+// gewellter Volant unter der Dachkante, Spitze mit Knauf, Eckpfosten. Alles als InstancedMesh (wenige Zeichenaufrufe).
+const tentTex = {};
+function tentCanvas(kind) {
+  if (tentTex[kind]) return tentTex[kind];
+  const c = document.createElement('canvas'), g = c.getContext('2d');
+  if (kind === 'wall') {
+    c.width = 512; c.height = 160;
+    g.fillStyle = '#f3f0e8'; g.fillRect(0, 0, 512, 160);
+    const gr = g.createLinearGradient(0, 0, 0, 160); gr.addColorStop(0, 'rgba(0,0,0,0.10)'); gr.addColorStop(0.15, 'rgba(0,0,0,0)'); gr.addColorStop(0.85, 'rgba(0,0,0,0)'); gr.addColorStop(1, 'rgba(110,85,55,0.28)');
+    g.fillStyle = gr; g.fillRect(0, 0, 512, 160);
+    for (let x = 0; x <= 512; x += 64) { g.fillStyle = 'rgba(0,0,0,0.13)'; g.fillRect(x - 2, 0, 3, 160); g.fillStyle = 'rgba(255,255,255,0.6)'; g.fillRect(x + 1, 0, 2, 160); } // Nähte
+    // Eingang (auf jeder 4. Bahn-Seite mittig): dunkle Öffnung mit hochgebundener Plane
+    g.fillStyle = '#4a4036'; g.fillRect(208, 30, 96, 130);
+    g.fillStyle = '#e4dfd3'; g.beginPath(); g.moveTo(204, 26); g.lineTo(308, 26); g.lineTo(256, 70); g.closePath(); g.fill();
+    g.strokeStyle = 'rgba(0,0,0,0.25)'; g.lineWidth = 3; g.strokeRect(206, 28, 100, 134);
+  } else if (kind === 'roof') {
+    c.width = 256; c.height = 256;
+    g.fillStyle = '#f6f4ee'; g.fillRect(0, 0, 256, 256);
+    for (let x = 0; x <= 256; x += 32) { g.fillStyle = 'rgba(0,0,0,0.10)'; g.fillRect(x - 1, 0, 2, 256); }
+    for (let q = 0; q <= 256; q += 64) { g.fillStyle = 'rgba(0,0,0,0.22)'; g.fillRect(q - 2, 0, 4, 256); } // Grate
+  } else {
+    c.width = 512; c.height = 64; // Volant: gewellte Unterkante mit feiner Borte
+    g.fillStyle = '#ece6d8';
+    g.beginPath(); g.moveTo(0, 0); g.lineTo(512, 0);
+    for (let x = 512; x >= 0; x -= 32) g.quadraticCurveTo(x - 16, 72, x - 32, 40);
+    g.closePath(); g.fill();
+    g.fillStyle = '#c8b48a'; g.fillRect(0, 10, 512, 5);
+  }
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4;
+  return (tentTex[kind] = t);
+}
 export function tents(world, list, { glow = null } = {}) {
-  const wall = new THREE.BoxGeometry(8, 2.6, 8); wall.translate(0, 1.3, 0);
-  const roof = new THREE.ConeGeometry(5.66, 2.4, 4, 1); roof.rotateY(Math.PI / 4); roof.translate(0, 2.6 + 1.2, 0);
-  const fabric = new THREE.MeshStandardMaterial({ color: 0xf4f2ec, roughness: 0.85, emissive: 0xffd9a0, emissiveIntensity: 0 });
-  const a = instanced(world, wall, fabric, list), b = instanced(world, roof, fabric, list);
-  if (glow) glow.push(fabric);
-  return [a, b];
+  const S = 8, WH = 2.6, RH = 2.6; // Grundfläche, Wandhöhe, Dachhöhe
+  const wall = new THREE.BoxGeometry(S, WH, S); wall.translate(0, WH / 2, 0);
+  { const uv = wall.attributes.uv; for (let i = 0; i < uv.count; i++) uv.setX(i, uv.getX(i)); } // je Seite eine volle Bahn mit Eingang
+  const roof = new THREE.ConeGeometry(S * 0.74, RH, 4, 1, true); roof.rotateY(Math.PI / 4); roof.translate(0, WH + RH / 2, 0);
+  const val = new THREE.CylinderGeometry(S * 0.74, S * 0.74, 0.5, 4, 1, true); val.rotateY(Math.PI / 4); val.translate(0, WH - 0.05, 0);
+  { const uv = val.attributes.uv; for (let i = 0; i < uv.count; i++) uv.setX(i, uv.getX(i) * 4); }
+  const cap = new THREE.CylinderGeometry(0.12, 0.35, 0.45, 8); cap.translate(0, WH + RH - 0.05, 0);
+  const knob = new THREE.SphereGeometry(0.16, 10, 6); knob.translate(0, WH + RH + 0.3, 0);
+  const poles = mergeGeometries([[-1, -1], [1, -1], [-1, 1], [1, 1]].map(([sx, sz]) => new THREE.CylinderGeometry(0.06, 0.06, WH + 0.2, 6).translate(sx * (S / 2 + 0.02), (WH + 0.2) / 2, sz * (S / 2 + 0.02))));
+  const fabric = new THREE.MeshStandardMaterial({ map: tentCanvas('wall'), roughness: 0.85, emissive: 0xffd9a0, emissiveIntensity: 0 });
+  const roofM = new THREE.MeshStandardMaterial({ map: tentCanvas('roof'), roughness: 0.8, side: THREE.DoubleSide, emissive: 0xffd9a0, emissiveIntensity: 0 });
+  const valM = new THREE.MeshStandardMaterial({ map: tentCanvas('val'), alphaTest: 0.5, transparent: false, side: THREE.DoubleSide, roughness: 0.85 });
+  const metal = new THREE.MeshStandardMaterial({ color: 0xb9bcc0, metalness: 0.6, roughness: 0.4 });
+  const gold = new THREE.MeshStandardMaterial({ color: 0xd2b061, metalness: 0.7, roughness: 0.35 });
+  const out = [instanced(world, wall, [fabric, fabric, new THREE.MeshStandardMaterial({ color: 0xece8de }), fabric, fabric, fabric], list), instanced(world, roof, roofM, list),
+    instanced(world, val, valM, list, { shadow: false }), instanced(world, cap, metal, list, { shadow: false }), instanced(world, knob, gold, list, { shadow: false }), instanced(world, poles, metal, list, { shadow: false })];
+  if (glow) glow.push(fabric, roofM);
+  return out;
 }
 
 // Dattelpalmen / Bäume: Stamm + Kronenblätter
