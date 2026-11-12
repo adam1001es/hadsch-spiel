@@ -121,7 +121,24 @@ export function createFigure(world, { color = 0xf3f1ea, skin = 0xc68642, ring = 
   root.traverse((o) => { if (o.isMesh) o.castShadow = true; });
   let ringMesh = null;
   if (ring) {
-    ringMesh = new THREE.Mesh(new THREE.RingGeometry(0.45, 0.6, 40), new THREE.MeshBasicMaterial({ color: 0xf0c35a, transparent: true, opacity: 0.85, depthWrite: false }));
+    // Dezenter Ring: ein feiner, halbdurchsichtiger Bogen zeichnet sich langsam zum Kreis, schließt sich,
+    // löst sich wieder auf und dreht dabei ständig weiter (Periode ca. 5 s)
+    ringMesh = new THREE.Mesh(new THREE.RingGeometry(0.46, 0.54, 64), new THREE.ShaderMaterial({
+      transparent: true, depthWrite: false,
+      uniforms: { uT: { value: 0 }, uC: { value: new THREE.Color(0xf6e2b0) } },
+      vertexShader: 'varying vec2 vP; void main() { vP = position.xy; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+      fragmentShader: `uniform float uT; uniform vec3 uC; varying vec2 vP;
+        float ease(float x) { x = clamp(x, 0.0, 1.0); return x * x * (3.0 - 2.0 * x); }
+        void main() {
+          float p = fract(uT / 5.0);
+          float head = ease(p * 1.6) * 6.2832, tail = ease(p * 1.6 - 0.6) * 6.2832; // Kopf läuft voraus, Ende folgt
+          float a = mod(atan(vP.y, vP.x) - uT * 0.5, 6.2832);                     // dreht ständig weiter
+          float vis = smoothstep(tail - 0.05, tail + 0.35, a) * (1.0 - smoothstep(head - 0.35, head + 0.05, a));
+          float r = length(vP), edge = smoothstep(0.46, 0.48, r) * (1.0 - smoothstep(0.52, 0.54, r)); // weiche Kanten
+          gl_FragColor = vec4(uC, vis * edge * 0.42);
+          #include <colorspace_fragment>
+        }`,
+    }));
     ringMesh.rotation.x = -Math.PI / 2; ringMesh.position.y = 0.04; root.add(ringMesh);
   }
   world.add(root);
@@ -136,6 +153,7 @@ export function createFigure(world, { color = 0xf3f1ea, skin = 0xc68642, ring = 
     pose(name) { target = POSES[name] || POSES.stand; },
     get poseName() { return Object.keys(POSES).find((k) => POSES[k] === target); },
     update(dt, walking = 0) {
+      if (ringMesh) ringMesh.material.uniforms.uT.value += dt;
       const k = 1 - Math.exp(-dt * 7);
       cur.hip += (target.hip - cur.hip) * k;
       cur.drop += (target.drop - cur.drop) * k;
