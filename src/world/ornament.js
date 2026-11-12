@@ -45,11 +45,12 @@ export function ornamentBand(world, { x, y, z, ry = 0, len, h = 0.8, i = 5, colo
 export function archFacade(world, { x, y = 0, z, ry = 0, w = 4.6, h = 4.8, door = false, stone = 0xefe7d8, recess = 0xa89a84, wood = 0x6a4428, niche = 0xd9cfbe }) {
   const g = new THREE.Group(); g.position.set(x, y + h / 2, z); g.rotation.y = ry; world.add(g);
   const plane = () => new THREE.PlaneGeometry(w, h);
-  const back = new THREE.Mesh(plane(), new THREE.MeshStandardMaterial({ color: recess, roughness: 0.95 })); back.position.z = -0.2; g.add(back);
+  const back = new THREE.Mesh(plane(), new THREE.MeshStandardMaterial({ color: recess, roughness: 0.95, polygonOffset: true, polygonOffsetFactor: 2, polygonOffsetUnits: 2 })); back.position.z = -0.08; g.add(back);
   const open = door
     ? new THREE.MeshStandardMaterial({ map: texture('patterns/door_open.png'), alphaTest: 0.5, color: wood, roughness: 0.7, normalMap: texture('patterns/pattern_2_nor.jpg', { repeat: [3, 3], color: false }) })
     : new THREE.MeshStandardMaterial({ map: texture('patterns/door_open.png'), alphaTest: 0.5, color: niche, roughness: 0.9 });
-  const op = new THREE.Mesh(plane(), open); op.position.z = -0.12; g.add(op);
+  open.polygonOffset = true; open.polygonOffsetFactor = 1; open.polygonOffsetUnits = 1;
+  const op = new THREE.Mesh(plane(), open); op.position.z = -0.04; g.add(op);
   const lat = new THREE.Mesh(plane(), new THREE.MeshStandardMaterial({
     map: texture('patterns/door_arch.png'), normalMap: texture('patterns/door_arch_nor.jpg', { color: false }), normalScale: new THREE.Vector2(1.4, 1.4),
     alphaTest: 0.5, color: stone, roughness: 0.75, side: THREE.DoubleSide,
@@ -59,10 +60,10 @@ export function archFacade(world, { x, y = 0, z, ry = 0, w = 4.6, h = 4.8, door 
 }
 
 // Musterwand: ganze Wandfläche mit einem islamischen Muster (Gitter in hellem Stein vor dunklerer Nische), nahtlos gekachelt.
-// Für Wände ohne Tür. Position = Mitte unten (Boden), ry = Vorderseite, tile = Kachelgröße in Metern.
+// Für Wände ohne Tür. Die Nische liegt 6 cm hinter dem Gitter: Gruppe mindestens 12 cm vor die Hauswand setzen (sonst flackert es). Position = Mitte unten (Boden), ry = Vorderseite, tile = Kachelgröße in Metern.
 export function patternWall(world, { x, y = 0, z, ry = 0, w, h, i = 3, tile = 1.4, stone = 0xefe7d8, recess = 0xa89a84 }) {
   const g = new THREE.Group(); g.position.set(x, y + h / 2, z); g.rotation.y = ry; world.add(g);
-  const back = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshStandardMaterial({ color: recess, roughness: 0.95 })); back.position.z = -0.12; g.add(back);
+  const back = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshStandardMaterial({ color: recess, roughness: 0.95, polygonOffset: true, polygonOffsetFactor: 2, polygonOffsetUnits: 2 })); back.position.z = -0.06; g.add(back);
   const lat = new THREE.Mesh(new THREE.PlaneGeometry(w, h), patternMat(i, { color: stone, repeat: [w / tile, h / tile], rough: 0.75 })); lat.castShadow = true; g.add(lat);
   return g;
 }

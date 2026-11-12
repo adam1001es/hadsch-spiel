@@ -51,8 +51,8 @@ export function create(ctx, st) {
     }
   }
   // Wände ohne Tür: durchgehend mit islamischem Sternmuster (Gitter in hellem Stein vor dunklerer Nische), bis unter die Decke
-  for (const sx of [-1, 1]) patternWall(world, { x: sx * (W / 2 - 0.14), z: 0, ry: -sx * Math.PI / 2, w: L + 16, h: H - 1.6, i: 2, tile: 2.2 });
-  for (const s2 of [-1, 1]) patternWall(world, { x: 0, z: s2 * (L / 2 + 7.86), ry: s2 > 0 ? Math.PI : 0, w: W, h: H - 1.6, i: 2, tile: 2.2 });
+  for (const sx of [-1, 1]) patternWall(world, { x: sx * (W / 2 - 0.15), z: 0, ry: -sx * Math.PI / 2, w: L + 16, h: H - 1.6, i: 2, tile: 2.2 });
+  for (const s2 of [-1, 1]) patternWall(world, { x: 0, z: s2 * (L / 2 + 7.85), ry: s2 > 0 ? Math.PI : 0, w: W, h: H - 1.6, i: 2, tile: 2.2 });
 
   // Mittelbarriere mit Säulen (trennt die Laufrichtungen)
   const barrierMat = new THREE.MeshStandardMaterial({ color: 0xbfb6a4, roughness: 0.5 });

@@ -24,12 +24,12 @@ export function create(ctx, st) {
   const wash = new THREE.Group(); wash.position.set(-30, 0, -6); world.add(wash);
   const wm = new THREE.MeshStandardMaterial({ color: 0xece6da, roughness: 0.8 });
   const wb = new THREE.Mesh(new THREE.BoxGeometry(14, 5.2, 9), wm); wb.position.y = 2.6; wb.castShadow = wb.receiveShadow = true; wash.add(wb);
-  sign(world, -30, -6 + 4.85, 0, ['مغاسل', 'Waschräume · Ghusl'], { w: 4.6, h: 1.2, y: 5.75, wall: true }); // auf der Fassade über der Tür
+  sign(world, -30, -6 + 4.95, 0, ['مغاسل', 'Waschräume · Ghusl'], { w: 4.6, h: 1.2, y: 5.75, wall: true }); // auf der Fassade über der Tür
   // Waschhaus: in der Mitte der Front der Torbogen mit Holztür, alle anderen Wandflächen mit islamischem Sternmuster
-  archFacade(world, { x: -30, z: -6 + 4.72, w: 4.4, h: 4.6, door: true });
-  for (const sx of [-1, 1]) patternWall(world, { x: -30 + sx * 4.6, z: -6 + 4.62, w: 4.8, h: 5.2, i: 3, tile: 1.6 });
-  patternWall(world, { x: -30, z: -6 - 4.62, ry: Math.PI, w: 14, h: 5.2, i: 3, tile: 1.6 });
-  for (const sx of [-1, 1]) patternWall(world, { x: -30 + sx * 7.12, z: -6, ry: sx * Math.PI / 2, w: 9, h: 5.2, i: 3, tile: 1.6 });
+  archFacade(world, { x: -30, z: -6 + 4.68, w: 4.4, h: 4.6, door: true });
+  for (const sx of [-1, 1]) patternWall(world, { x: -30 + sx * 4.6, z: -6 + 4.64, w: 4.8, h: 5.2, i: 3, tile: 1.6 });
+  patternWall(world, { x: -30, z: -6 - 4.64, ry: Math.PI, w: 14, h: 5.2, i: 3, tile: 1.6 });
+  for (const sx of [-1, 1]) patternWall(world, { x: -30 + sx * 7.14, z: -6, ry: sx * Math.PI / 2, w: 9, h: 5.2, i: 3, tile: 1.6 });
   // Reisebus (3D-Modell)
   bus(world, 34, 22, -0.3);
   const plist = [];
