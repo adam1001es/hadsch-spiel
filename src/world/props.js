@@ -93,26 +93,42 @@ export function lamps(world, list, glow) {
   });
 }
 
-// Schild mit Text (Arabisch + Deutsch) auf zwei Pfosten
-export function sign(world, x, z, ry, lines, { w = 6, h = 1.6, y = 3.2, bg = '#1d5642', fg = '#f5f1e6' } = {}) {
+// Schild mit Text (Arabisch + Deutsch), modern: Tafel mit abgerundeten Ecken (Anthrazit, cremefarbene Schrift,
+// feine goldene Linie zwischen den Sprachen). Halterung: ein schlanker Mast hinter der Tafel; hoch hängende Schilder
+// (Hallen) an zwei dünnen Seilen. bg/fg/accent für Sonderfälle (z. B. gelbe Grenzschilder in Arafat).
+export function sign(world, x, z, ry, lines, { w = 6, h = 1.6, y = 3.2, bg = '#2c3034', fg = '#f3ece0', accent = '#c9a45a', hang = y > 5, wall = false } = {}) {
+  const R = Math.min(w, h) * 0.18; // Eckenradius
   const c = document.createElement('canvas'); c.width = 1024; c.height = Math.round(1024 * h / w);
-  const g = c.getContext('2d');
-  g.fillStyle = bg; g.fillRect(0, 0, c.width, c.height);
-  g.strokeStyle = fg; g.lineWidth = 8; g.strokeRect(14, 14, c.width - 28, c.height - 28);
+  const g = c.getContext('2d'), cw = c.width, chh = c.height, rr = R / w * cw;
+  const round = (pad) => { g.beginPath(); g.roundRect(pad, pad, cw - 2 * pad, chh - 2 * pad, Math.max(1, rr - pad)); };
+  round(0); g.fillStyle = bg; g.fill();
+  round(10); g.strokeStyle = 'rgba(255,255,255,0.10)'; g.lineWidth = 4; g.stroke();
   g.fillStyle = fg; g.textAlign = 'center'; g.textBaseline = 'middle';
-  const n = lines.length;
-  lines.forEach((t, i) => {
-    const ar = /[؀-ۿ]/.test(t);
-    g.font = `${ar ? 'bold ' : '600 '}${Math.round(c.height / (n + 0.8) * (ar ? 0.72 : 0.5))}px ${ar ? '"Geeza Pro","Noto Naskh Arabic",serif' : 'Figtree, system-ui, sans-serif'}`;
-    g.fillText(t, c.width / 2, c.height * (i + 1) / (n + 1));
-  });
+  const n = lines.length, rows = lines.map((t, i) => ({ t, ar: /[؀-ۿ]/.test(t), cy: chh * (i + 1) / (n + 1) }));
+  for (const r of rows) {
+    g.font = `${r.ar ? 'bold ' : '500 '}${Math.round(chh / (n + 0.8) * (r.ar ? 0.66 : 0.42))}px ${r.ar ? '"Geeza Pro","Noto Naskh Arabic",serif' : 'Figtree, system-ui, sans-serif'}`;
+    g.fillText(r.t, cw / 2, r.cy);
+  }
+  if (n > 1) { g.fillStyle = accent; const ly = (rows[0].cy + rows[1].cy) / 2; g.fillRect(cw * 0.36, ly - 2, cw * 0.28, 4); }
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8;
   const grp = new THREE.Group();
-  const board = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshStandardMaterial({ map: t, roughness: 0.6, side: THREE.DoubleSide, emissive: 0xffffff, emissiveMap: t, emissiveIntensity: 0.25 }));
-  board.position.y = y;
-  const post = new THREE.MeshStandardMaterial({ color: 0x777b80, metalness: 0.5, roughness: 0.5 });
-  for (const sx of [-w / 2 + 0.3, w / 2 - 0.3]) { const p = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, y + h / 2), post); p.position.set(sx, (y + h / 2) / 2, -0.03); grp.add(p); }
-  grp.add(board); grp.position.set(x, 0, z); grp.rotation.y = ry; world.add(grp);
+  // Tafelkörper (abgerundet, 6 cm stark) und bedruckte Vorderseite
+  const shape = new THREE.Shape(); shape.moveTo(-w / 2 + R, -h / 2); shape.lineTo(w / 2 - R, -h / 2); shape.quadraticCurveTo(w / 2, -h / 2, w / 2, -h / 2 + R);
+  shape.lineTo(w / 2, h / 2 - R); shape.quadraticCurveTo(w / 2, h / 2, w / 2 - R, h / 2); shape.lineTo(-w / 2 + R, h / 2); shape.quadraticCurveTo(-w / 2, h / 2, -w / 2, h / 2 - R);
+  shape.lineTo(-w / 2, -h / 2 + R); shape.quadraticCurveTo(-w / 2, -h / 2, -w / 2 + R, -h / 2);
+  const body = new THREE.Mesh(new THREE.ExtrudeGeometry(shape, { depth: 0.06, bevelEnabled: false, curveSegments: 6 }).translate(0, 0, -0.07), new THREE.MeshStandardMaterial({ color: bg, roughness: 0.5, metalness: 0.2 }));
+  body.position.y = y; body.castShadow = true; grp.add(body);
+  const face = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshStandardMaterial({ map: t, transparent: true, alphaTest: 0.5, roughness: 0.55, emissive: 0xffffff, emissiveMap: t, emissiveIntensity: 0.22 }));
+  face.position.set(0, y, 0.002); grp.add(face);
+  const back = face.clone(); back.rotation.y = Math.PI; back.position.z = -0.072; grp.add(back);
+  const metal = new THREE.MeshStandardMaterial({ color: 0x3a3d41, metalness: 0.6, roughness: 0.4 });
+  if (wall) { /* an der Fassade befestigt: keine Halterung */ } else if (hang) {
+    for (const sx of [-w * 0.35, w * 0.35]) { const cab = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 4), metal); cab.position.set(sx, y + h / 2 + 2, -0.04); grp.add(cab); }
+  } else {
+    const post = new THREE.Mesh(new THREE.BoxGeometry(0.14, y, 0.1), metal); post.position.set(0, y / 2, -0.13); post.castShadow = true; grp.add(post);
+    const foot = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.06, 0.34), metal); foot.position.set(0, 0.03, -0.13); grp.add(foot);
+  }
+  grp.position.set(x, 0, z); grp.rotation.y = ry; world.add(grp);
   return grp;
 }
 

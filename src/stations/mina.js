@@ -37,7 +37,7 @@ export function create(ctx, st) {
   const own = [OWN.x, 0, OWN.z]; list.push(own); blocks.push({ type: 'box', x: OWN.x, z: OWN.z, hw: 4.2, hd: 4.2 });
   const tentGlow = [];
   tents(world, list, { glow: tentGlow });
-  sign(world, OWN.x - 4.6, OWN.z, -Math.PI / 2, ['خيمة ١٠٨', 'Dein Zelt · 108'], { w: 3.6, h: 1.1, y: 2.6, bg: '#a97c2c' });
+  sign(world, OWN.x - 4.6, OWN.z, -Math.PI / 2, ['خيمة ١٠٨', 'Dein Zelt · 108'], { w: 3.6, h: 1.1, y: 2.6 });
   // Laternen an der Hauptstraße und den Querstraßen
   const ll = [];
   for (let z = -140; z <= 140; z += 18) ll.push([4.5, 0, z, -Math.PI / 2], [-4.5, 0, z + 9, Math.PI / 2]); // Arm zur Straßenmitte, versetzt
@@ -49,8 +49,8 @@ export function create(ctx, st) {
     booth = { x: -6, z: -12 }; barber = { x: 6, z: -66 };
     const bm = new THREE.Mesh(new THREE.BoxGeometry(3, 2.6, 2), new THREE.MeshStandardMaterial({ color: 0x2b5d4a, roughness: 0.6 }));
     bm.position.set(booth.x - 1.5, 1.3, booth.z); bm.castShadow = true; world.add(bm);
-    sign(world, booth.x - 1.4, booth.z + 1.2, Math.PI / 2, ['الهدي', 'Hady · Opfer'], { w: 2.6, h: 0.9, y: 3.2, bg: '#1d5642' });
-    sign(world, barber.x + 1, barber.z, -Math.PI / 2, ['حلاق', 'Friseur'], { w: 2.6, h: 0.9, y: 3.2, bg: '#7a5716' });
+    sign(world, booth.x - 1.4, booth.z + 1.2, Math.PI / 2, ['الهدي', 'Hady · Opfer'], { w: 2.6, h: 0.9, y: 3.2 });
+    sign(world, barber.x + 1, barber.z, -Math.PI / 2, ['حلاق', 'Friseur'], { w: 2.6, h: 0.9, y: 3.2 });
   }
 
   // Pilger auf den Straßen
