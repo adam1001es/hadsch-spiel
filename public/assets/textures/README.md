@@ -9,6 +9,9 @@ Sie wurden für das Spiel eingefärbt bzw. verkleinert.
 | `kiswa_diff/nor/rough.jpg` | Textur `floral_jacquard` (1K) | auf Schwarz eingefärbt (Webmuster der Kiswa) |
 | `../hdri/night.hdr` | HDRI `st_peters_square_night` (1K) | – (Umgebungslicht bei Nacht) |
 | `../hdri/day.hdr` | HDRI `kloofendal_43d_clear_puresky` (1K) | – (Umgebungslicht am Tag) |
+| `../sky/sky_day.jpg` | HDRI `kloofendal_43d_clear_puresky` (Tonemapped JPG, obere Hälfte, 4096 px) | – (sichtbarer Himmel am Tag) |
+| `../sky/sky_dusk.jpg` | HDRI `qwantani_sunset_puresky` (Tonemapped JPG, obere Hälfte, 4096 px) | – (Sonnenuntergang/Dämmerung) |
+| `../sky/sky_night.jpg` | HDRI `qwantani_night_puresky` (Tonemapped JPG, obere Hälfte, 4096 px) | – (Nachthimmel mit Milchstraße) |
 
 Namensschema für neue Materialien: `<name>_diff.jpg`, `<name>_nor.jpg` (OpenGL-Normalen), `<name>_rough.jpg`.
 Laden im Code: `pbr('<name>', [wiederholungX, wiederholungY])` aus `src/world/assets.js`.

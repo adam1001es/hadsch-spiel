@@ -23,6 +23,44 @@ export function createSky(engine) {
   const stars = new THREE.Points(starGeo, new THREE.PointsMaterial({ color: 0xffffff, size: 1.6, sizeAttenuation: false, transparent: true, fog: false }));
   scene.add(stars);
 
+  // Echte Himmelsfotos (Poly Haven, CC0): Tag, Sonnenuntergang, Nacht mit Milchstraße.
+  // Je nach Sonnenstand überblendet; die Fotos werden so gedreht, dass ihre Sonne in Richtung unserer Sonne steht.
+  // Am Horizont geht der Himmel in die Nebelfarbe über. Bis die Bilder geladen sind, bleibt der berechnete Himmel.
+  const PHOTO = { day: { file: 'sky_day.jpg', sunU: 0.602 }, dusk: { file: 'sky_dusk.jpg', sunU: 0.565 }, night: { file: 'sky_night.jpg', sunU: 0.617 } };
+  const dome = new THREE.Mesh(new THREE.SphereGeometry(1900, 64, 32), new THREE.ShaderMaterial({
+    side: THREE.BackSide, depthWrite: false, depthTest: false, fog: false, toneMapped: false,
+    uniforms: {
+      tDay: { value: null }, tDusk: { value: null }, tNight: { value: null },
+      uW: { value: new THREE.Vector3(1, 0, 0) }, uRot: { value: new THREE.Vector3() }, uBright: { value: new THREE.Vector3(1, 1, 1) },
+      uFog: { value: new THREE.Color() },
+    },
+    vertexShader: `varying vec3 vDir; void main() { vDir = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); gl_Position.z = gl_Position.w; }`,
+    fragmentShader: `
+      uniform sampler2D tDay, tDusk, tNight; uniform vec3 uW, uRot, uBright; uniform vec3 uFog; varying vec3 vDir;
+      // Bild: oben = Zenit, Zeile 0,5/0,5156 = Horizont, unten ca. 2,8° unter dem Horizont
+      vec3 pick(sampler2D t, float rot, vec3 d) {
+        float el = degrees(asin(clamp(d.y, -1.0, 1.0)));
+        vec2 uv = vec2(fract(atan(d.z, d.x) / 6.28318 + 0.5 + rot), 1.0 - (90.0 - max(el, -2.5)) / 92.8125);
+        return texture2D(t, uv).rgb;
+      }
+      void main() {
+        vec3 d = normalize(vDir);
+        vec3 c = uW.x * uBright.x * pick(tDay, uRot.x, d) + uW.y * uBright.y * pick(tDusk, uRot.y, d) + uW.z * uBright.z * pick(tNight, uRot.z, d);
+        c = mix(uFog, c, smoothstep(-0.03, 0.12, d.y));
+        gl_FragColor = vec4(c, 1.0);
+        #include <colorspace_fragment>
+      }`,
+  }));
+  dome.renderOrder = -10; dome.frustumCulled = false; dome.visible = false; scene.add(dome);
+  {
+    const loader = new THREE.TextureLoader(); let n = 0;
+    for (const [k, P] of Object.entries(PHOTO)) loader.load('./assets/sky/' + P.file, (t) => {
+      t.colorSpace = THREE.SRGBColorSpace; t.wrapS = THREE.RepeatWrapping; t.anisotropy = 4;
+      dome.material.uniforms['t' + k[0].toUpperCase() + k.slice(1)].value = t;
+      if (++n === 3) { dome.visible = true; sky.visible = false; } // erst umschalten, wenn alle drei da sind
+    });
+  }
+
   const hemi = new THREE.HemisphereLight(0xcfe0f2, 0x8c7656, 0.8);
   const sun = new THREE.DirectionalLight(0xffffff, 2);
   sun.castShadow = true;
@@ -56,7 +94,20 @@ export function createSky(engine) {
     state.art = art;
     renderer.toneMappingExposure = 0.3 + dayK * 0.3 + art * 0.45;
     stars.material.opacity = 1 - smooth(-0.25, -0.02, e);
-    sky.visible = !state.indoor;
+    const photo = dome.material.uniforms.tNight.value && dome.material.uniforms.tDay.value && dome.material.uniforms.tDusk.value;
+    sky.visible = !state.indoor && !photo;
+    dome.visible = !state.indoor && !!photo;
+    stars.visible = !photo; // das Nachtfoto hat echte Sterne
+    if (photo) {
+      const U = dome.material.uniforms;
+      const nightW = 1 - smooth(-0.14, 0.0, e), dayW = smooth(0.1, 0.32, e), duskW = Math.max(0, 1 - nightW - dayW);
+      U.uW.value.set(dayW, duskW, nightW);
+      // Fotos so drehen, dass ihre Sonne in Richtung unserer Sonne steht
+      const su = Math.atan2(sunDir.z, sunDir.x) / (Math.PI * 2) + 0.5;
+      U.uRot.value.set(PHOTO.day.sunU - su, PHOTO.dusk.sunU - su, PHOTO.night.sunU - su);
+      // Dämmerung nach Sonnenuntergang dunkler, Nacht etwas aufgehellt (Lichter des Haram)
+      U.uBright.value.set(1.0, 0.18 + 0.82 * smooth(-0.1, 0.12, e), 0.6 + art * 0.25);
+    }
 
     lightDir.copy(e > -0.02 ? sunDir : new THREE.Vector3(-sunDir.x * 0.6, 0.75, 0.3).normalize());
     lightDir.lerp(new THREE.Vector3(0.25, 1, 0.18).normalize(), art * 0.8).normalize();
@@ -69,6 +120,7 @@ export function createSky(engine) {
     scene.environmentRotation.y = 0.6;
     const fogC = night.clone().lerp(duskFog, smooth(-0.1, 0.05, e)).lerp(dayFog, smooth(0.05, 0.35, e));
     scene.fog.color.copy(fogC);
+    dome.material.uniforms.uFog.value.copy(fogC);
 
     const s = state.shadowSize, c = sun.shadow.camera;
     c.left = -s; c.right = s; c.top = s; c.bottom = -s; c.near = 1; c.far = 900; c.updateProjectionMatrix();
@@ -89,6 +141,7 @@ export function createSky(engine) {
       }
       apply();
       sky.position.copy(camera.position);
+      dome.position.copy(camera.position);
       stars.position.copy(camera.position);
       sun.position.copy(state.focus).addScaledVector(lightDir, 400);
       sun.target.position.copy(state.focus);
