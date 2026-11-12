@@ -30,6 +30,6 @@ Nur die Texturen werden verwendet, nicht die Geometrie des Modells. Steinsockel 
 
 ## Islamische Muster (`patterns/`)
 
-„Islamic patterns“ von **GhalebR**, https://skfb.ly/oKpZY, Lizenz **CC BY 4.0**. Die 3D-Platten wurden frontal gerendert und als Bilder gespeichert: `pattern_N.png` (Form mit Transparenz) und `pattern_N_nor.jpg` (Relief, aus der Form berechnet). Genutzt für die Deckenleuchten im Sa'i.
+„Islamic patterns“ von **GhalebR**, https://skfb.ly/oKpZY, Lizenz **CC BY 4.0**. Die 3D-Platten wurden frontal gerendert und als Bilder gespeichert: `pattern_N.png` (Form mit Transparenz) und `pattern_N_nor.jpg` (Relief, aus der Form berechnet). Genutzt für Musterwände ohne Tür (Sa'i, Waschhaus am Miqat) und die Deckenleuchten im Sa'i.
 
-`door_arch.png`, `door_arch_nor.jpg`, `door_open.png`: „Arabic Traditional Doors: Timeless Beauty“ von **medbunz**, https://skfb.ly/oGU6Y, Lizenz **CC BY 4.0**. Spitzbogen mit Sternen-Gitter frontal gerendert (Form, Relief, Türöffnung als Maske). Genutzt als Bogen-Fassade (Sa'i, Waschhaus am Miqat).
+`door_arch.png`, `door_arch_nor.jpg`, `door_open.png`: „Arabic Traditional Doors: Timeless Beauty“ von **medbunz**, https://skfb.ly/oGU6Y, Lizenz **CC BY 4.0**. Spitzbogen mit Sternen-Gitter frontal gerendert (Form, Relief, Türöffnung als Maske). Genutzt als Torbogen um Türen (Waschhaus am Miqat).

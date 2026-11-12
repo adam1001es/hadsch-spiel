@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { TEXT, TALBIYAH } from '../content/hajj.js';
 import { heightFn, buildTerrain } from '../world/terrain.js';
 import { palms, mosqueModel, sign, bus } from '../world/props.js';
-import { archFacade } from '../world/ornament.js';
+import { archFacade, patternWall } from '../world/ornament.js';
 import { createCrowd } from '../world/crowd.js';
 import { createPlayer } from '../core/player.js';
 import { createFlow, createMarker, goTo, promptAt, holdAction, sunnah, isFemale } from '../core/kit.js';
@@ -25,8 +25,11 @@ export function create(ctx, st) {
   const wm = new THREE.MeshStandardMaterial({ color: 0xece6da, roughness: 0.8 });
   const wb = new THREE.Mesh(new THREE.BoxGeometry(14, 5.2, 9), wm); wb.position.y = 2.6; wb.castShadow = wb.receiveShadow = true; wash.add(wb);
   sign(world, -30, -1.2, 0, ['مغاسل', 'Waschräume · Ghusl'], { w: 5, h: 1.3, y: 6.2 });
-  // Fassade des Waschhauses: drei Spitzbögen mit Sternen-Gitter über die ganze Front, in der Mitte die Holztür
-  for (const dx of [-4.6, 0, 4.6]) archFacade(world, { x: -30 + dx, z: -6 + 4.72, w: 4.6, h: 4.8, door: dx === 0 });
+  // Waschhaus: in der Mitte der Front der Torbogen mit Holztür, alle anderen Wandflächen mit islamischem Sternmuster
+  archFacade(world, { x: -30, z: -6 + 4.72, w: 4.4, h: 4.6, door: true });
+  for (const sx of [-1, 1]) patternWall(world, { x: -30 + sx * 4.6, z: -6 + 4.62, w: 4.8, h: 5.2, i: 3, tile: 1.6 });
+  patternWall(world, { x: -30, z: -6 - 4.62, ry: Math.PI, w: 14, h: 5.2, i: 3, tile: 1.6 });
+  for (const sx of [-1, 1]) patternWall(world, { x: -30 + sx * 7.12, z: -6, ry: sx * Math.PI / 2, w: 9, h: 5.2, i: 3, tile: 1.6 });
   // Reisebus (3D-Modell)
   bus(world, 34, 22, -0.3);
   const plist = [];

@@ -57,3 +57,12 @@ export function archFacade(world, { x, y = 0, z, ry = 0, w = 4.6, h = 4.8, door 
   lat.castShadow = true; g.add(lat);
   return g;
 }
+
+// Musterwand: ganze Wandfläche mit einem islamischen Muster (Gitter in hellem Stein vor dunklerer Nische), nahtlos gekachelt.
+// Für Wände ohne Tür. Position = Mitte unten (Boden), ry = Vorderseite, tile = Kachelgröße in Metern.
+export function patternWall(world, { x, y = 0, z, ry = 0, w, h, i = 3, tile = 1.4, stone = 0xefe7d8, recess = 0xa89a84 }) {
+  const g = new THREE.Group(); g.position.set(x, y + h / 2, z); g.rotation.y = ry; world.add(g);
+  const back = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshStandardMaterial({ color: recess, roughness: 0.95 })); back.position.z = -0.12; g.add(back);
+  const lat = new THREE.Mesh(new THREE.PlaneGeometry(w, h), patternMat(i, { color: stone, repeat: [w / tile, h / tile], rough: 0.75 })); lat.castShadow = true; g.add(lat);
+  return g;
+}

@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { TEXT, SAFA_AYAH } from '../content/hajj.js';
 import { pbr } from '../world/assets.js';
 import { rock, sign } from '../world/props.js';
-import { patternMat, archFacade } from '../world/ornament.js';
+import { patternMat, patternWall } from '../world/ornament.js';
 import { createCrowd } from '../world/crowd.js';
 import { createPlayer } from '../core/player.js';
 import { createFlow, createMarker, goTo, promptAt, holdAction, duaFacing, pointGoal, sunnah, viewLine, clearView, createAutopilot, isFemale, autoAfter } from '../core/kit.js';
@@ -50,10 +50,9 @@ export function create(ctx, st) {
       const cap = new THREE.Mesh(new THREE.BoxGeometry(1.3, 0.5, 1.3), archMat); cap.position.set(sx * (W / 2 - 0.6), H - 1.5, z); world.add(cap);
     }
   }
-  // Islamische Fassade: in jedem Feld zwischen den Säulen ein Spitzbogen mit Sternen-Gitter (heller Stein vor dunkler Nische),
-  // an den Stirnwänden je zwei Bögen neben dem Schild
-  for (const sx of [-1, 1]) for (let z = -L / 2 + 3.75; z < L / 2; z += 7.5) archFacade(world, { x: sx * (W / 2 - 0.22), z, ry: -sx * Math.PI / 2, w: 6.3, h: 6.6 });
-  for (const s2 of [-1, 1]) for (const mx of [-6.6, 6.6]) archFacade(world, { x: mx, z: s2 * (L / 2 + 7.78), ry: s2 > 0 ? Math.PI : 0, w: 5.2, h: 5.4 });
+  // Wände ohne Tür: durchgehend mit islamischem Sternmuster (Gitter in hellem Stein vor dunklerer Nische), bis unter die Decke
+  for (const sx of [-1, 1]) patternWall(world, { x: sx * (W / 2 - 0.14), z: 0, ry: -sx * Math.PI / 2, w: L + 16, h: H - 1.6, i: 2, tile: 2.2 });
+  for (const s2 of [-1, 1]) patternWall(world, { x: 0, z: s2 * (L / 2 + 7.86), ry: s2 > 0 ? Math.PI : 0, w: W, h: H - 1.6, i: 2, tile: 2.2 });
 
   // Mittelbarriere mit Säulen (trennt die Laufrichtungen)
   const barrierMat = new THREE.MeshStandardMaterial({ color: 0xbfb6a4, roughness: 0.5 });
