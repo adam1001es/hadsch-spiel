@@ -1,5 +1,6 @@
 // Übersetzung (ce): deutscher Quelltext → Übersetzung. Erzeugt aus den Spieltexten; fehlende Einträge bleiben deutsch.
 export default {
+"Für diese Sprache gibt es noch keine Stimme. Die Texte erscheinen trotzdem übersetzt.": "ХӀокху маттахь хӀинца а аз дац. Йозанаш таржам дина гучудовлу.",
 "Ton an": "Аз латийна",
 "Ton aus": "Аз дӀайайина",
 "Ton an oder aus": "Аз лато я дӀайайа",

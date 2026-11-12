@@ -1,5 +1,6 @@
 // Übersetzung (ps): deutscher Quelltext → Übersetzung. Erzeugt aus den Spieltexten; fehlende Einträge bleiben deutsch.
 export default {
+"Für diese Sprache gibt es noch keine Stimme. Die Texte erscheinen trotzdem übersetzt.": "د دې ژبې لپاره لا غږ نشته. متنونه بیا هم ژباړل شوي ښکاري.",
 "Ton an": "غږ چالان",
 "Ton aus": "غږ بند",
 "Ton an oder aus": "غږ چالان یا بند کړه",

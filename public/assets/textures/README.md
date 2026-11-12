@@ -35,3 +35,7 @@ Nur die Texturen werden verwendet, nicht die Geometrie des Modells. Steinsockel 
 `door_arch.png`, `door_arch_nor.jpg`, `door_open.png`: „Arabic Traditional Doors: Timeless Beauty“ von **medbunz**, https://skfb.ly/oGU6Y, Lizenz **CC BY 4.0**. Spitzbogen mit Sternen-Gitter frontal gerendert (Form, Relief, Türöffnung als Maske). Genutzt als Torbogen um Türen (Waschhaus am Miqat).
 
 `neem_leaves.png`, `neem_bark.jpg`: aus „Jungle Tree“ von **gelmi.com.br**, https://skfb.ly/oJPVU, Lizenz **CC BY 4.0**. Blattbüschel (Farbe + Maske als Transparenz, aufgehellt) und Rinde, verkleinert. Genutzt für die Neem-Bäume in Arafat (eigene, leichte Baumform).
+
+## Sprachansagen (`../voice/<sprache>/`)
+
+Vorab erzeugt mit **Piper** (offline, Open Source). Stimmen: Deutsch „thorsten“ (CC0), Englisch „joe“ (CC0), Farsi/Dari „amir“ (CC0), Türkisch „dfki“ (Daten CC BY-NC-SA 4.0, nicht-kommerziell), Arabisch „kareem“ (Daten: github.com/AliMokhammad/arabicttstrain). Dateiname = Hash des deutschen Zieltextes; `index.json` listet die vorhandenen Ansagen.

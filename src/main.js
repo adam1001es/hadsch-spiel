@@ -123,7 +123,7 @@ document.getElementById('setBtn').addEventListener('click', () => {
   input.holding = false;
   // Hinweis, wenn das Gerät keine Stimme für diese Sprache hat
   const ok = voiceAvailable();
-  voiceNote.hidden = ok; voiceNote.textContent = 'Für diese Sprache hat dein Gerät keine Vorlese-Stimme. Die Texte erscheinen trotzdem übersetzt.';
+  voiceNote.hidden = ok; voiceNote.textContent = 'Für diese Sprache gibt es noch keine Stimme. Die Texte erscheinen trotzdem übersetzt.';
   setBox.hidden = false;
 });
 document.getElementById('setClose').addEventListener('click', () => { setBox.hidden = true; });

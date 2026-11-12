@@ -1,5 +1,6 @@
 // Übersetzung (prs): deutscher Quelltext → Übersetzung. Erzeugt aus den Spieltexten; fehlende Einträge bleiben deutsch.
 export default {
+"Für diese Sprache gibt es noch keine Stimme. Die Texte erscheinen trotzdem übersetzt.": "برای این زبان هنوز آوازی نیست. متن‌ها با این حال ترجمه‌شده نمایش داده می‌شوند.",
 "Ton an": "آواز روشن",
 "Ton aus": "آواز خاموش",
 "Ton an oder aus": "روشن یا خاموش کردن آواز",

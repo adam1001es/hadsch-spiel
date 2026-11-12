@@ -1,5 +1,6 @@
 // Übersetzung (tr): deutscher Quelltext → Übersetzung. Erzeugt aus den Spieltexten; fehlende Einträge bleiben deutsch.
 export default {
+"Für diese Sprache gibt es noch keine Stimme. Die Texte erscheinen trotzdem übersetzt.": "Bu dil için henüz ses yok. Metinler yine de çevrilmiş olarak görünür.",
 "Ton an": "Ses açık",
 "Ton aus": "Ses kapalı",
 "Ton an oder aus": "Sesi aç veya kapat",

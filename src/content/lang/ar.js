@@ -1,5 +1,6 @@
 // Übersetzung (ar): deutscher Quelltext → Übersetzung. Erzeugt aus den Spieltexten; fehlende Einträge bleiben deutsch.
 export default {
+"Für diese Sprache gibt es noch keine Stimme. Die Texte erscheinen trotzdem übersetzt.": "لا يوجد صوت لهذه اللغة بعد. لكن النصوص تظهر مترجمة.",
 "Ton an": "الصوت مفعَّل",
 "Ton aus": "الصوت متوقف",
 "Ton an oder aus": "تشغيل الصوت أو إيقافه",

@@ -1,5 +1,6 @@
 // Übersetzung (bs): deutscher Quelltext → Übersetzung. Erzeugt aus den Spieltexten; fehlende Einträge bleiben deutsch.
 export default {
+"Für diese Sprache gibt es noch keine Stimme. Die Texte erscheinen trotzdem übersetzt.": "Za ovaj jezik još nema glasa. Tekstovi se ipak prikazuju prevedeni.",
 "Ton an": "Zvuk uključen",
 "Ton aus": "Zvuk isključen",
 "Ton an oder aus": "Zvuk uključi ili isključi",

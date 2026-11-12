@@ -131,7 +131,7 @@ export function createUI() {
         rawGoal = text; el.goalText.textContent = text;
         // Minimale Sprachnavigation: nur das neue Ziel ansagen (ohne Meterangabe), nicht bei jeder Entfernungsänderung
         const name = text.split(' · ')[0];
-        if (name !== goalName) { goalName = name; later(() => speak(el.goalText.textContent.split(' · ')[0], { interrupt: false })); }
+        if (name !== goalName) { goalName = name; speak(name, { interrupt: false }); } // deutscher Quelltext → Aufnahme in der gewählten Sprache
       }
       el.goalArrow.style.display = angle == null ? 'none' : '';
       if (angle != null) el.goalArrow.style.transform = `rotate(${angle - Math.PI / 2}rad)`;

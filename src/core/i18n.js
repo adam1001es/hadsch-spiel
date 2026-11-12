@@ -111,42 +111,33 @@ export async function initI18n() {
   }).observe(document.body, { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ['placeholder', 'aria-label', 'title'] });
 }
 
-// ---------- Sprachausgabe (Vorlesen der Aufgaben und Hinweise) ----------
-const synth = typeof speechSynthesis !== 'undefined' ? speechSynthesis : null;
-let voices = [], unlocked = false;
-const pickVoices = () => { voices = synth ? synth.getVoices() : []; };
-if (synth) { pickVoices(); synth.onvoiceschanged = pickVoices; }
-
-// Ruhige, angenehme Stimme der passenden Sprache (bevorzugt „Enhanced“/„Premium“/natürliche Stimmen)
-function voiceFor(L) {
-  if (!voices.length) pickVoices();
-  for (const tag of L.voice) {
-    const c = voices.filter((v) => v.lang.toLowerCase().replace('_', '-').startsWith(tag.toLowerCase()));
-    if (c.length) return c.sort((a, b) => score(b) - score(a))[0];
-  }
-  return null;
-}
-const score = (v) => (/premium|enhanced|natural|neural|siri/i.test(v.name) ? 4 : 0) + (/female|anna|helena|petra|yelda|maged|laila|zeynep|sara|ava|samantha|serena/i.test(v.name) ? 1 : 0) + (v.localService ? 1 : 0);
-export const voiceAvailable = (L = lang()) => !!(synth && voiceFor(L));
-
-// iOS: Sprachausgabe erst nach einer Berührung erlaubt → beim ersten Tippen einmal leer sprechen
+// ---------- Sprachansagen (natürliche Stimme, vorab erzeugt) ----------
+// Ziel-Namen werden als fertige Audiodateien abgespielt: assets/voice/<sprache>/<hash>.mp3 (Piper-Stimmen, offline erzeugt,
+// z. B. „Thorsten“ für Deutsch). Gibt es für einen Text keine Datei, bleibt es still – keine Computerstimme des Geräts.
+const VOICED = ['de', 'en', 'tr', 'ar', 'fa', 'prs'];
+export const voiceAvailable = (L = lang()) => VOICED.includes(L.code);
+const clipHash = (s) => { let h = 0x811c9dc5; for (const ch of norm(s)) { h ^= ch.codePointAt(0); h = Math.imul(h, 16777619) >>> 0; } return h.toString(16).padStart(8, '0'); };
+let manifest = null;
+const loadManifest = () => (manifest ||= voiceAvailable() ? fetch(`./assets/voice/${lang().code}/index.json`).then((r) => r.json()).then((a) => new Set(a)).catch(() => new Set()) : Promise.resolve(new Set()));
+let clip = null, unlocked = false, lastKey = '', lastAt = 0;
+// iOS: Audio erst nach einer Berührung erlaubt → beim ersten Tippen einmal stumm abspielen
 export function unlockVoice() {
-  if (unlocked || !synth) return; unlocked = true;
-  try { const u = new SpeechSynthesisUtterance(' '); u.volume = 0; synth.speak(u); } catch { /* egal */ }
+  if (unlocked) return; unlocked = true; loadManifest();
+  try { const a = new Audio(); a.muted = true; a.play().catch(() => {}); } catch { /* egal */ }
 }
-
-let lastSaid = '', lastAt = 0;
-export function speak(text, { interrupt = true } = {}) {
-  if (!settings.voice || !synth) return;
-  const s = norm(String(t(text) || '').replace(/<[^>]+>/g, ' ').replace(/[✓✋➤▾▸•·]/g, ' ').replace(/[؀-ۿ]+[^A-Za-zÄÖÜäöüß]*/g, (m) => (lang().rtl ? m : ' ')));
-  if (!s || (s === lastSaid && performance.now() - lastAt < 4000)) return;
-  const L = lang(), v = voiceFor(L); if (!v) return;
-  lastSaid = s; lastAt = performance.now();
-  if (interrupt) synth.cancel();
-  const u = new SpeechSynthesisUtterance(s); u.voice = v; u.lang = v.lang; u.rate = 0.95 * settings.rate; u.pitch = 1;
-  synth.speak(u);
+// key = deutscher Quelltext (z. B. „Waschhaus“); gespielt wird die Aufnahme in der gewählten Sprache
+export async function speak(key, { interrupt = true } = {}) {
+  if (!settings.voice || !key) return;
+  const k = norm(String(key).split(' · ')[0]);
+  if (k === lastKey && performance.now() - lastAt < 4000) return;
+  const set = await loadManifest(), h = clipHash(k);
+  if (!set.has(h)) return;
+  lastKey = k; lastAt = performance.now();
+  if (clip && !interrupt && !clip.ended && !clip.paused) return;
+  if (clip) clip.pause();
+  clip = new Audio(`./assets/voice/${lang().code}/${h}.mp3`); clip.playbackRate = settings.rate || 1; clip.play().catch(() => {});
 }
-export const stopSpeaking = () => { if (synth) synth.cancel(); };
+export const stopSpeaking = () => { if (clip) { clip.pause(); clip = null; } };
 
 // ---------- Rezitation / Aufnahmen (arabische Texte) ----------
 // Aufnahmen liegen in public/assets/audio/<name>.mp3 (z. B. talbiyah.mp3). Fehlt eine Datei, erscheint kein Abspielknopf.

@@ -1,5 +1,6 @@
 // Übersetzung (sq): deutscher Quelltext → Übersetzung. Erzeugt aus den Spieltexten; fehlende Einträge bleiben deutsch.
 export default {
+"Für diese Sprache gibt es noch keine Stimme. Die Texte erscheinen trotzdem übersetzt.": "Për këtë gjuhë ende nuk ka zë. Tekstet shfaqen gjithsesi të përkthyera.",
 "Ton an": "Zëri i ndezur",
 "Ton aus": "Zëri i fikur",
 "Ton an oder aus": "Ndiz ose fik zërin",

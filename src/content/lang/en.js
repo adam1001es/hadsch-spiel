@@ -1,5 +1,6 @@
 // Übersetzung (en): deutscher Quelltext → Übersetzung. Erzeugt aus den Spieltexten; fehlende Einträge bleiben deutsch.
 export default {
+"Für diese Sprache gibt es noch keine Stimme. Die Texte erscheinen trotzdem übersetzt.": "There is no voice for this language yet. The texts still appear translated.",
 "Ton an": "Sound on",
 "Ton aus": "Sound off",
 "Ton an oder aus": "Sound on or off",

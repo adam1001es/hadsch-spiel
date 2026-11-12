@@ -1,5 +1,6 @@
 // Übersetzung (fa): deutscher Quelltext → Übersetzung. Erzeugt aus den Spieltexten; fehlende Einträge bleiben deutsch.
 export default {
+"Für diese Sprache gibt es noch keine Stimme. Die Texte erscheinen trotzdem übersetzt.": "برای این زبان هنوز صدایی نیست. متن‌ها با این حال ترجمه‌شده نمایش داده می‌شوند.",
 "Ton an": "صدا روشن",
 "Ton aus": "صدا خاموش",
 "Ton an oder aus": "روشن یا خاموش کردن صدا",
