@@ -38,3 +38,22 @@ export function ornamentBand(world, { x, y, z, ry = 0, len, h = 0.8, i = 5, colo
   m.position.set(x, y, z); m.rotation.y = ry; world.add(m);
   return m;
 }
+
+// Bogen-Fassade („Arabic Traditional Doors“ von medbunz, CC BY 4.0, als Bild gebacken): Spitzbogen mit Sternen-Gitter
+// in hellem Stein vor einer dunkleren Nische. door: true → Holztür in der Bogenöffnung, sonst eine flache Blendnische.
+// Mehrere Module nebeneinander ergeben eine durchgehende verzierte Wand. Position = Mitte unten (Boden), ry = Vorderseite.
+export function archFacade(world, { x, y = 0, z, ry = 0, w = 4.6, h = 4.8, door = false, stone = 0xefe7d8, recess = 0xa89a84, wood = 0x6a4428, niche = 0xd9cfbe }) {
+  const g = new THREE.Group(); g.position.set(x, y + h / 2, z); g.rotation.y = ry; world.add(g);
+  const plane = () => new THREE.PlaneGeometry(w, h);
+  const back = new THREE.Mesh(plane(), new THREE.MeshStandardMaterial({ color: recess, roughness: 0.95 })); back.position.z = -0.2; g.add(back);
+  const open = door
+    ? new THREE.MeshStandardMaterial({ map: texture('patterns/door_open.png'), alphaTest: 0.5, color: wood, roughness: 0.7, normalMap: texture('patterns/pattern_2_nor.jpg', { repeat: [3, 3], color: false }) })
+    : new THREE.MeshStandardMaterial({ map: texture('patterns/door_open.png'), alphaTest: 0.5, color: niche, roughness: 0.9 });
+  const op = new THREE.Mesh(plane(), open); op.position.z = -0.12; g.add(op);
+  const lat = new THREE.Mesh(plane(), new THREE.MeshStandardMaterial({
+    map: texture('patterns/door_arch.png'), normalMap: texture('patterns/door_arch_nor.jpg', { color: false }), normalScale: new THREE.Vector2(1.4, 1.4),
+    alphaTest: 0.5, color: stone, roughness: 0.75, side: THREE.DoubleSide,
+  }));
+  lat.castShadow = true; g.add(lat);
+  return g;
+}

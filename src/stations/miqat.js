@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { TEXT, TALBIYAH } from '../content/hajj.js';
 import { heightFn, buildTerrain } from '../world/terrain.js';
 import { palms, mosqueModel, sign, bus } from '../world/props.js';
-import { ornamentPanel, ornamentBand } from '../world/ornament.js';
+import { archFacade } from '../world/ornament.js';
 import { createCrowd } from '../world/crowd.js';
 import { createPlayer } from '../core/player.js';
 import { createFlow, createMarker, goTo, promptAt, holdAction, sunnah, isFemale } from '../core/kit.js';
@@ -23,12 +23,10 @@ export function create(ctx, st) {
   const mosq = mosqueModel(world, { x: 0, z: -55, glow }); // Eingang bei z ≈ -33
   const wash = new THREE.Group(); wash.position.set(-30, 0, -6); world.add(wash);
   const wm = new THREE.MeshStandardMaterial({ color: 0xece6da, roughness: 0.8 });
-  const wb = new THREE.Mesh(new THREE.BoxGeometry(14, 4, 9), wm); wb.position.y = 2; wb.castShadow = wb.receiveShadow = true; wash.add(wb);
-  const door = new THREE.Mesh(new THREE.PlaneGeometry(2.2, 2.8), new THREE.MeshStandardMaterial({ color: 0x5b4632 })); door.position.set(0, 1.4, 4.52); wash.add(door);
-  sign(world, -30, -1.2, 0, ['مغاسل', 'Waschräume · Ghusl'], { w: 5, h: 1.3, y: 4.6 });
-  // Verzierungen am Waschhaus: Gitterfenster neben der Tür und Fries unter der Dachkante
-  for (const dx of [-4.2, 4.2]) ornamentPanel(world, { x: -30 + dx, y: 2.1, z: -6 + 4.53, w: 2, h: 2, i: dx < 0 ? 2 : 3, back: 0x4a3c2c, backGlow: 0.15 });
-  ornamentBand(world, { x: -30, y: 3.65, z: -6 + 4.52, len: 14, h: 0.5 });
+  const wb = new THREE.Mesh(new THREE.BoxGeometry(14, 5.2, 9), wm); wb.position.y = 2.6; wb.castShadow = wb.receiveShadow = true; wash.add(wb);
+  sign(world, -30, -1.2, 0, ['مغاسل', 'Waschräume · Ghusl'], { w: 5, h: 1.3, y: 6.2 });
+  // Fassade des Waschhauses: drei Spitzbögen mit Sternen-Gitter über die ganze Front, in der Mitte die Holztür
+  for (const dx of [-4.6, 0, 4.6]) archFacade(world, { x: -30 + dx, z: -6 + 4.72, w: 4.6, h: 4.8, door: dx === 0 });
   // Reisebus (3D-Modell)
   bus(world, 34, 22, -0.3);
   const plist = [];

@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { TEXT, SAFA_AYAH } from '../content/hajj.js';
 import { pbr } from '../world/assets.js';
 import { rock, sign } from '../world/props.js';
-import { patternMat, ornamentPanel, ornamentBand } from '../world/ornament.js';
+import { patternMat, archFacade } from '../world/ornament.js';
 import { createCrowd } from '../world/crowd.js';
 import { createPlayer } from '../core/player.js';
 import { createFlow, createMarker, goTo, promptAt, holdAction, duaFacing, pointGoal, sunnah, viewLine, clearView, createAutopilot, isFemale, autoAfter } from '../core/kit.js';
@@ -50,13 +50,10 @@ export function create(ctx, st) {
       const cap = new THREE.Mesh(new THREE.BoxGeometry(1.3, 0.5, 1.3), archMat); cap.position.set(sx * (W / 2 - 0.6), H - 1.5, z); world.add(cap);
     }
   }
-  // Islamische Verzierungen: Gitterfenster zwischen den Säulen (von hinten beleuchtet), goldener Fries unter der Decke,
-  // Medaillons an den Stirnwänden neben den Schildern
-  for (const sx of [-1, 1]) {
-    for (let z = -L / 2 + 3.75, k = 0; z < L / 2; z += 7.5, k++) ornamentPanel(world, { x: sx * (W / 2 - 0.16), y: 4.4, z, ry: -sx * Math.PI / 2, w: 3, h: 3, i: k % 2 ? 3 : 2 });
-    ornamentBand(world, { x: sx * (W / 2 - 0.02), y: H - 1.05, z: 0, ry: -sx * Math.PI / 2, len: L + 16, h: 0.7 });
-  }
-  for (const s2 of [-1, 1]) for (const mx of [-6.2, 6.2]) ornamentPanel(world, { x: mx, y: 6.5, z: s2 * (L / 2 + 7.97), ry: s2 > 0 ? Math.PI : 0, w: 2.8, h: 2.8, i: 1, back: 0x6b5a3e, backGlow: 0.25 });
+  // Islamische Fassade: in jedem Feld zwischen den Säulen ein Spitzbogen mit Sternen-Gitter (heller Stein vor dunkler Nische),
+  // an den Stirnwänden je zwei Bögen neben dem Schild
+  for (const sx of [-1, 1]) for (let z = -L / 2 + 3.75; z < L / 2; z += 7.5) archFacade(world, { x: sx * (W / 2 - 0.22), z, ry: -sx * Math.PI / 2, w: 6.3, h: 6.6 });
+  for (const s2 of [-1, 1]) for (const mx of [-6.6, 6.6]) archFacade(world, { x: mx, z: s2 * (L / 2 + 7.78), ry: s2 > 0 ? Math.PI : 0, w: 5.2, h: 5.4 });
 
   // Mittelbarriere mit Säulen (trennt die Laufrichtungen)
   const barrierMat = new THREE.MeshStandardMaterial({ color: 0xbfb6a4, roughness: 0.5 });
