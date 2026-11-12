@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { TEXT } from '../content/hajj.js';
 import { heightFn, buildTerrain } from '../world/terrain.js';
-import { lamps, mats, mosque, pebbleGeometry } from '../world/props.js';
+import { lamps, mats, mosqueModel, pebbleGeometry } from '../world/props.js';
 import { createCrowd } from '../world/crowd.js';
 import { createPlayer } from '../core/player.js';
 import { createFlow, createMarker, goTo, pray, holdAction, duaFacing, pointGoal, sunnah, createAutopilot, autoAfter } from '../core/kit.js';
@@ -20,7 +20,7 @@ export function create(ctx, st) {
   const h = heightFn({ r0: 260, r1: 620, amp: 150 });
   buildTerrain(world, h);
   const glow = [];
-  mosque(world, { x: MASHAR.x, z: MASHAR.z - 25, w: 60, d: 36, h: 11, minarets: 2, glow });
+  const mosq = mosqueModel(world, { x: MASHAR.x, z: MASHAR.z - 28, glow });
   const ll = [];
   for (let x = -120; x <= 120; x += 20) for (let z = -120; z <= 120; z += 24) ll.push([x + 3, 0, z]);
   lamps(world, ll, glow);
@@ -56,7 +56,7 @@ export function create(ctx, st) {
   const glint = new THREE.InstancedMesh(new THREE.RingGeometry(0.12, 0.17, 16).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0xffe6a0, transparent: true, opacity: 0.8, depthWrite: false }), PN);
   glint.count = 0; world.add(glint);
 
-  const colliders = [{ type: 'inside', x: 0, z: -30, r: 170 }, { type: 'box', x: MASHAR.x, z: MASHAR.z - 25, hw: 30, hd: 18 }];
+  const colliders = [{ type: 'inside', x: 0, z: -30, r: 170 }, mosq.collider];
   const player = createPlayer(ctx, { x: 0, z: 10, heading: Math.PI, color: 0xf6f4ee, speed: 3.2, fastSpeed: 5, colliders });
   player.fig.skinM.color.setHex(0xb07a4f);
 

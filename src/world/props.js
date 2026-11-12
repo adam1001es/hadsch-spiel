@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { pbr } from './assets.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { toCreasedNormals } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 
 // Wiederverwendbare Bauteile für die Außen-Stationen. Viele gleiche Objekte → InstancedMesh.
@@ -144,6 +145,30 @@ export function mosque(world, { x = 0, z = 0, ry = 0, w = 40, d = 30, h = 9, min
     const cap = new THREE.Mesh(new THREE.ConeGeometry(1.2, 4, 12), new THREE.MeshStandardMaterial({ color: 0xd8b04f, metalness: 0.8, roughness: 0.35 })); cap.position.set(mx, mH + 2, d / 2 - 3); grp.add(cap);
   }
   return grp;
+}
+
+// Moschee als 3D-Modell: „Medina Baye Mosque“ (papaamady, CC BY 4.0), vereinfacht (~53.000 Dreiecke).
+// Grundfläche ca. 46 × 48,5 m (Mitte im Ursprung, Eingang Richtung +z). Bis das Modell geladen ist, steht die einfache Moschee.
+export const MOSQUE_SIZE = { hw: 23.5, hd: 24.5 };
+let mosqueLoad = null;
+export function mosqueModel(world, { x = 0, z = 0, ry = 0, glow = null } = {}) {
+  const simple = mosque(world, { x, z, ry, w: 44, d: 44, h: 10, minarets: 2, glow });
+  const grp = new THREE.Group(); grp.position.set(x, 0, z); grp.rotation.y = ry; world.add(grp);
+  mosqueLoad ||= new GLTFLoader().loadAsync('./assets/models/mosque.glb').then((g) => {
+    g.scene.traverse((o) => {
+      if (!o.isMesh) return;
+      o.geometry = toCreasedNormals(o.geometry, Math.PI / 6); // Kanten scharf, Kuppeln rund
+      o.castShadow = true; o.receiveShadow = true;
+      if (o.material.name === 'glass') { o.material.emissive = new THREE.Color(0xffd08a); o.material.emissiveIntensity = 0; }
+    });
+    return g.scene;
+  }).catch(() => null);
+  mosqueLoad.then((sc) => {
+    if (!sc || !grp.parent) return;
+    const m = sc.clone(true); grp.add(m); simple.removeFromParent();
+    m.traverse((o) => { if (o.isMesh && o.material.name === 'glass' && glow && !glow.includes(o.material)) glow.push(o.material); });
+  });
+  return { group: grp, collider: { type: 'box', x, z, hw: MOSQUE_SIZE.hw, hd: MOSQUE_SIZE.hd, rot: ry } };
 }
 
 // Reisebus: 3D-Modell „indonesian bus Ecoline“ (agungkuncoro13021986, CC BY 4.0), vereinfacht. Länge 12,2 m entlang z, Front bei +z.

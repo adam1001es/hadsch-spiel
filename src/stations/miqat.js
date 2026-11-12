@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { TEXT, TALBIYAH } from '../content/hajj.js';
 import { heightFn, buildTerrain } from '../world/terrain.js';
-import { palms, mosque, sign, bus } from '../world/props.js';
+import { palms, mosqueModel, sign, bus } from '../world/props.js';
 import { createCrowd } from '../world/crowd.js';
 import { createPlayer } from '../core/player.js';
 import { createFlow, createMarker, goTo, promptAt, holdAction, sunnah, isFemale } from '../core/kit.js';
@@ -19,7 +19,7 @@ export function create(ctx, st) {
   buildTerrain(world, h);
   const glow = [];
   // Moschee mit hohem Minarett, Waschhaus, Palmenhain
-  mosque(world, { x: 0, z: -48, w: 56, d: 34, h: 10, minarets: 1, glow });
+  const mosq = mosqueModel(world, { x: 0, z: -55, glow }); // Eingang bei z ≈ -30
   const wash = new THREE.Group(); wash.position.set(-30, 0, -6); world.add(wash);
   const wm = new THREE.MeshStandardMaterial({ color: 0xece6da, roughness: 0.8 });
   const wb = new THREE.Mesh(new THREE.BoxGeometry(14, 4, 9), wm); wb.position.y = 2; wb.castShadow = wb.receiveShadow = true; wash.add(wb);
@@ -34,11 +34,11 @@ export function create(ctx, st) {
   // Pilger rund um die Moschee
   const N = 160, crowd = createCrowd(world, N, { ihram: true });
   const cp = [];
-  for (let i = 0; i < N; i++) { cp.push([(Math.random() - 0.5) * 70, -24 - Math.random() * 10, Math.random() * 6]); crowd.set(i, cp[i][0], 0, cp[i][1], cp[i][2]); }
+  for (let i = 0; i < N; i++) { cp.push([(Math.random() - 0.5) * 70, -22 - Math.random() * 7, Math.random() * 6]); crowd.set(i, cp[i][0], 0, cp[i][1], cp[i][2]); }
   crowd.commit();
 
   const colliders = [
-    { type: 'box', x: 0, z: -48, hw: 28, hd: 17 }, { type: 'circle', x: 31, z: -34, r: 1.6 },
+    mosq.collider,
     { type: 'box', x: -30, z: -6, hw: 7, hd: 4.5 }, { type: 'box', x: 34, z: 22, hw: 1.6, hd: 6, rot: -0.3 },
     { type: 'inside', x: 0, z: 0, r: 110 },
   ];
