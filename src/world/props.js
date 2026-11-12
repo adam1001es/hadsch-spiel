@@ -71,14 +71,26 @@ export function trees(world, list) {
   instanced(world, crown, new THREE.MeshStandardMaterial({ color: 0x5c7a3c, roughness: 0.95, flatShading: true }), list);
 }
 
-// Straßenlaternen mit leuchtendem Kopf. glow-Liste: Materialien, deren Leuchten nachts hochgeregelt wird.
+// Straßenlaternen: 3D-Modell „Street Light“ (Algirdas Lalys, CC BY 4.0), 9,3 m, Arm nach +z (ry dreht ihn), 674 Dreiecke.
+// Die Leuchte glüht nachts (glow-Liste). Bis das Modell geladen ist, stehen einfache Masten.
+let lampLoad = null;
 export function lamps(world, list, glow) {
   const pole = new THREE.CylinderGeometry(0.08, 0.12, 9, 6); pole.translate(0, 4.5, 0);
   const headG = new THREE.BoxGeometry(0.9, 0.25, 0.5); headG.translate(0, 9, 0);
-  instanced(world, pole, new THREE.MeshStandardMaterial({ color: 0x8a8f94, metalness: 0.6, roughness: 0.5 }), list, { shadow: false });
   const lm = new THREE.MeshStandardMaterial({ color: 0xfff1d0, emissive: 0xffc070, emissiveIntensity: 0 });
-  instanced(world, headG, lm, list, { shadow: false });
+  const simple = [instanced(world, pole, new THREE.MeshStandardMaterial({ color: 0x8a8f94, metalness: 0.6, roughness: 0.5 }), list, { shadow: false }), instanced(world, headG, lm, list, { shadow: false })];
   glow.push(lm);
+  lampLoad ||= new GLTFLoader().loadAsync('./assets/models/streetlight.glb').then((g) => g.scene).catch(() => null);
+  lampLoad.then((sc) => {
+    if (!sc || !simple[0].parent) return;
+    sc.traverse((o) => {
+      if (!o.isMesh) return;
+      let mat = o.material;
+      if (mat.name === 'glass') { mat = mat.clone(); mat.emissive = new THREE.Color(0xffc070); mat.emissiveIntensity = 0; glow.push(mat); }
+      instanced(world, o.geometry, mat, list, { shadow: false });
+    });
+    for (const m of simple) m.removeFromParent();
+  });
 }
 
 // Schild mit Text (Arabisch + Deutsch) auf zwei Pfosten

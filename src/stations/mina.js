@@ -40,7 +40,7 @@ export function create(ctx, st) {
   sign(world, OWN.x - 4.6, OWN.z, -Math.PI / 2, ['خيمة ١٠٨', 'Dein Zelt · 108'], { w: 3.6, h: 1.1, y: 2.6, bg: '#a97c2c' });
   // Laternen an der Hauptstraße und den Querstraßen
   const ll = [];
-  for (let z = -140; z <= 140; z += 18) ll.push([4.5, 0, z], [-4.5, 0, z]);
+  for (let z = -140; z <= 140; z += 18) ll.push([4.5, 0, z, -Math.PI / 2], [-4.5, 0, z + 9, Math.PI / 2]); // Arm zur Straßenmitte, versetzt
   lamps(world, ll, glow);
 
   let booth = null, barber = null;

@@ -8,6 +8,7 @@
 | `haram.glb` | „Masjid al-Haram (Great Mosque of Mecca)“ von **alfinann (nawafilla)**, https://skfb.ly/pszEs, Lizenz **CC BY 4.0** | auf unsere Kaaba ausgerichtet (Maßstab über die Kaaba-Breite), Kaaba/Lampen/Boden des Modells entfernt, Teile weiter als 350 m weggelassen, nach Material zusammengefasst und vereinfacht (~170.000 Dreiecke), Farben aufgehellt |
 | `mosque2.glb` | „M-01 [mosque]“ von **Designs Forge**, https://skfb.ly/opINs, Lizenz **CC BY 4.0** | von STL umgewandelt und aufgerichtet, Eingang nach +z, Breite 44 m, vereinfacht (~58.000 Dreiecke), heller Stein; genutzt als Moschee am Miqat und in Muzdalifa |
 | `palms.glb` | „Palm Trees“ von **YadroGames**, https://skfb.ly/ovANy, Lizenz **CC BY 4.0** | von FBX umgewandelt, vier Palmen (palm1–4) je Stamm + Blätter (grün / gelblich), Fuß im Ursprung, Maßstab ×2 (7,8–10,6 m), Texturen 512 px |
+| `streetlight.glb` | „Street Light“ von **Algirdas Lalys**, https://skfb.ly/6tZGA, Lizenz **CC BY 4.0** | aus .blend mit Blender nach glTF, Mastfuß im Ursprung, Arm nach +z, Höhe 9,3 m (×1,4), eigene Materialien (Metall, Leuchte), 674 Dreiecke |
 | `muslima.glb` | „women in hijab“ von **Abdullah5007**, https://skfb.ly/pvKzS, Lizenz **CC BY 4.0** | von FBX umgewandelt, Arme aus der A-Haltung gesenkt, Ärmel markiert, vereinfacht (~5.800 Dreiecke), Gesichts-Textur farbneutral (Hautfarbe pro Person), Hijab-Textur als Goldrand-Maske (Stoff einfärbbar), Hände/Füße einfarbig |
 
 Das Umwandlungs-Werkzeug liegt nicht im Repository (lokal unter `tools/`).
