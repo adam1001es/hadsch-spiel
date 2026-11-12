@@ -5,6 +5,7 @@ import { palms, mosqueModel, sign, bus } from '../world/props.js';
 import { archFacade, patternWall } from '../world/ornament.js';
 import { createCrowd } from '../world/crowd.js';
 import { createPlayer } from '../core/player.js';
+import * as sfx from '../core/sfx.js';
 import { createFlow, createMarker, goTo, promptAt, holdAction, sunnah, isFemale } from '../core/kit.js';
 
 const T = TEXT.miqat;
@@ -58,7 +59,7 @@ export function create(ctx, st) {
     await goTo(ctx, flow, marker, T.goGhusl, -30, -0.5);
     await promptAt(ctx, flow, T.ghusl, () => marker.inside(player.pos, 1));
     marker.hide();
-    await flow.run(holdAction(ctx, player, { label: 'Halten: Ghusl', steps: [{ pose: 'bend', sec: 1.2 }, { pose: 'stand', sec: 0.6 }, { pose: 'bend', sec: 1.2 }] }));
+    await flow.run(holdAction(ctx, player, { label: 'Halten: Ghusl', steps: [{ pose: 'bend', sec: 1.2 }, { pose: 'stand', sec: 0.6 }, { pose: 'bend', sec: 1.2 }], onTick: () => sfx.waterKeep() })); // Wasser läuft, solange gehalten wird
     ui.toast('Ghusl ✓'); ctx.mission?.done(0);
     if (isFemale(ctx)) await ui.choice(T.clothesQF, T.clothesF); else await ui.choice(T.clothesQ, T.clothes);
     player.fig.setColor(0xf6f4ee);
@@ -99,6 +100,7 @@ export function create(ctx, st) {
 
     await goTo(ctx, flow, marker, T.goBus, 31.5, 18);
     await promptAt(ctx, flow, T.bus, () => marker.inside(player.pos, 1));
+    sfx.bus();
     ctx.next();
   }
   run();

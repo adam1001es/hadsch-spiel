@@ -4,6 +4,7 @@ import { heightFn, buildTerrain } from '../world/terrain.js';
 import { tents, lamps, sign, bus } from '../world/props.js';
 import { createCrowd } from '../world/crowd.js';
 import { createPlayer } from '../core/player.js';
+import * as sfx from '../core/sfx.js';
 import { createFlow, createMarker, goTo, promptAt, holdAction, pray, viewLine, clearView, isFemale } from '../core/kit.js';
 
 // Mina: Zeltstadt im Tal. phase 'd8' (8. Dhul-Hiddscha) oder 'd10' (Opfer & Rasur).
@@ -102,6 +103,7 @@ export function create(ctx, st) {
     ui.info(`<p>${T.leave}.</p>`);
     await new Promise((r) => sky.animateTo(30.3, 2, r));
     await goTo(ctx, flow, marker, T.busGoal, 0, 120);
+    sfx.bus();
     ctx.next();
   }
 
@@ -125,6 +127,7 @@ export function create(ctx, st) {
     player.fig.setColor(0x6f7f8e);
     ui.toast('Normale Kleidung ✓'); ctx.mission?.done(2);
     await goTo(ctx, flow, marker, T.busGoal, 0, 120);
+    sfx.bus();
     ctx.next();
   }
   (d10 ? day10 : day8)();

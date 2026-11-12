@@ -5,6 +5,7 @@ import { heightFn, buildTerrain, fbm } from '../world/terrain.js';
 import { tents, trees, sign, rock, bus } from '../world/props.js';
 import { createCrowd } from '../world/crowd.js';
 import { createPlayer } from '../core/player.js';
+import * as sfx from '../core/sfx.js';
 import { createFlow, createMarker, goTo, promptAt, pray, duaFacing, pointGoal } from '../core/kit.js';
 
 const T = TEXT.arafat;
@@ -77,7 +78,7 @@ export function create(ctx, st) {
     { type: 'fn', fn(p) { if (boundActive && insideArafat && p.z > BOUND - 1) { p.z = BOUND - 1; if (boundHint <= 0) { ui.hint(T.stay); boundHint = 3; } } } },
   ];
   let insideArafat = false;
-  const player = createPlayer(ctx, { x: 0, z: 128, heading: Math.PI, color: 0xf6f4ee, speed: 3.4, fastSpeed: 5.4, colliders, ground: h });
+  const player = createPlayer(ctx, { x: 0, z: 128, heading: Math.PI, color: 0xf6f4ee, speed: 3.4, fastSpeed: 5.4, colliders, ground: h, surface: (x, z) => (hill(x, z) > 1.2 ? 'stone' : 'sand') }); // auf dem Jabal ar-Rahma: Fels
   player.fig.skinM.color.setHex(0xb07a4f);
 
   const flow = createFlow();
@@ -119,6 +120,7 @@ export function create(ctx, st) {
     boundActive = false; ctx.mission?.done(3);
     ui.info(`<p>Die Sonne ist untergegangen.</p><p class="tr">${T.leave}.</p>`);
     await goTo(ctx, flow, marker, T.busGoal, 0, BOUND + 16);
+    sfx.bus();
     ctx.next();
   }
   run();

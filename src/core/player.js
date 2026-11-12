@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { step as sfxStep } from './sfx.js';
 import { izarGeo, torsoGeo, ridaGeo, hairGeo, faceGeo, khimarGeo } from '../world/people.js';
 import { peopleModels } from '../world/crowd.js';
 import { WALK, walkMaterial } from '../world/walk.js';
@@ -217,7 +218,8 @@ export function resolve(p, r, shapes) {
 }
 
 // ---------- Spieler: Bewegung + Kamera ----------
-export function createPlayer(ctx, { x = 0, z = 0, heading = 0, color, speed = 1.6, fastSpeed = 2.8, colliders = [], ground = null, camDist = 6.5, camHeight = 2.6 } = {}) {
+export function createPlayer(ctx, { x = 0, z = 0, heading = 0, color, speed = 1.6, fastSpeed = 2.8, colliders = [], ground = null, camDist = 6.5, camHeight = 2.6, surface = 'sand' } = {}) {
+  let stepDist = 0; // für Schrittgeräusche (alle ca. 0,75 m)
   const { engine, input } = ctx;
   const fig = createFigure(engine.world, { color, covered: ctx.profile?.gender === 'f', models: peopleModels() });
   const pos = new THREE.Vector3(x, 0, z);
@@ -331,6 +333,8 @@ export function createPlayer(ctx, { x = 0, z = 0, heading = 0, color, speed = 1.
       pos.y = ground ? ground(pos.x, pos.z) : 0;
       const v = Math.hypot(vel.x, vel.z);
       walking = v / speed;
+      // Leise Schritte je nach Untergrund (surface: 'sand' | 'stone' | 'marble' | 'carpet' oder Funktion (x, z) → Untergrund)
+      if (v > 0.4 && !frozen) { stepDist += v * dt; if (stepDist > 0.75) { stepDist = 0; sfxStep(typeof surface === 'function' ? surface(pos.x, pos.z) : surface, Math.min(1, v / speed)); } } else stepDist = 0.5;
       if (v > 0.15) {
         const want = Math.atan2(vel.x, vel.z);
         const d = Math.atan2(Math.sin(want - head), Math.cos(want - head));

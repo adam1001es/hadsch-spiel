@@ -20,11 +20,11 @@ export const LANGS = [
 ];
 
 const KEY = 'hp-settings';
-const DEF = { lang: '', voice: false, rate: 1, recite: true, v: 2 };
+const DEF = { lang: '', voice: true, rate: 1, recite: true, v: 3 };
 export const settings = (() => {
   try {
     const st = { ...DEF, ...JSON.parse(localStorage.getItem(KEY) || '{}') };
-    if (st.v !== 2) { st.voice = false; st.v = 2; } // Vorlesen ist jetzt standardmäßig aus (nur Zielansagen, wenn eingeschaltet)
+    if (st.v !== 3) { st.voice = true; st.v = 3; } // Ton (Ansagen mit natürlicher Stimme + leise Geräusche) ist standardmäßig an
     return st;
   } catch { return { ...DEF }; }
 })();

@@ -4,6 +4,7 @@ import { heightFn, buildTerrain } from '../world/terrain.js';
 import { lamps, carpets, gravelBasin, mosqueModel, pebbleGeometry } from '../world/props.js';
 import { createCrowd } from '../world/crowd.js';
 import { createPlayer } from '../core/player.js';
+import * as sfx from '../core/sfx.js';
 import { createFlow, createMarker, goTo, pray, holdAction, duaFacing, pointGoal, sunnah, createAutopilot, autoAfter } from '../core/kit.js';
 
 const T = TEXT.muzdalifa;
@@ -77,7 +78,7 @@ export function create(ctx, st) {
   glint.count = 0; world.add(glint);
 
   const colliders = [{ type: 'inside', x: 0, z: -30, r: 170 }, mosq.collider];
-  const player = createPlayer(ctx, { x: 0, z: 10, heading: Math.PI, color: 0xf6f4ee, speed: 3.2, fastSpeed: 5, colliders });
+  const player = createPlayer(ctx, { x: 0, z: 10, heading: Math.PI, color: 0xf6f4ee, speed: 3.2, fastSpeed: 5, colliders, surface: (x, z) => (BASINS.some((q) => Math.hypot((x - q.x) / q.rx, (z - q.z) / q.rz) < 1) ? 'stone' : rugs.some((r) => Math.abs(x - r[0]) < 1.5 && Math.abs(z - r[1]) < 1) ? 'carpet' : 'sand') });
   player.fig.skinM.color.setHex(0xb07a4f);
 
   const flow = createFlow();
@@ -165,7 +166,7 @@ export function create(ctx, st) {
         pointGoal(ui, player, near ? T.masharGoal : T.busGoal, near ? MASHAR.x : 60, near ? MASHAR.z : 120);
         return (marker.visible && marker.inside(player.pos, 0.5)) || mExit.inside(player.pos);
       });
-      if (mExit.inside(player.pos)) { done = true; break; }
+      if (mExit.inside(player.pos)) { done = true; sfx.bus(); break; }
       if (!dhikr) {
         dhikr = true;
         await duaFacing(ctx, flow, { label: T.dhikr, sec: 5, tx: QIBLA.x, tz: QIBLA.z, onTick: (k) => sky.setHour(29.33 + k * 0.4) });

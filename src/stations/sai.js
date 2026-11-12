@@ -81,7 +81,7 @@ export function create(ctx, st) {
   ];
   for (let z = -36; z <= 36; z += 9) colliders.push({ type: 'circle', x: 0, z, r: 0.45 });
 
-  const player = createPlayer(ctx, { x: 4, z: -L / 2 + 3.5, heading: 0, color: umrah ? 0xf3f1ea : 0x6f7f8e, speed: 3.4, fastSpeed: 5.4, colliders, camDist: 5.5, camHeight: 2.3 });
+  const player = createPlayer(ctx, { x: 4, z: -L / 2 + 3.5, heading: 0, color: umrah ? 0xf3f1ea : 0x6f7f8e, speed: 3.4, fastSpeed: 5.4, colliders, camDist: 5.5, camHeight: 2.3, surface: 'marble' });
 
   // Mitpilger in zwei Richtungen
   const N = engine.isMobile ? 260 : 400;

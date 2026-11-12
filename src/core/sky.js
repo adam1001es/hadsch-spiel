@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { Sky } from 'three/examples/jsm/objects/Sky.js';
 import { environment } from '../world/assets.js';
+import { sun as sfxSun } from './sfx.js';
 
 const smooth = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
 
@@ -81,6 +82,7 @@ export function createSky(engine) {
 
   const state = { hour: 12, art: 0, artificial: 0, indoor: false, focus: new THREE.Vector3(), shadowSize: 50, anim: null };
   const sunDir = new THREE.Vector3(), lightDir = new THREE.Vector3();
+  let lastE = null, lastH = 0;
   const warm = new THREE.Color(0xfff0d6), night = new THREE.Color(0x0b1430), dayFog = new THREE.Color(0xc9d4dc), duskFog = new THREE.Color(0xd99a6a);
 
   function apply() {
@@ -88,6 +90,9 @@ export function createSky(engine) {
     const a = ((h - 6) / 12) * Math.PI;
     sunDir.set(Math.cos(a), Math.sin(a) * 0.92, 0.38).normalize();
     const e = sunDir.y;
+    // Sonnenauf-/-untergang hörbar machen (nur bei fließendem Zeitverlauf, nicht beim Stationswechsel)
+    if (lastE != null && Math.abs(state.hour - lastH) < 0.6 && Math.sign(e) !== Math.sign(lastE) && !state.indoor) sfxSun(e > lastE);
+    lastE = e; lastH = state.hour;
     u.sunPosition.value.copy(sunDir);
     const dayK = smooth(-0.08, 0.25, e);
     const art = state.indoor ? 1 : state.artificial * (1 - smooth(-0.04, 0.18, e));

@@ -92,7 +92,7 @@ export function create(ctx, st) {
   } });
   for (let z = zMin + 10; z < zMax; z += 18) for (const x of [-34, -22, 22, 34]) colliders.push({ type: 'circle', x, z, r: 0.8 });
 
-  const player = createPlayer(ctx, { x: 2, z: POS[list[0]] + 26, heading: Math.PI, color: firstDay ? 0xf6f4ee : 0x6f7f8e, speed: 3.2, fastSpeed: 5, colliders });
+  const player = createPlayer(ctx, { x: 2, z: POS[list[0]] + 26, heading: Math.PI, color: firstDay ? 0xf6f4ee : 0x6f7f8e, speed: 3.2, fastSpeed: 5, colliders, surface: 'marble' });
   player.fig.skinM.color.setHex(0xb07a4f);
 
   // Wurf: Stein, Flugbahn-Vorschau

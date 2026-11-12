@@ -10,7 +10,9 @@ import { progressStore } from './core/progress.js';
 import { preloadPeople, setCrowdCamera, peopleStatus } from './world/crowd.js';
 import { initI18n, LANGS, settings, saveSettings, lang, unlockVoice, voiceAvailable, speak, stopSpeaking, stopAudio } from './core/i18n.js';
 initI18n();
-addEventListener('pointerdown', unlockVoice, { once: true, capture: true });
+import { unlockSfx } from './core/sfx.js';
+addEventListener('pointerdown', () => { unlockVoice(); unlockSfx(); }, { once: true, capture: true });
+addEventListener('keydown', () => { unlockVoice(); unlockSfx(); }, { once: true, capture: true });
 const peopleReady = preloadPeople(); // 3D-Pilgerinnen im Hintergrund laden
 
 const engine = createEngine(document.getElementById('c'));

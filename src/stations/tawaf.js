@@ -4,6 +4,7 @@ import { buildHaram, matafRadius } from '../world/haram.js';
 import { createCrowd } from '../world/crowd.js';
 import { RABBANA, TEXT } from '../content/hajj.js';
 import { createPlayer } from '../core/player.js';
+import * as sfx from '../core/sfx.js';
 import { createFlow, createMarker, pointGoal, holdAction, rakatSteps, pick, sunnah, createAutopilot, isFemale, autoAfter } from '../core/kit.js';
 
 const TAU = Math.PI * 2;
@@ -67,7 +68,7 @@ export function create(ctx, st) {
   const R0 = 11, thS = th0 - 0.12;
   const sx = R0 * Math.cos(thS), sz = -R0 * Math.sin(thS);
   const dirX = -Math.sin(thS), dirZ = -Math.cos(thS); // Tangente in Richtung wachsendes θ
-  const player = createPlayer(ctx, { x: sx, z: sz, heading: Math.atan2(dirX, dirZ), color: st.kind === 'umrah' ? 0xf3f1ea : 0x6f7f8e, speed: 3, fastSpeed: 4.4, colliders });
+  const player = createPlayer(ctx, { x: sx, z: sz, heading: Math.atan2(dirX, dirZ), color: st.kind === 'umrah' ? 0xf3f1ea : 0x6f7f8e, speed: 3, fastSpeed: 4.4, colliders, surface: 'marble' });
   input.yaw = Math.atan2(dirX, dirZ) + 0.5; // etwas zur Kaaba gedreht
   // Idtiba' (nur Männer, nur Tawaf der Umrah): rechte Schulter frei während der 7 Runden
   if (st.kind === 'umrah') player.fig.setIdtiba(true);
@@ -115,7 +116,7 @@ export function create(ctx, st) {
 
   function drink() {
     if (ctx.progress.sunnah.has('zamzam') && !mZam.visible) return;
-    mZam.hide(); ui.prompt(null);
+    mZam.hide(); ui.prompt(null); sfx.drink();
     player.fig.pose('drink');
     setTimeout(() => { if (flow.dead) return; player.fig.pose('stand'); ui.toast('Zamzam getrunken'); sunnah(ctx, 'zamzam'); ctx.mission?.done(4); }, 1400);
   }
