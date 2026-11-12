@@ -33,3 +33,5 @@ Nur die Texturen werden verwendet, nicht die Geometrie des Modells. Steinsockel 
 „Islamic patterns“ von **GhalebR**, https://skfb.ly/oKpZY, Lizenz **CC BY 4.0**. Die 3D-Platten wurden frontal gerendert und als Bilder gespeichert: `pattern_N.png` (Form mit Transparenz) und `pattern_N_nor.jpg` (Relief, aus der Form berechnet). Genutzt für Musterwände ohne Tür (Sa'i, Waschhaus am Miqat) und die Deckenleuchten im Sa'i.
 
 `door_arch.png`, `door_arch_nor.jpg`, `door_open.png`: „Arabic Traditional Doors: Timeless Beauty“ von **medbunz**, https://skfb.ly/oGU6Y, Lizenz **CC BY 4.0**. Spitzbogen mit Sternen-Gitter frontal gerendert (Form, Relief, Türöffnung als Maske). Genutzt als Torbogen um Türen (Waschhaus am Miqat).
+
+`neem_leaves.png`, `neem_bark.jpg`: aus „Jungle Tree“ von **gelmi.com.br**, https://skfb.ly/oJPVU, Lizenz **CC BY 4.0**. Blattbüschel (Farbe + Maske als Transparenz, aufgehellt) und Rinde, verkleinert. Genutzt für die Neem-Bäume in Arafat (eigene, leichte Baumform).

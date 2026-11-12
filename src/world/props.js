@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { pbr } from './assets.js';
+import { pbr, texture } from './assets.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { toCreasedNormals } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
@@ -107,12 +107,35 @@ export function palms(world, list) {
     for (const m of simple) m.removeFromParent();
   });
 }
-// Neem-Bäume (Arafat): runde Krone
+// Neem-Bäume (Arafat): Stamm mit echter Rinde, zwei Äste, Krone aus vielen Blattbüscheln (Foto mit Transparenz,
+// aus „Jungle Tree“ von gelmi.com.br, CC BY 4.0). Innen dunkler, außen heller. Ca. 150 Dreiecke je Baum.
+let neemGeo = null;
+function neemGeometry() {
+  if (neemGeo) return neemGeo;
+  let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const trunk = mergeGeometries([
+    new THREE.CylinderGeometry(0.16, 0.3, 2.8, 8).translate(0, 1.4, 0),
+    new THREE.CylinderGeometry(0.07, 0.13, 1.8, 6).translate(0, 0.9, 0).rotateZ(0.6).translate(0.15, 2.4, 0),
+    new THREE.CylinderGeometry(0.07, 0.13, 1.7, 6).translate(0, 0.85, 0).rotateZ(-0.55).rotateY(2.2).translate(-0.1, 2.5, 0.1),
+  ]);
+  const cards = [], col = [];
+  for (let i = 0; i < 64; i++) {
+    const u = rnd() * Math.PI * 2, v = Math.acos(1 - rnd() * 1.6), r = 0.55 + rnd() * 0.45;
+    const x = Math.sin(v) * Math.cos(u) * 2.5 * r, z = Math.sin(v) * Math.sin(u) * 2.5 * r, y = 3.7 + Math.cos(v) * 1.5 * r;
+    const sz = 1.5 + rnd() * 0.9;
+    const q = new THREE.PlaneGeometry(sz, sz);
+    q.rotateX(-Math.PI / 2 + (rnd() - 0.5) * 1.6); q.rotateY(rnd() * Math.PI * 2); q.rotateZ((rnd() - 0.5) * 0.8);
+    q.translate(x, y, z);
+    const shade = 0.7 + r * 0.45 + (y - 3.7) * 0.08; // innen und unten dunkler
+    const c = new Float32Array(q.attributes.position.count * 3).fill(Math.min(1.1, shade)); q.setAttribute('color', new THREE.BufferAttribute(c, 3));
+    cards.push(q);
+  }
+  return (neemGeo = { trunk, crown: mergeGeometries(cards) });
+}
 export function trees(world, list) {
-  const trunk = new THREE.CylinderGeometry(0.2, 0.3, 2.6, 7); trunk.translate(0, 1.3, 0);
-  const crown = new THREE.IcosahedronGeometry(2.4, 1); crown.scale(1, 0.75, 1); crown.translate(0, 3.6, 0);
-  instanced(world, trunk, new THREE.MeshStandardMaterial({ color: 0x6b5440, roughness: 1 }), list);
-  instanced(world, crown, new THREE.MeshStandardMaterial({ color: 0x5c7a3c, roughness: 0.95, flatShading: true }), list);
+  const { trunk, crown } = neemGeometry();
+  instanced(world, trunk, new THREE.MeshStandardMaterial({ map: texture('neem_bark.jpg', { repeat: [1, 2] }), color: 0x9a8a78, roughness: 1 }), list);
+  instanced(world, crown, new THREE.MeshStandardMaterial({ map: texture('neem_leaves.png'), alphaTest: 0.45, side: THREE.DoubleSide, vertexColors: true, roughness: 0.85 }), list);
 }
 
 // Straßenlaternen: 3D-Modell „Street Light“ (Algirdas Lalys, CC BY 4.0), 9,3 m, Arm nach +z (ry dreht ihn), 674 Dreiecke.
