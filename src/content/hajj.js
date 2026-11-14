@@ -352,3 +352,25 @@ export const TEXT = {
     great: 'Super! Jetzt kannst du dich bewegen.',
   },
 };
+
+// ---------------------------------------------------------------------------
+// Belohnung nach dem Hadsch: ein Blick in das Innere der Kaaba (vereinfachte Lerndarstellung).
+export const KAABA_INSIDE = {
+  title: 'Belohnung: In der Kaaba',
+  enter: 'Als Belohnung in die Kaaba eintreten',
+  intro: 'Als Belohnung für deinen Hadsch darfst du hier einen Blick in das Innere der Kaaba werfen.',
+  real: 'In Wirklichkeit wird die Kaaba nur selten geöffnet, zum Beispiel zur Waschung, und meist nur für wenige Gäste. Als Pilger kommt man normalerweise nicht hinein.',
+  hijr: 'Gut zu wissen: Der Hijr Ismail (die halbrunde Mauer) gehört zur Kaaba. Wer dort betet, betet also auch in der Kaaba.',
+  look: 'Schau dich um: drei Holzsäulen, Marmorboden, grüne Vorhänge, hängende Lampen. Es gibt keine Fenster.',
+  goal: 'Gebetsplatz des Propheten',
+  goalInfo: 'Der Prophet ﷺ betete in der Kaaba: Er ging von der Tür geradeaus, bis die gegenüberliegende Wand etwa drei Ellen (ca. 1,5 m) vor ihm war, und betete zwei Rak\'at.',
+  pray: 'Halten: 2 Rak\'at beten',
+  anyDir: 'In der Kaaba darf man in jede Richtung beten, denn die Kaaba ist überall um dich herum.',
+  pillars: 'Drei Säulen aus Holz tragen das Dach.',
+  tawbah: 'Bab at-Tawbah: Diese Tür in der Ecke führt zu einer Treppe auf das Dach.',
+  lamps: 'Die Lampen sind alte Geschenke. Heute gibt es elektrisches Licht.',
+  dua: 'Halten: Dua',
+  end: 'Möge Allah deinen Hadsch annehmen. Danke, dass du den Hadsch-Pfad gegangen bist!',
+  back: 'Zurück zur Urkunde',
+  again: 'Nochmal spielen',
+};

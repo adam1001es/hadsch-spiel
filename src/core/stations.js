@@ -7,10 +7,14 @@ import * as arafat from '../stations/arafat.js';
 import * as muzdalifa from '../stations/muzdalifa.js';
 import * as jamarat from '../stations/jamarat.js';
 import * as info from '../stations/info.js';
+import * as kaabaInside from '../stations/kaabaInside.js';
 import { progressStore } from './progress.js';
+import { createLife } from '../world/life.js';
 
 // Neue Stationen hier eintragen, sobald die Datei in src/stations/ existiert.
 const IMPL = { tawaf, miqat, sai, mina, arafat, muzdalifa, jamarat };
+// Vögel/Flugzeug: draußen Wüstenvögel + Flugzeug, am Haram Tauben, drinnen nichts
+const LIFE = { miqat: 'desert', mina: 'desert', arafat: 'desert', muzdalifa: 'desert', tawaf: 'haram' };
 
 // Pädagogischer Ablauf jeder Station:
 // 1. Lernkarte „Worum geht es? Warum? Deine Aufgaben. Wusstest du?“
@@ -20,6 +24,7 @@ const IMPL = { tawaf, miqat, sai, mina, arafat, muzdalifa, jamarat };
 const store = { get(k) { try { return localStorage.getItem(k); } catch { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch { /* egal */ } } };
 
 export function createStations(ctx) {
+  let life = null;
   let current = null, index = -1, paused = false, tutorial = null, busy = false;
   ctx.progress.quizOk = ctx.progress.quizOk || 0;
   ctx.progress.quizN = ctx.progress.quizN || 0;
@@ -86,7 +91,7 @@ export function createStations(ctx) {
   async function go(i) {
     await ctx.ui.fade(true);
     await ctx.ready; // Modelle (z. B. Pilgerinnen) fertig geladen
-    current?.dispose?.();
+    current?.dispose?.(); life?.dispose(); life = null;
     ctx.engine.clearWorld();
     ctx.sky.reset();
     ctx.input.reset();
@@ -99,6 +104,7 @@ export function createStations(ctx) {
     ctx.mission = makeMission(L.tasks);
     const impl = IMPL[st.id] || info;
     current = impl.create(ctx, st);
+    life = createLife(ctx, { kind: LIFE[st.id] || 'none' });
     current.update?.(0.016); // Kamera einmal setzen, damit die Szene hinter der Lernkarte sichtbar ist
     paused = true;
     ctx.ui.fade(false);
@@ -106,6 +112,17 @@ export function createStations(ctx) {
     paused = false;
     if (!store.get('hp-tutorial') && ctx.player) tutorial = startTutorial();
   }
+
+  // Belohnung nach dem Hadsch: in die Kaaba eintreten (und zurück zur Urkunde)
+  async function scene(make) {
+    await ctx.ui.fade(true);
+    current?.dispose?.(); life?.dispose(); life = null;
+    ctx.engine.clearWorld(); ctx.sky.reset(); ctx.input.reset(); ctx.ui.reset();
+    current = make(ctx); current.update?.(0.016);
+    ctx.ui.fade(false);
+  }
+  ctx.reward = () => scene(kaabaInside.create);
+  ctx.backToEnding = () => scene(info.ending);
 
   ctx.next = async () => {
     if (busy) return;
@@ -128,6 +145,7 @@ export function createStations(ctx) {
     update(dt) {
       if (paused) return;
       current?.update?.(dt);
+      life?.update(dt);
       if (tutorial && tutorial.update(dt)) tutorial = null;
     },
   };

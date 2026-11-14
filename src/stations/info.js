@@ -1,4 +1,4 @@
-import { ENDING } from '../content/hajj.js';
+import { ENDING, KAABA_INSIDE } from '../content/hajj.js';
 import { buildKaaba } from '../world/kaaba.js';
 import { buildHaram } from '../world/haram.js';
 import { SUNNAH_LIST } from '../core/kit.js';
@@ -38,10 +38,15 @@ export function ending(ctx) {
   ui.el.panel.classList.remove('collapsed');
   ui.info(`${ui.prayer(ENDING)}
     <div class="cert"><div class="k">Urkunde</div><b>${pf.name || 'Du'}</b>${pf.age ? ` (${pf.age >= 18 ? '18+' : pf.age} Jahre)` : ''} ${pf.name ? 'hat' : 'hast'} ${nDone >= 12 ? 'alle 12 Stationen' : `${nDone} von 12 Stationen`} des Hadsch-Pfads geschafft.</div>
+    <p><button type="button" class="primary" id="toKaaba">🕋 ${KAABA_INSIDE.enter}</button></p>
     ${ctx.progress.quizN ? `<p><b>Quiz:</b> ${ctx.progress.quizOk} von ${ctx.progress.quizN} Fragen beim ersten Versuch richtig ${ctx.progress.quizOk === ctx.progress.quizN ? '– hervorragend!' : ''}</p>` : ''}
     <ul class="sunnah-list">${SUNNAH_LIST.map(([k, label]) => `<li class="${ctx.progress.sunnah.has(k) ? 'ok' : ''}">${ctx.progress.sunnah.has(k) ? '✓' : '○'} ${label}</li>`).join('')}</ul>
     <p class="tr">Gezählt wird nur, was du wirklich getan hast – Sunnah ist freiwillig.</p>`);
-  ui.actions([{ label: 'Nochmal spielen', kind: 'primary', onClick: () => location.reload() }]);
+  document.getElementById('toKaaba')?.addEventListener('click', () => ctx.reward?.());
+  ui.actions([
+    { label: '🕋 ' + KAABA_INSIDE.enter, kind: 'primary', onClick: () => ctx.reward?.() },
+    { label: 'Nochmal spielen', onClick: () => location.reload() },
+  ]);
   let t = 0;
   return {
     update(dt) {

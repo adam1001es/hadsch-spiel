@@ -96,6 +96,7 @@ document.getElementById('guideClose').addEventListener('click', () => { guide.hi
 // Direkt zu einer Station springen (zum Testen): …/index.html#s2 öffnet Station 2.
 const m = location.hash.match(/^#s(\d+)$/);
 if (m) begin(Math.max(0, Math.min(content.STATIONS.length - 1, +m[1] - 1)), false);
+if (location.hash === '#ende') begin(content.STATIONS.length, false); // Urkunde (und Belohnung in der Kaaba)
 
 // ---------- Einstellungen: Sprache, Vorlesen, Tempo, Rezitation ----------
 const setBox = document.getElementById('settings');
