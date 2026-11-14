@@ -46,7 +46,7 @@ export function createSky(engine) {
       }
       void main() {
         vec3 d = normalize(vDir);
-        vec3 c = uW.x * uBright.x * pick(tDay, uRot.x, d) + uW.y * uBright.y * pick(tDusk, uRot.y, d) + uW.z * uBright.z * pick(tNight, uRot.z, d);
+        vec3 c = uW.x * uBright.x * pick(tDay, uRot.x, d) + uW.y * uBright.y * pick(tDusk, uRot.y, d) + uW.z * uBright.z * pick(tNight, uRot.z, d) * vec3(0.42, 0.52, 0.78); // Nacht: klares Dunkelblau statt bräunlichem Dunst
         c = mix(uFog, c, smoothstep(-0.03, 0.12, d.y));
         gl_FragColor = vec4(c, 1.0);
         #include <colorspace_fragment>
@@ -83,7 +83,7 @@ export function createSky(engine) {
   const state = { hour: 12, art: 0, artificial: 0, indoor: false, focus: new THREE.Vector3(), shadowSize: 50, anim: null };
   const sunDir = new THREE.Vector3(), lightDir = new THREE.Vector3();
   let lastE = null, lastH = 0;
-  const warm = new THREE.Color(0xfff0d6), night = new THREE.Color(0x0b1430), dayFog = new THREE.Color(0xc9d4dc), duskFog = new THREE.Color(0xd99a6a);
+  const warm = new THREE.Color(0xfff0d6), night = new THREE.Color(0x101a30), dayFog = new THREE.Color(0xc9d4dc), duskFog = new THREE.Color(0xd99a6a);
 
   function apply() {
     const h = ((state.hour % 24) + 24) % 24;
@@ -97,7 +97,7 @@ export function createSky(engine) {
     const dayK = smooth(-0.08, 0.25, e);
     const art = state.indoor ? 1 : state.artificial * (1 - smooth(-0.04, 0.18, e));
     state.art = art;
-    renderer.toneMappingExposure = 0.3 + dayK * 0.3 + art * 0.45;
+    renderer.toneMappingExposure = 0.3 + dayK * 0.3 + art * 0.32; // Flutlicht-Nacht: nicht überbelichten
     stars.material.opacity = 1 - smooth(-0.25, -0.02, e);
     const photo = dome.material.uniforms.tNight.value && dome.material.uniforms.tDay.value && dome.material.uniforms.tDusk.value;
     sky.visible = !state.indoor && !photo;
@@ -111,14 +111,15 @@ export function createSky(engine) {
       const su = Math.atan2(sunDir.z, sunDir.x) / (Math.PI * 2) + 0.5;
       U.uRot.value.set(PHOTO.day.sunU - su, PHOTO.dusk.sunU - su, PHOTO.night.sunU - su);
       // Dämmerung nach Sonnenuntergang dunkler, Nacht etwas aufgehellt (Lichter des Haram)
-      U.uBright.value.set(1.0, 0.18 + 0.82 * smooth(-0.1, 0.12, e), 0.6 + art * 0.25);
+      U.uBright.value.set(1.0, 0.18 + 0.82 * smooth(-0.1, 0.12, e), 0.55 + art * 0.1);
     }
 
     lightDir.copy(e > -0.02 ? sunDir : new THREE.Vector3(-sunDir.x * 0.6, 0.75, 0.3).normalize());
-    lightDir.lerp(new THREE.Vector3(0.25, 1, 0.18).normalize(), art * 0.8).normalize();
+    lightDir.lerp(new THREE.Vector3(0.45, 1, 0.3).normalize(), art * 0.6).normalize(); // Flutlicht schräg von oben → Formen und Schatten sichtbar
     sun.color.setHSL(0.09, 0.6 * (1 - dayK) + 0.1, 0.85).lerp(warm, art * 0.7);
-    sun.intensity = Math.max(0.15, dayK * 2.4) + art * 2.2;
-    hemi.intensity = 0.15 + dayK * 0.35 + art * 0.9;
+    sun.intensity = Math.max(0.15, dayK * 2.4) + art * 1.7;
+    hemi.intensity = 0.15 + dayK * 0.35 + art * 0.55;
+    hemi.groundColor.set(0x8c7656).lerp(new THREE.Color(0x4a4036), art * 0.6); // nachts dunklerer Boden-Rückstrahl → mehr Tiefe
     hemi.color.set(0x8fa4c8).lerp(new THREE.Color(0xcfe0f2), dayK).lerp(warm, art * 0.5);
     useEnv(dayK > 0.35 && !state.indoor ? 'day' : 'night');
     scene.environmentIntensity = dayK > 0.35 ? 0.25 + dayK * 0.2 : 0.15 + art * 0.25;

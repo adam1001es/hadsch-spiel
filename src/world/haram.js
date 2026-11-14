@@ -20,7 +20,7 @@ function loadHaram() {
       o.castShadow = false; o.receiveShadow = true; // Schatten werfen wäre auf dem Handy zu teuer
       const m = o.material; m.flatShading = !m.map; m.side = THREE.DoubleSide;
       // nachts leicht beleuchtet (wie die angestrahlten Arkaden)
-      if (m.name !== '4_Material_Emas' && m.name !== 'material_0') { m.emissive = m.color.clone().multiplyScalar(0.38); m.emissiveIntensity = 0; m.userData.glow = true; }
+      if (m.name !== '4_Material_Emas' && m.name !== 'material_0') { m.color.multiply(new THREE.Color(1.0, 0.95, 0.87)); m.emissive = new THREE.Color(0xffd9a0).multiplyScalar(0.16); m.emissiveIntensity = 0; m.userData.glow = true; } // warmer Stein, nachts sanft angestrahlt
       m.needsUpdate = true;
     });
     haramStatus.state = 'geladen'; return g.scene;
@@ -33,7 +33,7 @@ function loadHaram() {
 export function buildHaram(world) {
   const glow = [], simple = [];
   const track = (o) => { simple.push(o); return o; };
-  const floor = new THREE.Mesh(new THREE.CircleGeometry(420, 96), new THREE.MeshStandardMaterial({ ...pbr('marble_floor', [840 / 1.5, 840 / 1.5]), roughness: 1, normalScale: new THREE.Vector2(0.6, 0.6) }));
+  const floor = new THREE.Mesh(new THREE.CircleGeometry(420, 96), new THREE.MeshStandardMaterial({ ...pbr('marble_floor', [840 / 1.5, 840 / 1.5]), color: 0xd9d3c8, roughness: 0.74, envMapIntensity: 0.9, normalScale: new THREE.Vector2(0.5, 0.5) })); // gedämpfter, leicht glänzender Marmor (blendet nicht)
   floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; world.add(floor);
 
   for (const [r, h, rows, reps] of [[57, 15, 2, 26], [92, 32, 3, 36], [150, 50, 4, 52]]) {

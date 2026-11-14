@@ -56,6 +56,14 @@ function womanColors(R) {
 let CAM = null, NEAR = 28, CAP = 200;
 export function setCrowdCamera(camera, { near = 28, cap = 200 } = {}) { CAM = camera; NEAR = near; CAP = cap; }
 
+let blobTex = null;
+function blobTexture() {
+  if (blobTex) return blobTex;
+  const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d');
+  const gr = g.createRadialGradient(32, 32, 2, 32, 32, 31); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.5, 'rgba(255,255,255,0.55)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
+  g.fillStyle = gr; g.fillRect(0, 0, 64, 64);
+  blobTex = new THREE.CanvasTexture(c); return blobTex;
+}
 export function createCrowd(world, n, { men = 0.6, ihram = true, idtiba = false } = {}) {
   const P = {
     dress: () => dressGeo(8), izar: () => izarGeo(8), torso: () => torsoGeo(7, 0, false), rida: () => ridaGeo(9, 0, idtiba), arms: () => armsGeo(4),
@@ -183,6 +191,10 @@ export function createCrowd(world, n, { men = 0.6, ihram = true, idtiba = false 
     return sl;
   }
 
+  // Weiche Kontaktschatten unter jeder Person (verankert die Figuren am Boden, sehr günstig: ein InstancedMesh)
+  const shadowM = new THREE.InstancedMesh(new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ map: blobTexture(), color: 0x000000, transparent: true, opacity: 0.42, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -2 }), n);
+  shadowM.frustumCulled = false; shadowM.renderOrder = 1; shadowM.count = n; world.add(shadowM);
+  const sd = new THREE.Object3D();
   const api = {
     n,
     // Position (x, y, z), Drehung ry, Höhe sy (z. B. 0.62 = sitzend), Neigung rx (z. B. π/2 = liegend)
@@ -202,6 +214,9 @@ export function createCrowd(world, n, { men = 0.6, ihram = true, idtiba = false 
       setsSinceCommit++; dirty = true;
       const s = scale[i];
       d.position.set(x, y, z); d.rotation.set(rx, ry, 0); d.scale.set(s * sw[i], sy * s * sh[i], s * sw[i]); d.updateMatrix();
+      const lying = rx > 0.5;
+      sd.position.set(x + (lying ? Math.sin(ry) * 0.75 : 0), (lying ? y - 0.2 : y) + 0.02, z + (lying ? Math.cos(ry) * 0.75 : 0)); sd.rotation.set(0, ry, 0);
+      sd.scale.set(lying ? 0.8 : 0.85 * s, 1, lying ? 2.0 : 0.85 * s); sd.updateMatrix(); shadowM.setMatrixAt(i, sd.matrix);
       const L = people[i];
       let useModel = false;
       if (model[i] && CAM && POOLS[model[i].s].cap > 0) {
@@ -230,6 +245,7 @@ export function createCrowd(world, n, { men = 0.6, ihram = true, idtiba = false 
         for (const m of pool.meshes) { m.count = top; if (colorsDirty && m.instanceColor) m.instanceColor.needsUpdate = true; }
       }
       colorsDirty = false;
+      if (dirty) shadowM.instanceMatrix.needsUpdate = true;
       if (dirty) for (const m of Object.values(meshes)) { m.instanceMatrix.needsUpdate = true; if (m.userData.walk) m.userData.walk.needsUpdate = true; if (m.userData.face) m.userData.face.needsUpdate = true; }
       dirty = false;
     },

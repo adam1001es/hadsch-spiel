@@ -228,3 +228,6 @@ html[data-rtl] .tr { direction: ltr; text-align: left; }
 #soundBtn svg { width: 21px; height: 21px; }
 #soundBtn .on { display: none; } #soundBtn[aria-pressed="true"] .on { display: block; } #soundBtn[aria-pressed="true"] .off { display: none; }
 #soundBtn[aria-pressed="false"] { color: rgba(230,196,110,.65); }
+
+/* Einheitlicher Bildlook: sanfter Randschatten wie bei einer Kamera (kostet keine Leistung) */
+#vignette { position: fixed; inset: 0; z-index: 1; pointer-events: none; background: radial-gradient(ellipse 85% 75% at 50% 45%, rgba(0,0,0,0) 55%, rgba(10,8,6,.28) 100%); }
