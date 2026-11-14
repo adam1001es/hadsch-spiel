@@ -70,6 +70,16 @@ export function createInput(canvas, holdBtn, stickEl) {
   };
   canvas.addEventListener('pointerup', end);
   canvas.addEventListener('pointercancel', end);
+  // Sicherheitsnetz gegen „hängende“ Steuerung: geht ein Loslassen verloren (iPhone-Langdruck, eingeblendetes Fenster,
+  // Finger außerhalb des Bildschirms, App-Wechsel), wird der Joystick trotzdem freigegeben.
+  canvas.addEventListener('lostpointercapture', end);
+  window.addEventListener('pointerup', end, true);
+  window.addEventListener('pointercancel', end, true);
+  const releaseAll = () => { if (stick) { stick = null; s.move.x = s.move.y = 0; s.fast = false; hideStick(); } look = null; s.aim = null; keys.clear(); off(); };
+  window.addEventListener('touchend', (e) => { if (e.touches.length === 0 && (stick || look)) releaseAll(); }, true);
+  window.addEventListener('touchcancel', releaseAll, true);
+  document.addEventListener('visibilitychange', () => { if (document.hidden) releaseAll(); });
+  canvas.addEventListener('contextmenu', (e) => e.preventDefault());
 
   // Halte-Knopf
   const on = (e) => { if (holdBtn.hidden) return; s.holding = true; holdBtn.classList.add('on'); if (e?.pointerId != null) holdBtn.setPointerCapture?.(e.pointerId); };
@@ -88,7 +98,9 @@ export function createInput(canvas, holdBtn, stickEl) {
   window.addEventListener('keyup', (e) => {
     if (e.code === 'Space') off();
     keys.delete(e.code);
+    if (e.key === 'Meta' || e.key === 'Control' || e.key === 'Alt') keys.clear(); // macOS: keyup der anderen Tasten fehlt sonst
   });
+  window.addEventListener('focusout', () => { if (!document.hasFocus()) keys.clear(); });
   window.addEventListener('blur', () => { keys.clear(); off(); });
 
   // Tastatur in s.move umrechnen (pro Frame aufrufen)

@@ -52,18 +52,16 @@ function tone(t0, dur, freq, { type = 'sine', gain = 0.1, attack = 0.01, to = nu
 // Schritt: sand (weich knirschend), stone (Fels, trocken), marble (glatter Boden, kurzer heller Klick), carpet (gedämpft)
 export function step(surface = 'sand', strength = 1) {
   if (!on()) return;
-  const t = ac.currentTime, v = (0.85 + Math.random() * 0.3) * strength;
+  // sehr leise und weich (nur ein Hauch, damit es nie lästig wird)
+  const t = ac.currentTime, v = (0.85 + Math.random() * 0.3) * strength * 0.5;
   if (surface === 'sand') {
-    noise(t, 0.14, { type: 'bandpass', freq: 700 + Math.random() * 300, q: 0.7, gain: 0.05 * v, attack: 0.02 });
-    noise(t + 0.01, 0.09, { type: 'highpass', freq: 3500, q: 0.5, gain: 0.012 * v, attack: 0.01 });
+    noise(t, 0.16, { type: 'lowpass', freq: 650 + Math.random() * 200, q: 0.5, gain: 0.035 * v, attack: 0.03 });
   } else if (surface === 'stone') {
-    noise(t, 0.07, { type: 'bandpass', freq: 1500 + Math.random() * 500, q: 1.4, gain: 0.07 * v, attack: 0.003 });
-    tone(t, 0.05, 140 + Math.random() * 30, { gain: 0.03 * v, attack: 0.002, to: 90 });
+    noise(t, 0.08, { type: 'bandpass', freq: 1100 + Math.random() * 300, q: 0.9, gain: 0.04 * v, attack: 0.008 });
   } else if (surface === 'marble') {
-    noise(t, 0.05, { type: 'bandpass', freq: 2600 + Math.random() * 400, q: 2, gain: 0.03 * v, attack: 0.002 });
-    tone(t, 0.06, 200, { gain: 0.012 * v, attack: 0.002, to: 140 });
+    noise(t, 0.06, { type: 'bandpass', freq: 1800 + Math.random() * 300, q: 1.2, gain: 0.018 * v, attack: 0.006 });
   } else {
-    noise(t, 0.1, { type: 'lowpass', freq: 500, q: 0.6, gain: 0.03 * v, attack: 0.015 });
+    noise(t, 0.12, { type: 'lowpass', freq: 420, q: 0.5, gain: 0.025 * v, attack: 0.02 });
   }
 }
 
