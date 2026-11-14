@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { TEXT, TALBIYAH } from '../content/hajj.js';
 import { heightFn, buildTerrain } from '../world/terrain.js';
-import { palms, mosqueModel, sign, bus } from '../world/props.js';
+import { palms, mosqueModel, sign, bus, roads, plaza } from '../world/props.js';
 import { archFacade, patternWall } from '../world/ornament.js';
 import { createCrowd } from '../world/crowd.js';
 import { createPlayer } from '../core/player.js';
@@ -31,6 +31,8 @@ export function create(ctx, st) {
   for (const sx of [-1, 1]) patternWall(world, { x: -30 + sx * 4.6, z: -6 + 4.64, w: 4.8, h: 5.2, i: 3, tile: 1.6 });
   patternWall(world, { x: -30, z: -6 - 4.64, ry: Math.PI, w: 14, h: 5.2, i: 3, tile: 1.6 });
   for (const sx of [-1, 1]) patternWall(world, { x: -30 + sx * 7.14, z: -6, ry: sx * Math.PI / 2, w: 9, h: 5.2, i: 3, tile: 1.6 });
+  plaza(world, { x: -5, z: -18, w: 72, d: 26 }); // gepflasterter Vorplatz von Moschee und Waschhaus
+  roads(world, [{ x1: 34, z1: -5, x2: 34, z2: 60, w: 8 }]); // Zufahrt zum Busparkplatz
   // Reisebus (3D-Modell)
   bus(world, 34, 22, -0.3);
   const plist = [];

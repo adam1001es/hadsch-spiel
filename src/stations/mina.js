@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { TEXT } from '../content/hajj.js';
 import { heightFn, buildTerrain } from '../world/terrain.js';
-import { tents, lamps, sign, bus } from '../world/props.js';
+import { tents, lamps, sign, bus, roads } from '../world/props.js';
 import { createCrowd } from '../world/crowd.js';
 import { createPlayer } from '../core/player.js';
 import * as sfx from '../core/sfx.js';
@@ -39,6 +39,9 @@ export function create(ctx, st) {
   const tentGlow = [];
   tents(world, list, { glow: tentGlow });
   sign(world, OWN.x - 4.6, OWN.z, -Math.PI / 2, ['خيمة ١٠٨', 'Dein Zelt · 108'], { w: 3.6, h: 1.1, y: 2.6 });
+  // Asphaltstraßen wie in Mina: breite Hauptstraße, Querstraßen zwischen den Zeltblöcken
+  const cross = [coord(5) + 4.2 + (coord(6) - 4.2 - coord(5) - 4.2) / 2]; cross.push(coord(10) + 4.2 + (coord(11) - 4.2 - coord(10) - 4.2) / 2);
+  roads(world, [{ x1: 0, z1: -150, x2: 0, z2: 150, w: 12 }, ...cross.flatMap((c) => [{ x1: -150, z1: c, x2: 150, z2: c, w: 8 }, { x1: -150, z1: -c, x2: 150, z2: -c, w: 8 }])]);
   // Laternen an der Hauptstraße und den Querstraßen
   const ll = [];
   for (let z = -140; z <= 140; z += 18) ll.push([4.5, 0, z, -Math.PI / 2], [-4.5, 0, z + 9, Math.PI / 2]); // Arm zur Straßenmitte, versetzt

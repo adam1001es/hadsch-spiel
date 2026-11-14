@@ -69,7 +69,7 @@ export function createSky(engine) {
   sun.shadow.bias = -0.0004;
   sun.shadow.normalBias = 0.03;
   scene.add(hemi, sun, sun.target);
-  scene.fog = new THREE.Fog(0x9fb3c8, 80, 1800);
+  scene.fog = new THREE.Fog(0x9fb3c8, 60, 1100); // leichter Dunst: ferne Berge werden weich
 
   // Umgebungslicht (HDRI): Tag- oder Nachtbild, je nach Sonnenstand. Wird im Hintergrund geladen.
   let envWanted = '', envReady = {};
@@ -83,7 +83,7 @@ export function createSky(engine) {
   const state = { hour: 12, art: 0, artificial: 0, indoor: false, focus: new THREE.Vector3(), shadowSize: 50, anim: null };
   const sunDir = new THREE.Vector3(), lightDir = new THREE.Vector3();
   let lastE = null, lastH = 0;
-  const warm = new THREE.Color(0xfff0d6), night = new THREE.Color(0x101a30), dayFog = new THREE.Color(0xc9d4dc), duskFog = new THREE.Color(0xd99a6a);
+  const warm = new THREE.Color(0xfff0d6), night = new THREE.Color(0x101a30), dayFog = new THREE.Color(0xdcd6cb), duskFog = new THREE.Color(0xd99a6a);
 
   function apply() {
     const h = ((state.hour % 24) + 24) % 24;
@@ -97,7 +97,7 @@ export function createSky(engine) {
     const dayK = smooth(-0.08, 0.25, e);
     const art = state.indoor ? 1 : state.artificial * (1 - smooth(-0.04, 0.18, e));
     state.art = art;
-    renderer.toneMappingExposure = 0.3 + dayK * 0.3 + art * 0.32; // Flutlicht-Nacht: nicht überbelichten
+    renderer.toneMappingExposure = 0.3 + dayK * 0.3 + art * 0.37; // Flutlicht-Nacht: hell, aber nicht überbelichtet
     stars.material.opacity = 1 - smooth(-0.25, -0.02, e);
     const photo = dome.material.uniforms.tNight.value && dome.material.uniforms.tDay.value && dome.material.uniforms.tDusk.value;
     sky.visible = !state.indoor && !photo;

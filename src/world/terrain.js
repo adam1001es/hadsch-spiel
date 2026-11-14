@@ -33,7 +33,7 @@ export function buildTerrain(world, h, size = 1600, seg = 160) {
   for (let i = 0; i < p.count; i++) p.setY(i, h(p.getX(i), p.getZ(i)));
   geo.computeVertexNormals();
   const nrm = geo.attributes.normal, col = new Float32Array(p.count * 3), rockW = new Float32Array(p.count);
-  const warm = new THREE.Color(1.0, 0.97, 0.92), dark = new THREE.Color(0.62, 0.55, 0.5), c = new THREE.Color();
+  const warm = new THREE.Color(1.0, 0.97, 0.92), dark = new THREE.Color(0.8, 0.74, 0.68), c = new THREE.Color();
   for (let i = 0; i < p.count; i++) {
     const x = p.getX(i), z = p.getZ(i), y = p.getY(i), ny = nrm.getY(i);
     const v = fbm(x * 0.02, z * 0.02);
@@ -44,7 +44,7 @@ export function buildTerrain(world, h, size = 1600, seg = 160) {
   geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
   geo.setAttribute('rockW', new THREE.BufferAttribute(rockW, 1));
   const rep = size / 5; // Kies-Kachel 5 m
-  const tex = pbr('desert', [rep, rep]), rock = pbr('granite', [1, 1]);
+  const tex = pbr('dune', [rep, rep]), rock = pbr('granite', [1, 1]); // feiner Sand wie in der Sahara
   const mat = new THREE.MeshStandardMaterial({ ...tex, vertexColors: true, roughness: 1, normalScale: new THREE.Vector2(1, 1) });
   mat.onBeforeCompile = (sh) => {
     sh.uniforms.tRock = { value: rock.map }; sh.uniforms.tRockN = { value: rock.normalMap }; sh.uniforms.uRockS = { value: 5 / 9 }; // Fels-Kachel 9 m
@@ -52,13 +52,18 @@ export function buildTerrain(world, h, size = 1600, seg = 160) {
       .replace('#include <begin_vertex>', '#include <begin_vertex>\nvRock = rockW;');
     sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform sampler2D tRock, tRockN; uniform float uRockS; varying float vRock;')
       .replace('#include <map_fragment>', `
-        vec3 sandC = texture2D(map, vMapUv).rgb * 1.12 * mix(0.8, 1.2, texture2D(map, vMapUv * 0.071).r * 1.6);
-        vec3 rockC = texture2D(tRock, vMapUv * uRockS).rgb * mix(0.85, 1.15, texture2D(tRock, vMapUv * uRockS * 0.11).r * 1.8) * vec3(0.95, 0.8, 0.68); // warmer, dunkler Granit
+        vec3 sandC = texture2D(map, vMapUv).rgb * vec3(1.3, 1.16, 0.95) * mix(0.88, 1.12, texture2D(map, vMapUv * 0.071).r * 1.6); // goldener, heller Sand
+        vec3 rockC = texture2D(tRock, vMapUv * uRockS).rgb * mix(0.85, 1.15, texture2D(tRock, vMapUv * uRockS * 0.11).r * 1.8) * vec3(1.08, 0.97, 0.86); // warmer, heller Fels (einheitlich mit dem Sand)
         diffuseColor.rgb *= mix(sandC, rockC, smoothstep(0.25, 0.75, vRock));`)
       .replace('vec3 mapN = texture2D( normalMap, vNormalMapUv ).xyz * 2.0 - 1.0;',
-        'vec3 mapN = mix(texture2D( normalMap, vNormalMapUv ).xyz, texture2D( tRockN, vNormalMapUv * uRockS ).xyz, smoothstep(0.25, 0.75, vRock)) * 2.0 - 1.0;');
+        `vec3 mapN = mix(texture2D( normalMap, vNormalMapUv ).xyz, texture2D( tRockN, vNormalMapUv * uRockS ).xyz, smoothstep(0.25, 0.75, vRock)) * 2.0 - 1.0;
+        { // Windrippel im Sand (nur in der Nähe, sonst flimmert es)
+          vec2 q = vNormalMapUv; float w = dot(q, vec2(0.83, 0.55)) * 46.0 + sin(q.y * 2.3 + q.x * 1.1) * 3.0 + sin(q.x * 5.7) * 0.8;
+          float fade = (1.0 - smoothstep(12.0, 45.0, length(vViewPosition))) * (1.0 - smoothstep(0.2, 0.6, vRock));
+          mapN.xy += vec2(0.83, 0.55) * cos(w) * 0.32 * fade;
+        }`);
   };
-  mat.customProgramCacheKey = () => 'terrain2';
+  mat.customProgramCacheKey = () => 'terrain3';
   const m = new THREE.Mesh(geo, mat);
   m.receiveShadow = true; world.add(m);
   return m;

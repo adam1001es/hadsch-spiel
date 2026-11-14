@@ -33,7 +33,7 @@ function loadHaram() {
 export function buildHaram(world) {
   const glow = [], simple = [];
   const track = (o) => { simple.push(o); return o; };
-  const floor = new THREE.Mesh(new THREE.CircleGeometry(420, 96), new THREE.MeshStandardMaterial({ ...pbr('marble_floor', [840 / 1.5, 840 / 1.5]), color: 0xd9d3c8, roughness: 0.74, envMapIntensity: 0.9, normalScale: new THREE.Vector2(0.5, 0.5) })); // gedämpfter, leicht glänzender Marmor (blendet nicht)
+  const floor = new THREE.Mesh(new THREE.CircleGeometry(420, 96), new THREE.MeshStandardMaterial({ ...pbr('marble_floor', [840 / 1.5, 840 / 1.5]), color: 0xe6e1d8, roughness: 0.74, envMapIntensity: 0.9, normalScale: new THREE.Vector2(0.5, 0.5) })); // gedämpfter, leicht glänzender Marmor (blendet nicht)
   floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; world.add(floor);
 
   for (const [r, h, rows, reps] of [[57, 15, 2, 26], [92, 32, 3, 36], [150, 50, 4, 52]]) {

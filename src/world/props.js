@@ -348,3 +348,27 @@ export function bus(world, x, z, ry = 0) {
   });
   return { group: grp, collider: { type: 'box', x, z, hw: 1.55, hd: 6.2, rot: ry } };
 }
+
+// Straßen: Asphalt (Poly Haven, CC0) mit hellen Bordsteinen. segs: [{ x1, z1, x2, z2, w }] (Breite in Metern).
+// Flach knapp über dem Boden; für ebene Bereiche (Mina, Arafat-Ebene, Muzdalifa, Miqat).
+export function roads(world, segs, { y = 0.03, curb = true } = {}) {
+  const curbM = new THREE.MeshStandardMaterial({ color: 0xd9d2c4, roughness: 0.9 });
+  const grp = new THREE.Group(); world.add(grp);
+  for (const { x1, z1, x2, z2, w } of segs) {
+    const len = Math.hypot(x2 - x1, z2 - z1), ang = Math.atan2(x2 - x1, z2 - z1);
+    const m = new THREE.MeshStandardMaterial({ ...pbr('asphalt', [w / 6, len / 6]), color: 0xe2ddd4, roughness: 1, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
+    const r = new THREE.Mesh(new THREE.PlaneGeometry(w, len).rotateX(-Math.PI / 2), m);
+    r.position.set((x1 + x2) / 2, y, (z1 + z2) / 2); r.rotation.y = ang; r.receiveShadow = true; grp.add(r);
+    if (curb) for (const sx of [-1, 1]) {
+      const c = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.14, len), curbM);
+      c.position.set((x1 + x2) / 2 + Math.cos(ang) * sx * (w / 2 + 0.15), y + 0.05, (z1 + z2) / 2 - Math.sin(ang) * sx * (w / 2 + 0.15)); c.rotation.y = ang; c.receiveShadow = true; grp.add(c);
+    }
+  }
+  return grp;
+}
+// Gepflasterter Platz (helle Steinplatten), z. B. vor der Moschee am Miqat
+export function plaza(world, { x, z, w, d, ry = 0 }) {
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(w, d).rotateX(-Math.PI / 2), new THREE.MeshStandardMaterial({ ...pbr('terrazzo', [w / 3, d / 3]), color: 0xffffff, roughness: 0.9, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }));
+  m.position.set(x, 0.025, z); m.rotation.y = ry; m.receiveShadow = true; world.add(m);
+  return m;
+}
