@@ -102,7 +102,10 @@ Spielstand (Geld, Hasanat, Besitz, Position) in `localStorage` (`hp-life`), mit 
 
 ## 4. Vorgeschlagene Reihenfolge
 
-1. `interact.js` mit Randleuchten + Aktionsknopf; bestehende SPOTS (Datteln, Zamzam, Tauben, Ballon, Bus) darauf umstellen.
+1. ✅ `interact.js` mit Randleuchten + Aktionsknopf; bestehende SPOTS (Datteln, Zamzam, Tauben, Ballon, Bus) darauf umstellen.
+   Fertig: `src/life/interact.js` – `createInteract(ctx, player)`, dann `add({ obj|objs, label, run, color: 'gold'|'green'|'blue', x, z, radius, near, push, when })`,
+   `update(dt)` im Loop, `dispose()`. Leuchten = Fresnel-Kopie je Mesh (teilt Geometrie/Instanzen), additiv, Tiefentest an (verdeckt die Figur nicht).
+   Der Aktionsknopf übernimmt die Farbe (`ui.prompt(..., { tone })`).
 2. Geldanzeige (Riyal + Hasanat) und Speichern; Multiplayer in allen Lebensspiel-Orten prüfen (Mitspieler sichtbar, auch in Fahrzeugen).
 3. Erster Job: Datteln verkaufen am Stand (kleines Minispiel), dann Zamzam verteilen (Sadaqa).
 4. Größere Stadt: mehrere Straßen/Plätze statt einer Straße, Kreuzungen, Ampeln.

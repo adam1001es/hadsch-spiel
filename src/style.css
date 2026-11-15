@@ -69,6 +69,8 @@ button:focus-visible { outline: 3px solid #e6c46e; outline-offset: 2px; }
 #hint { position: fixed; z-index: 6; left: 50%; top: 50%; transform: translate(-50%, -50%); max-width: min(86vw, 420px); padding: 10px 16px; border-radius: 12px; background: rgba(20,37,31,.86); color: var(--ivory); text-align: center; pointer-events: none; }
 
 /* Aktionsknopf vor Ort (erscheint, wenn man am richtigen Platz steht) */
+#prompt[data-tone="green"] { background: #8fe0a6; border-color: #e8fff0; }
+#prompt[data-tone="blue"] { background: #9fd0ff; border-color: #eef7ff; }
 #prompt.sunnah::after { content: ' · Sunnah'; font-weight: 400; font-size: 12px; }
 @keyframes pulse { 50% { box-shadow: 0 4px 22px rgba(230,196,110,.9); } }
 

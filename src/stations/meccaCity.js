@@ -13,10 +13,11 @@ import { viewLine, clearView } from '../core/kit.js';
 import { city, clockTower, nabawi } from './balloon.js';
 import { bus } from '../world/props.js';
 import * as sfx from '../core/sfx.js';
+import { createInteract } from '../life/interact.js';
 
 // Die Straßen von Mekka: Fußgängerzone vor der Masjid al-Haram (Blick auf den Uhrturm), mit Läden und Dingen zum Erleben:
 // Dattelmarkt, Zamzam-Brunnen, Tauben füttern, Heißluftballon. Leicht gebaut (Instanzen, einfache Läden), Pilger gehen umher.
-// Weitere Erlebnisse können als neuer Eintrag in SPOTS ergänzt werden.
+// Weitere Erlebnisse: neuer Eintrag in SPOTS mit obj/objs (leuchtet in der Nähe) und color (gold/green/blue).
 let balloonLoad = null;
 const dm = new THREE.Object3D();
 const ZMIN = -100, ZMAX = 60, HALF = 15; // begehbare Straße
@@ -69,23 +70,23 @@ export function create(ctx, { from, where = 'mecca' } = {}) {
   lamps(world, ll, glow);
   palms(world, [[-6, 0, ZMIN + 10, 1, 0.8], [6, 0, ZMIN + 10, 2, 0.8], [-6, 0, 35, 3, 0.75], [6, 0, 35, 1, 0.75]]);
 
-  // Erlebnis-Orte (ohne Pfeile und Aufgaben – einfach hingehen, in der Nähe erscheint ein Knopf)
+  // Erlebnis-Orte (ohne Pfeile und Aufgaben): in der Nähe leuchtet der Rand, ganz nah erscheint der Knopf (src/life/interact.js)
   const SPOTS = [];
   // Dattelmarkt
-  { const x = -11, z = 22; stand(world, x, z, Math.PI / 2, 0x2f6b55);
+  { const x = -11, z = 22; const st = stand(world, x, z, Math.PI / 2, 0x2f6b55);
     const dg = new THREE.SphereGeometry(0.035, 6, 4); dg.scale(1, 1.6, 1);
     const dates = new THREE.InstancedMesh(dg, new THREE.MeshStandardMaterial({ color: 0x4a2414, roughness: 0.4 }), 300);
     for (let i = 0; i < 300; i++) { const k = i % 3; dm.position.set(x + (Math.random() - 0.5) * 0.9, 0.93 + Math.random() * 0.06, z - 1.2 + k * 1.2 + (Math.random() - 0.5) * 0.7); dm.rotation.set(Math.random() * 3, Math.random() * 3, 0); dm.scale.setScalar(1); dm.updateMatrix(); dates.setMatrixAt(i, dm.matrix); }
     world.add(dates);
-    sign(world, x - 1.6, z, Math.PI / 2, ['تمور', 'Datteln'], { w: 2.6, h: 0.9, y: 3.3 });
-    SPOTS.push({ key: 'dates', name: T.dates, x: x + 2.2, z, label: T.datesDo, run() { ui.info(`<p>${medina ? T.datesInfoMedina : T.datesInfo}</p>`); ui.toast('Bismillah – lecker!', 1800); } }); }
+    const sg = sign(world, x - 1.6, z, Math.PI / 2, ['تمور', 'Datteln'], { w: 2.6, h: 0.9, y: 3.3 });
+    SPOTS.push({ objs: [st, sg], color: 'gold', key: 'dates', name: T.dates, x: x + 2.2, z, label: T.datesDo, run() { ui.info(`<p>${medina ? T.datesInfoMedina : T.datesInfo}</p>`); ui.toast('Bismillah – lecker!', 1800); } }); }
   // Zamzam-Brunnen: Reihe blauer Kanister und Spender
-  { const x = 11, z = 2; stand(world, x, z, -Math.PI / 2, 0x2b4f8a);
+  { const x = 11, z = 2; const st = stand(world, x, z, -Math.PI / 2, 0x2b4f8a);
     const can = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.16, 0.16, 0.45, 10), new THREE.MeshStandardMaterial({ color: 0x3f7fd0, roughness: 0.4 }), 12);
     for (let i = 0; i < 12; i++) { dm.position.set(x + 0.2 * ((i % 2) * 2 - 1), 1.13, z - 1.4 + Math.floor(i / 2) * 0.55); dm.rotation.set(0, 0, 0); dm.updateMatrix(); can.setMatrixAt(i, dm.matrix); }
     world.add(can);
-    sign(world, x + 1.6, z, -Math.PI / 2, ['زمزم', 'Zamzam'], { w: 2.6, h: 0.9, y: 3.3 });
-    SPOTS.push({ key: 'zamzam', name: T.zamzam, x: x - 2.2, z, label: T.zamzamDo, run() { sfx.drink(); ui.info(`<p>${T.zamzamInfo}</p>`); } }); }
+    const sg = sign(world, x + 1.6, z, -Math.PI / 2, ['زمزم', 'Zamzam'], { w: 2.6, h: 0.9, y: 3.3 });
+    SPOTS.push({ objs: [st, can, sg], color: 'gold', key: 'zamzam', name: T.zamzam, x: x - 2.2, z, label: T.zamzamDo, run() { sfx.drink(); ui.info(`<p>${T.zamzamInfo}</p>`); } }); }
   // Tauben am Platz
   const PZ = -38, PN = engine.isMobile ? 40 : 70;
   // Taube: Körper, Kopf, Schwanz (eine Form)
@@ -98,18 +99,16 @@ export function create(ctx, { from, where = 'mecca' } = {}) {
   const col = new THREE.Color(); for (let i = 0; i < PN; i++) pigeons.setColorAt(i, col.setHSL(0.62, 0.06, 0.55 + Math.random() * 0.25));
   pigeons.castShadow = true; world.add(pigeons);
   let feed = 0;
-  SPOTS.push({ key: 'pigeons', name: T.pigeons, x: 0, z: PZ + 9, label: T.pigeonsDo, run() { feed = 12; ui.info(`<p>${T.pigeonsInfo}</p>`); } });
+  SPOTS.push({ obj: pigeons, color: 'gold', radius: 12, near: 4, push: 0.012, key: 'pigeons', name: T.pigeons, x: 0, z: PZ + 9, label: T.pigeonsDo, run() { feed = 12; ui.info(`<p>${T.pigeonsInfo}</p>`); } });
   // Heißluftballon auf dem Platz am Ende der Straße
   const BZ = -82, balloon = new THREE.Group(); balloon.position.set(0, 0, BZ); world.add(balloon);
   balloonLoad ||= new GLTFLoader().loadAsync('./assets/models/balloon.glb').then((g) => g.scene).catch(() => null);
   balloonLoad.then((sc) => { if (sc && balloon.parent) { const m = sc.clone(true); m.traverse((o) => { if (o.isMesh) o.castShadow = true; }); balloon.add(m); } });
-  SPOTS.push({ key: 'balloon', name: T.balloon, x: 2.5, z: BZ + 4, label: T.balloonDo, run() { ctx.balloon?.(where); } });
+  SPOTS.push({ obj: balloon, color: 'blue', radius: 12, near: 3.2, push: 0.04, key: 'balloon', name: T.balloon, x: 2.5, z: BZ + 4, label: T.balloonDo, run() { ctx.balloon?.(where); } });
   // Bus in die andere Stadt (Haltestelle am Anfang der Straße)
   const other = medina ? 'mecca' : 'medina';
-  bus(world, -10, 40, 0);
-  SPOTS.push({ key: 'bus', name: T.bus, x: -6.3, z: 38, label: medina ? T.busToMecca : T.busToMedina, run() { sfx.bus(); ctx.drive?.(where, other); } });
-
-  const done = SPOTS.map(() => false);
+  const coach = bus(world, -10, 40, 0).group;
+  SPOTS.push({ obj: coach, color: 'blue', radius: 10, near: 2.8, push: 0.04, key: 'bus', name: T.bus, x: -6.3, z: 38, label: medina ? T.busToMecca : T.busToMedina, run() { sfx.bus(); ctx.drive?.(where, other); } });
 
   // Pilger in der Fußgängerzone
   const N = engine.isMobile ? 70 : 120, crowd = createCrowd(world, N, { ihram: false, men: 0.55 });
@@ -128,6 +127,9 @@ export function create(ctx, { from, where = 'mecca' } = {}) {
   const start = from === 'balloon' ? { x: 4, z: BZ + 8 } : from === 'bus' ? { x: -5.5, z: 33 } : { x: 0, z: ZMAX - 6 };
   const player = createPlayer(ctx, { x: start.x, z: start.z, heading: Math.PI, color: ctx.profile?.gender === 'f' ? 0x2c3a4a : 0xf6f4ee, speed: 2.2, fastSpeed: 3.6, colliders, surface: 'stone' });
   const life = createLife(ctx, { kind: 'haram' });
+  const interact = createInteract(ctx, player);
+  for (const s of SPOTS) interact.add(s);
+  ctx.interact = interact; // für Tests
 
   ui.el.panel.classList.remove('collapsed');
   ui.info(`<p>${medina ? T.introMedina : T.intro}</p><p class="tr">${T.more}</p>`);
@@ -141,11 +143,7 @@ export function create(ctx, { from, where = 'mecca' } = {}) {
       for (const m of glow) m.emissiveIntensity = 0.4;
       agents.update(dt, viewLine(ctx));
       life.update(dt);
-      // nächster Ort: Knopf zeigen; Pfeil zum nächsten noch nicht erlebten Ort
-      let near = -1, best = 1e9, goal = -1, gd = 1e9;
-      SPOTS.forEach((s, i) => { const d = player.distTo(s.x, s.z); if (d < 2.6 && d < best) { best = d; near = i; } if (!done[i] && d < gd) { gd = d; goal = i; } });
-      if (near >= 0) ui.prompt(SPOTS[near].label, () => { const i = near; SPOTS[i].run(); done[i] = true; }, { key: SPOTS[near].key });
-      else ui.prompt(null);
+      interact.update(dt); // Randleuchten + Aktionsknopf in der Nähe
       // Tauben: picken, weichen dem Spieler aus, kommen beim Füttern zusammen
       feed = Math.max(0, feed - dt);
       const px = player.pos.x, pz = player.pos.z;
@@ -162,6 +160,6 @@ export function create(ctx, { from, where = 'mecca' } = {}) {
       }
       pigeons.instanceMatrix.needsUpdate = true;
     },
-    dispose() { ui.prompt(null); ui.goal(null); },
+    dispose() { interact.dispose(); ui.prompt(null); ui.goal(null); },
   };
 }

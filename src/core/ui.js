@@ -137,7 +137,7 @@ export function createUI() {
       if (onToggle) el.fast.onclick = () => onToggle();
     },
     // Aktionsknopf vor Ort. Gleicher key → kein Neuaufbau (verhindert Flackern im Frame-Loop).
-    prompt(label, fn, { sunnah = false, key = label } = {}) {
+    prompt(label, fn, { sunnah = false, key = label, tone = '' } = {}) {
       if (!label) { if (!el.prompt.hidden) { el.prompt.hidden = true; promptKey = ''; promptFn = null; if (el.coach.className === 'prompt') ui.coach(null); } return; }
       promptFn = fn;
       if (promptKey === key && !el.prompt.hidden) return;
@@ -145,6 +145,7 @@ export function createUI() {
       if (!seen.prompt) ui.coach(TEXT.coach.prompt, 'prompt', '👇');
       el.prompt.textContent = label;
       el.prompt.classList.toggle('sunnah', sunnah);
+      el.prompt.dataset.tone = tone; // Farbcode des Randleuchtens: gold benutzen, green kaufen/verdienen, blue fahren
       el.prompt.hidden = false;
     },
     // Ziel-Anzeige: Text + Pfeilwinkel (Radiant, 0 = geradeaus, positiv = rechts)
