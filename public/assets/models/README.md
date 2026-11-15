@@ -10,8 +10,8 @@
 | `palms.glb` | „Palm Trees“ von **YadroGames**, https://skfb.ly/ovANy, Lizenz **CC BY 4.0** | von FBX umgewandelt, vier Palmen (palm1–4) je Stamm + Blätter (grün / gelblich), Fuß im Ursprung, Maßstab ×2 (7,8–10,6 m), Texturen 512 px |
 | `streetlight.glb` | „Street Light“ von **Algirdas Lalys**, https://skfb.ly/6tZGA, Lizenz **CC BY 4.0** | aus .blend mit Blender nach glTF, Mastfuß im Ursprung, Arm nach +z, Höhe 9,3 m (×1,4), eigene Materialien (Metall, Leuchte), 674 Dreiecke |
 | `muslima.glb` | „women in hijab“ von **Abdullah5007**, https://skfb.ly/pvKzS, Lizenz **CC BY 4.0** | von FBX umgewandelt, Arme aus der A-Haltung gesenkt, Ärmel markiert, vereinfacht (~5.800 Dreiecke), Gesichts-Textur farbneutral (Hautfarbe pro Person), Hijab-Textur als Goldrand-Maske (Stoff einfärbbar), Hände/Füße einfarbig |
-| `man2.glb` | Pilger im Ihram (beide Schultern bedeckt), vom Projekt-Inhaber mit **Tripo AI** erstellt | gedreht (Blick nach +z), auf 1,74 m skaliert, Haut und Stoff getrennt (Hautfarbe pro Person), von 1,9 Mio. auf ~3.800 Dreiecke vereinfacht, Textur 1024 px; in der Menge außerhalb des Umrah-Tawaf |
-| `man3.glb` | Pilger im Ihram mit freier rechter Schulter (Idtiba'), vom Projekt-Inhaber mit **Tripo AI** erstellt | wie `man2.glb` bearbeitet (~3.900 Dreiecke); nur im Tawaf der Umrah |
-| `boy.glb` | Junge im Ihram (rechte Schulter frei), vom Projekt-Inhaber mit **Tripo AI** erstellt | wie `man2.glb` bearbeitet, 0,95 m groß (~3.600 Dreiecke); nur im Tawaf der Umrah |
+| `man2.glb` | Pilger im Ihram (beide Schultern bedeckt), vom Projekt-Inhaber mit **Tripo AI** erstellt | gedreht (Blick nach +z), auf 1,74 m skaliert, Haut und Stoff getrennt (Hautfarbe pro Person), von 1,9 Mio. auf ~6.200 Dreiecke vereinfacht (Kopf schonend mit festen Textur-Nähten), Textur 1536 px; in der Menge außerhalb des Umrah-Tawaf |
+| `man3.glb` | Pilger im Ihram mit freier rechter Schulter (Idtiba'), vom Projekt-Inhaber mit **Tripo AI** erstellt | wie `man2.glb` bearbeitet (~6.300 Dreiecke); nur im Tawaf der Umrah |
+| `boy.glb` | Junge im Ihram (rechte Schulter frei), vom Projekt-Inhaber mit **Tripo AI** erstellt | wie `man2.glb` bearbeitet, 0,95 m groß (~5.700 Dreiecke); nur im Tawaf der Umrah |
 
 Das Umwandlungs-Werkzeug liegt nicht im Repository (lokal unter `tools/`).
