@@ -6,8 +6,8 @@ Gutes tun – **ohne Gewalt, ohne Verbotenes, respektvoll**. Eigene Spielidee im
 (keine Namen, Figuren, Karten, Logos oder Musik anderer Spiele).
 
 Der Nutzer programmiert nicht selbst, testet auf iPhone (Safari/Firefox) und Laptop und spricht Deutsch.
-Er lädt das Spiel zusätzlich per FTP auf islamlernen.at/hadsch/ hoch (Ordner `public/hadsch`) → nach jeder Änderung `dist/` als
-`hadsch-komplett.zip` packen und schicken.
+Das Spiel läuft unter **https://hadsch.islamlernen.at** (GitHub Pages mit eigener Domain, `public/CNAME`): Push auf `main` genügt.
+**Keine ZIP-Datei mehr schicken** (FTP wird nicht mehr gebraucht).
 
 ---
 
@@ -137,7 +137,7 @@ Spielstand (Geld, Hasanat, Besitz, Position) in `localStorage` (`hp-life`), mit 
 - **Keine Inhalte aus `src/content/hajj.js` ändern**, ohne dass der Nutzer es verlangt; neue Texte in eigene Datei
   `src/content/life.js`.
 - Hadsch-Teil (12 Stationen) bleibt unverändert lauffähig; das Lebensspiel hängt sich an `ctx.city()` an.
-- Eine Sache pro Schritt bauen, testen (Playwright-Screenshots), committen, pushen, ZIP schicken, auf Deutsch berichten.
+- Eine Sache pro Schritt bauen, testen (Playwright-Screenshots), committen, pushen, auf Deutsch berichten.
 
 ---
 
