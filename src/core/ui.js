@@ -98,7 +98,16 @@ export function createUI() {
       layout();
     },
     // Halte-Knopf: für Handlungen, die Zeit brauchen (Gebet, Dua, Schlafen). label=null blendet aus.
+    // Fortschritt beim Gedrückthalten: Zahl über dem Halte-Knopf und Ring um den Knopf (p = 0…1, null = aus)
+    holdPct(p) {
+      if (!el.holdPct) { el.holdPct = document.createElement('div'); el.holdPct.id = 'holdPct'; document.body.appendChild(el.holdPct); }
+      const on = p != null && !el.hold.hidden;
+      el.holdPct.hidden = !on;
+      if (on) { const v = Math.round(Math.min(1, p) * 100); el.holdPct.textContent = v + ' %'; el.hold.style.setProperty('--p', v + '%'); }
+      else el.hold.style.removeProperty('--p');
+    },
     hold(label) {
+      if (!label) ui.holdPct(null);
       el.hold.hidden = !label; if (label) el.hold.textContent = label.replace(/^Halten: /, 'Halten:\n');
       document.body.classList.toggle('has-hold', !!label);
       if (label && !seen.hold) ui.coach(TEXT.coach.hold, 'hold', '👇');

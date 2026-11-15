@@ -81,9 +81,9 @@ export function holdAction(ctx, player, { label, steps = [{ pose: 'dua', sec: 3 
       } else if (t > 0 && t < total) {
         player.fig.pose(steps[0].pose === 'stand' ? 'stand' : steps[0].pose);
       }
-      ui.counter(done ? '' : `${Math.round((t / total) * 100)} %`);
+      ui.holdPct(done ? null : t / total); // Fortschritt direkt über dem Halte-Knopf
     },
-    cancel() { done = true; ui.hold(null); player.freeze(false); player.fig.pose(rest); },
+    cancel() { done = true; ui.hold(null); ui.holdPct(null); player.freeze(false); player.fig.pose(rest); },
   };
 }
 
@@ -148,7 +148,9 @@ export function angleTo(player, tx, tz) {
 }
 
 // Zur Qibla drehen und Dua halten: Fortschritt läuft nur, wenn man in Richtung Kaaba schaut.
-export function duaFacing(ctx, flow, { label = 'Halten: Dua', sec = 6, tx, tz, text = 'Richtung Qibla drehen', onTick }) {
+export function duaFacing(ctx, flow, { label = 'Halten: Dua', sec = 6, tx, tz, text = 'Dua Richtung Qibla', onTick }) {
+  // Einfach für Schüler: nur halten – die Figur dreht sich dabei von selbst zur Qibla (Richtung Kaaba).
+  // Der Pfeil oben zeigt trotzdem, wo die Qibla liegt (zum Lernen), muss aber nicht befolgt werden.
   const { ui, player, input } = ctx;
   let t = 0, done = false;
   ui.hold(label);
@@ -156,18 +158,18 @@ export function duaFacing(ctx, flow, { label = 'Halten: Dua', sec = 6, tx, tz, t
   const act = {
     get done() { return done; },
     update(dt) {
-      const a = angleTo(player, tx, tz), ok = Math.abs(a) < 0.45;
-      ui.goal(ok ? 'Qibla ✓' : text, -a);
-      if (input.holding && ok) {
+      const a = angleTo(player, tx, tz);
+      ui.goal(Math.abs(a) < 0.3 ? 'Qibla ✓' : text, -a);
+      if (input.holding) {
+        input.yaw -= a * Math.min(1, dt * 4); // Kamera und Figur drehen sich weich zur Qibla
         t += dt; player.freeze(true); player.heading = player.viewYaw; player.fig.pose('dua'); onTick?.(t / sec, dt);
-        if (t >= sec) { done = true; ui.hold(null); player.freeze(false); player.fig.pose('stand'); ui.goal(null); ui.counter(''); return; }
+        if (t >= sec) { done = true; ui.hold(null); player.freeze(false); player.fig.pose('stand'); ui.goal(null); ui.holdPct(null); return; }
       } else {
-        if (input.holding && !ok) ui.hint('Dreh dich zuerst Richtung Qibla (rechts wischen).', 1200);
         player.freeze(false); if (player.fig.poseName === 'dua') player.fig.pose('stand');
       }
-      ui.counter(`${Math.round((t / sec) * 100)} %`);
+      ui.holdPct(t / sec);
     },
-    cancel() { done = true; ui.hold(null); player.freeze(false); },
+    cancel() { done = true; ui.hold(null); ui.holdPct(null); player.freeze(false); },
   };
   return flow.run(act);
 }

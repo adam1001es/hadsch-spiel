@@ -231,3 +231,8 @@ html[data-rtl] .tr { direction: ltr; text-align: left; }
 
 /* Einheitlicher Bildlook: sanfter Randschatten wie bei einer Kamera (kostet keine Leistung) */
 #vignette { position: fixed; inset: 0; z-index: 1; pointer-events: none; background: radial-gradient(ellipse 85% 75% at 50% 45%, rgba(0,0,0,0) 55%, rgba(10,8,6,.28) 100%); }
+
+/* Fortschritt beim Gedrückthalten: Zahl über dem Knopf, goldener Ring um den Knopf */
+#holdPct { position: fixed; z-index: 7; right: var(--sr); bottom: calc(var(--sb) + 100px); width: 92px; text-align: center; font: 700 18px var(--f-body); color: #fff; text-shadow: 0 1px 4px rgba(0,0,0,.7); pointer-events: none; }
+#holdPct[hidden] { display: none; }
+#hold { background-image: conic-gradient(rgba(230,196,110,.55) var(--p, 0%), transparent 0); }

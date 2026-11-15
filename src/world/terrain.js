@@ -50,20 +50,30 @@ export function buildTerrain(world, h, size = 1600, seg = 160) {
     sh.uniforms.tRock = { value: rock.map }; sh.uniforms.tRockN = { value: rock.normalMap }; sh.uniforms.uRockS = { value: 5 / 9 }; // Fels-Kachel 9 m
     sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute float rockW; varying float vRock;')
       .replace('#include <begin_vertex>', '#include <begin_vertex>\nvRock = rockW;');
-    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform sampler2D tRock, tRockN; uniform float uRockS; varying float vRock;')
+    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', `#include <common>
+uniform sampler2D tRock, tRockN; uniform float uRockS; varying float vRock;
+float sh1(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+float sn(vec2 p) { vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f); return mix(mix(sh1(i), sh1(i + vec2(1, 0)), f.x), mix(sh1(i + vec2(0, 1)), sh1(i + vec2(1, 1)), f.x), f.y); }`)
       .replace('#include <map_fragment>', `
-        vec3 sandC = texture2D(map, vMapUv).rgb * vec3(1.3, 1.16, 0.95) * mix(0.88, 1.12, texture2D(map, vMapUv * 0.071).r * 1.6); // goldener, heller Sand
+        // Feiner Sahara-Sand, im Shader berechnet (kein Kachelmuster): goldgelber Grundton, große sanfte Helligkeitswellen,
+        // mittlere Flecken und sehr feine Körnung (nur in der Nähe, damit es in der Ferne nicht flimmert)
+        vec2 wp = vMapUv * 5.0; // Meter
+        float dist = length(vViewPosition);
+        float big = sn(wp * 0.012) * 0.6 + sn(wp * 0.05) * 0.4;
+        float mid = sn(wp * 0.6) * 0.5 + sn(wp * 1.7) * 0.5;
+        float grain = (sn(wp * 22.0) - 0.5) * (1.0 - smoothstep(4.0, 22.0, dist)) + (sn(wp * 7.0) - 0.5) * 0.5 * (1.0 - smoothstep(10.0, 60.0, dist));
+        vec3 sandC = mix(vec3(0.74, 0.47, 0.22), vec3(0.86, 0.6, 0.32), big) * (0.94 + mid * 0.1 + grain * 0.12);
         vec3 rockC = texture2D(tRock, vMapUv * uRockS).rgb * mix(0.85, 1.15, texture2D(tRock, vMapUv * uRockS * 0.11).r * 1.8) * vec3(1.08, 0.97, 0.86); // warmer, heller Fels (einheitlich mit dem Sand)
         diffuseColor.rgb *= mix(sandC, rockC, smoothstep(0.25, 0.75, vRock));`)
       .replace('vec3 mapN = texture2D( normalMap, vNormalMapUv ).xyz * 2.0 - 1.0;',
-        `vec3 mapN = mix(texture2D( normalMap, vNormalMapUv ).xyz, texture2D( tRockN, vNormalMapUv * uRockS ).xyz, smoothstep(0.25, 0.75, vRock)) * 2.0 - 1.0;
+        `vec3 mapN = mix(mix(vec3(0.5, 0.5, 1.0), texture2D( normalMap, vNormalMapUv ).xyz, 0.25), texture2D( tRockN, vNormalMapUv * uRockS ).xyz, smoothstep(0.25, 0.75, vRock)) * 2.0 - 1.0; // Sand fast glatt, Fels mit Struktur
         { // Windrippel im Sand (nur in der Nähe, sonst flimmert es)
           vec2 q = vNormalMapUv; float w = dot(q, vec2(0.83, 0.55)) * 46.0 + sin(q.y * 2.3 + q.x * 1.1) * 3.0 + sin(q.x * 5.7) * 0.8;
           float fade = (1.0 - smoothstep(12.0, 45.0, length(vViewPosition))) * (1.0 - smoothstep(0.2, 0.6, vRock));
-          mapN.xy += vec2(0.83, 0.55) * cos(w) * 0.32 * fade;
+          mapN.xy += vec2(0.83, 0.55) * cos(w) * 0.22 * fade;
         }`);
   };
-  mat.customProgramCacheKey = () => 'terrain3';
+  mat.customProgramCacheKey = () => 'terrain4';
   const m = new THREE.Mesh(geo, mat);
   m.receiveShadow = true; world.add(m);
   return m;
