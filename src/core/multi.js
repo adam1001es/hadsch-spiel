@@ -1,122 +1,119 @@
-// Zusammen spielen: Schüler verbinden sich selbst über einen Raum-Code (4 Ziffern) und sehen sich gegenseitig als Pilger.
-// Technik: öffentlicher MQTT-Nachrichtendienst über WebSocket (HiveMQ). Max. 8 Spieler pro Raum.
-// Übertragen wird NUR: Station, Position, Blickrichtung, Haltung, Kleidungs-/Hautfarbe. Keine Namen, kein Chat, kein Konto.
+// Zusammen spielen: Wer gerade gleichzeitig spielt, sieht die anderen automatisch als Pilger – am selben Ort (Station,
+// Kaaba, Straßen von Mekka/Medina). Über dem Kopf steht nur der Anfangsbuchstabe des Vornamens (kein Name, kein Chat).
+// Optional: privater Raum mit 4-stelligem Code (z. B. für eine Schulklasse) – dann sieht man nur die Leute im Raum.
+// Technik: öffentlicher MQTT-Nachrichtendienst über WebSocket (HiveMQ) – funktioniert auch im Mobilfunk und in Schul-WLANs.
+// Jeder Ort hat ein eigenes Thema, man empfängt nur die Leute am eigenen Ort (spart Daten, auch bei vielen Spielern).
+// Zum Testen: ?mqtt=ws://127.0.0.1:8888
 import * as THREE from 'three';
 import { createFigure } from './player.js';
 import { peopleModels } from '../world/crowd.js';
+import { settings, saveSettings } from './i18n.js';
 
-const MAX = 8, RATE = 0.15;
+const RATE = 0.25, SHOW = 14; // Senden 4× pro Sekunde; höchstens 14 Mitspieler gleichzeitig zeigen (die nächsten)
 const COLORS = ['#e6c46e', '#5fb3e6', '#e67a5f', '#8fd16a', '#c78fe6', '#e6e05f', '#5fe6c4', '#e65fa8'];
+const colorOf = (id) => COLORS[[...id].reduce((a, c) => a + c.charCodeAt(0), 0) % COLORS.length];
 
 export function createMulti(ctx) {
-  // Verbindung über einen öffentlichen MQTT-Nachrichtendienst (WebSocket, funktioniert auch im Mobilfunk und in Schul-WLANs,
-  // wo direkte Gerät-zu-Gerät-Verbindungen oft blockiert sind). Jeder sendet seinen Zustand an „hadsch3d/<Code>/<id>“
-  // und empfängt die der anderen. Zum Testen: ?mqtt=ws://127.0.0.1:8888
   const BROKER = (location.search.match(/[?&]mqtt=([^&]+)/) || [])[1] || 'wss://broker.hivemq.com:8884/mqtt';
-  const TOPIC = 'hadsch3d-v1/';
-  let client = null, host = false, code = '', myNum = 0, myId = '', joinedAt = 0, connected = false;
-  let states = {}; // id → { s, x, z, h, p, c, k, f, n, t }
-  const seen = {}; // id → letzte Nachricht (ms)
-  const figs = new Map(); // id → { fig, world, x, z, h }
-  let sendT = 0, listT = 0, onChange = () => {}, lookT = 0;
+  const ROOT = 'hadsch3d-v2/';
+  const myId = Math.random().toString(36).slice(2, 10);
+  let client = null, connected = false, code = '', sub = '', loc = null;
+  let states = {}; const seen = {};
+  const figs = new Map();
+  let sendT = 0, listT = 0, onChange = () => {};
   const load = async () => (await import('mqtt')).default;
+  const base = () => ROOT + (code ? 'raum/' + code : 'alle') + '/';
+  const locKey = () => (ctx.stationIndex == null ? 'start' : String(ctx.stationIndex));
+  const initial = () => ((ctx.profile?.name || '').trim()[0] || '•').toUpperCase();
 
   function myState() {
-    const base = { n: myNum, j: joinedAt };
-    if (ctx.stationIndex === 'balloon' || ctx.stationIndex === 'drive') return { ...base, s: ctx.stationIndex }; // nur „wo bin ich“
-    const p = ctx.player; if (!p || ctx.stationIndex == null) return { ...base, s: null };
-    return { ...base, s: ctx.stationIndex, x: +p.pos.x.toFixed(2), y: +p.pos.y.toFixed(2), z: +p.pos.z.toFixed(2), h: +p.fig.root.rotation.y.toFixed(2), p: p.fig.poseName || 'stand',
+    const s = { i: initial(), s: ctx.stationIndex };
+    if (ctx.stationIndex === 'balloon' || ctx.stationIndex === 'drive') return s; // nur „wo bin ich“
+    const p = ctx.player; if (!p || ctx.stationIndex == null) return s;
+    return { ...s, x: +p.pos.x.toFixed(2), y: +p.pos.y.toFixed(2), z: +p.pos.z.toFixed(2), h: +p.fig.root.rotation.y.toFixed(2), p: p.fig.poseName || 'stand',
       c: p.fig.cloth.color.getHex(), k: p.fig.skinM.color.getHex(), f: ctx.profile?.gender === 'f' ? 1 : 0 };
   }
-  const status = () => ({ on: connected && myNum > 0, host, code, me: myNum, others: Object.entries(states).filter(([, s]) => s.n).map(([id, s]) => ({ id, ...s })) });
+  const status = () => ({ online: settings.online !== false, connected, code, me: initial(), others: Object.entries(states).map(([id, s]) => ({ id, col: colorOf(id), ...s })) });
   const changed = () => onChange(status());
 
-  function leave(msg) {
-    try { if (client && myId) client.publish(TOPIC + code + '/' + myId, '', { retain: false }); client?.end(true); } catch { /* egal */ }
-    client = null; connected = false; states = {}; host = false; code = ''; myNum = 0;
-    for (const f of figs.values()) f.world.remove(f.fig.root);
-    figs.clear(); changed();
-    if (msg) ctx.ui.toast(msg, 3000);
+  function clearOthers() { states = {}; for (const k of Object.keys(seen)) delete seen[k]; for (const f of figs.values()) f.world.remove(f.fig.root); figs.clear(); }
+  function resubscribe() {
+    if (!client || !connected) return;
+    const t = base() + locKey() + '/+';
+    if (t === sub) return;
+    if (sub) { client.publish(sub.slice(0, -1) + myId, ''); client.unsubscribe(sub); }
+    clearOthers(); sub = t; loc = ctx.stationIndex; client.subscribe(sub); changed();
   }
 
-  async function start(c, asHost) {
-    let mqtt; try { mqtt = await load(); } catch { ctx.ui.toast('Verbindung nicht möglich', 3000); return; }
-    leave();
-    code = c; host = asHost; myNum = 0; joinedAt = Date.now(); myId = Math.random().toString(36).slice(2, 10);
-    changed();
-    client = mqtt.connect(BROKER, { clientId: 'h3d_' + myId, clean: true, connectTimeout: 10000, reconnectPeriod: 3000, keepalive: 30 });
-    client.on('connect', () => {
-      connected = true;
-      client.subscribe(TOPIC + code + '/+');
-      // kurz zuhören, dann die kleinste freie Nummer nehmen (Ersteller bekommt 1)
-      lookT = asHost ? 0 : performance.now() + 1600; // Echtzeit
-      if (asHost) { myNum = 1; ctx.ui.toast('Raum ' + code + ' erstellt', 2500); }
-      changed();
-    });
+  async function connect() {
+    if (client) return;
+    let mqtt; try { mqtt = await load(); } catch { return; }
+    if (client) return;
+    client = mqtt.connect(BROKER, { clientId: 'h3d_' + myId, clean: true, connectTimeout: 10000, reconnectPeriod: 4000, keepalive: 30 });
+    client.on('connect', () => { connected = true; sub = ''; resubscribe(); changed(); });
     client.on('message', (topic, buf) => {
+      if (topic.slice(0, topic.lastIndexOf('/') + 1) !== sub.slice(0, -1)) return;
       const id = topic.slice(topic.lastIndexOf('/') + 1); if (id === myId) return;
       if (!buf.length) { delete states[id]; delete seen[id]; return; }
-      try { const st = JSON.parse(buf.toString()); const isNew = !states[id]; states[id] = st; seen[id] = Date.now();
-        if (isNew && st.n && myNum) ctx.ui.toast('Pilger ' + st.n + ' ist dabei', 2000);
-        // gleiche Nummer? Wer später kam, wählt neu
-        if (myNum && st.n === myNum && (st.j < joinedAt || (st.j === joinedAt && id < myId))) { myNum = 0; lookT = performance.now() + 300; }
-      } catch { /* ungültig */ }
+      try { states[id] = JSON.parse(buf.toString()); seen[id] = Date.now(); } catch { /* ungültig */ }
     });
-    client.on('error', () => { /* mqtt verbindet selbst neu */ });
-    const cl = client; setTimeout(() => { if (client === cl && !connected) ctx.ui.toast('Noch keine Verbindung – bitte Internet prüfen', 3500); }, 12000);
+    client.on('error', () => { /* verbindet selbst neu */ });
     client.on('offline', () => { connected = false; changed(); });
-    client.on('reconnect', () => changed());
+  }
+  function disconnect() {
+    try { if (client && sub) client.publish(sub.slice(0, -1) + myId, ''); client?.end(true); } catch { /* egal */ }
+    client = null; connected = false; sub = ''; clearOthers(); changed();
   }
 
-  const create = () => start(String(1000 + Math.floor(Math.random() * 9000)), true);
-  function join(c) {
-    c = String(c || '').replace(/\D/g, '');
-    if (c.length !== 4) { ctx.ui.toast('Bitte den 4-stelligen Raum-Code eingeben', 2500); return; }
-    start(c, false);
-  }
-
-  function badge(n) {
+  function badge(letter, col) {
     const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d');
-    g.fillStyle = COLORS[(n - 1) % COLORS.length]; g.beginPath(); g.arc(32, 32, 28, 0, 7); g.fill();
-    g.fillStyle = '#14251f'; g.font = 'bold 36px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(String(n), 32, 34);
+    g.fillStyle = col; g.beginPath(); g.arc(32, 32, 28, 0, 7); g.fill();
+    g.fillStyle = '#14251f'; g.font = 'bold 36px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(letter, 32, 34);
     const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), depthTest: false, transparent: true }));
     s.scale.set(0.42, 0.42, 1); s.position.y = 2.15; s.renderOrder = 10; return s;
   }
 
+  // automatisch online, wenn erlaubt (Standard: an)
+  if (settings.online !== false) setTimeout(connect, 1500);
+
   return {
-    create, join, leave: () => leave(), status,
+    status,
     set onChange(fn) { onChange = fn; },
+    setOnline(on) { settings.online = on; saveSettings(); if (on) connect(); else disconnect(); changed(); },
+    create() { code = String(1000 + Math.floor(Math.random() * 9000)); if (!client) connect(); else { sub = ''; resubscribe(); } ctx.ui.toast('Privater Raum ' + code, 2500); changed(); },
+    join(c) {
+      c = String(c || '').replace(/\D/g, '');
+      if (c.length !== 4) { ctx.ui.toast('Bitte den 4-stelligen Raum-Code eingeben', 2500); return; }
+      code = c; if (!client) connect(); else { sub = ''; resubscribe(); } ctx.ui.toast('Raum ' + c + ' – du siehst jetzt nur die Leute im Raum', 3000); changed();
+    },
+    leave() { code = ''; sub = ''; resubscribe(); changed(); }, // zurück zu „alle online“
     update(dt) {
       if (!client) return;
-      // Nummer wählen (nach kurzem Zuhören)
-      if (connected && !myNum && lookT > 0) { if (performance.now() >= lookT) { lookT = 0;
-        const used = new Set(Object.values(states).map((x) => x.n)); let n = 1; while (used.has(n)) n++;
-        if (n > MAX) { leave('Raum ist voll (max. 8)'); return; }
-        myNum = n; changed(); ctx.ui.toast(Object.keys(states).length ? 'Verbunden mit Raum ' + code + ' – du bist Pilger ' + n : 'Raum ' + code + ': noch niemand da – warte auf die anderen', 3000);
-      } }
-      // Wer 8 s nichts sendet, ist weg
+      if (connected && ctx.stationIndex !== loc) resubscribe(); // Ort gewechselt → nur noch Leute dort empfangen
       const now = Date.now();
-      for (const id of Object.keys(states)) if (now - (seen[id] || 0) > 8000) { const n = states[id].n; delete states[id]; delete seen[id]; if (n) ctx.ui.toast('Pilger ' + n + ' hat den Raum verlassen', 2000); }
+      for (const id of Object.keys(states)) if (now - (seen[id] || 0) > 8000) { delete states[id]; delete seen[id]; }
       listT += dt; if (listT > 1) { listT = 0; changed(); }
-      if (connected && myNum && performance.now() - sendT > RATE * 1000) { sendT = performance.now(); const me = myState(); client.publish(TOPIC + code + '/' + myId, JSON.stringify(me), { qos: 0 }); }
-      // Mitspieler in derselben Station zeigen (weich nachgeführt)
-      const world = ctx.engine.world;
-      for (const [id, f] of figs) if (!states[id] || f.world !== world || states[id].s !== ctx.stationIndex) { f.world.remove(f.fig.root); figs.delete(id); }
-      for (const [id, s] of Object.entries(states)) {
-        if (s.s !== ctx.stationIndex || s.s === 'balloon' || !ctx.player || s.x == null) continue;
+      if (connected && sub && performance.now() - sendT > RATE * 1000) { sendT = performance.now(); client.publish(sub.slice(0, -1) + myId, JSON.stringify(myState()), { qos: 0 }); }
+      // Mitspieler am selben Ort zeigen (die nächsten SHOW), weich nachgeführt
+      const world = ctx.engine.world, me = ctx.player?.pos;
+      const near = new Set(Object.entries(states).filter(([, s]) => s.s === ctx.stationIndex && s.x != null && me)
+        .sort((a, b) => Math.hypot(a[1].x - me.x, a[1].z - me.z) - Math.hypot(b[1].x - me.x, b[1].z - me.z)).slice(0, SHOW).map(([id]) => id));
+      for (const [id, f] of figs) if (!near.has(id) || f.world !== world) { f.world.remove(f.fig.root); figs.delete(id); }
+      for (const id of near) {
+        const s = states[id];
         let f = figs.get(id);
         if (!f) {
           const fig = createFigure(world, { color: s.c, covered: !!s.f, ring: false, models: peopleModels() });
-          fig.skinM.color.setHex(s.k); const b = badge(s.n); fig.root.add(b);
+          fig.skinM.color.setHex(s.k); fig.root.add(badge(s.i || '•', colorOf(id)));
           f = { fig, world, x: s.x, z: s.z, h: s.h, c: s.c }; figs.set(id, f);
         }
         if (f.c !== s.c) { f.fig.setColor(s.c); f.c = s.c; }
-        const k = Math.min(1, dt * 8), ox = f.x, oz = f.z;
+        const k = Math.min(1, dt * 6), ox = f.x, oz = f.z;
         f.x += (s.x - f.x) * k; f.z += (s.z - f.z) * k;
         f.h += Math.atan2(Math.sin(s.h - f.h), Math.cos(s.h - f.h)) * k;
         const v = Math.hypot(f.x - ox, f.z - oz) / Math.max(dt, 1e-3);
         f.fig.pose(v > 0.3 ? 'walk' : s.p === 'walk' ? 'stand' : s.p);
-        f.fig.root.position.set(f.x, s.y ?? ctx.player.pos.y, f.z); f.fig.root.rotation.y = f.h;
+        f.fig.root.position.set(f.x, s.y ?? me.y, f.z); f.fig.root.rotation.y = f.h;
         f.fig.update(dt, v / 1.6);
       }
     },

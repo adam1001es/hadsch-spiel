@@ -29,7 +29,7 @@ Bereits gebaut und wiederverwendbar:
 | `src/core/player.js` | Spielfigur (Joystick links, rechts wischen = Umschauen, WASD), Kollision (`circle`, `box`, `rect`, `inside`, `fn`), Posen. |
 | `src/world/crowd.js` + `agents.js` | Menschenmengen per InstancedMesh, 3D-Modelle nahe der Kamera; `createAgents()` = Leute laufen Wegpunkte ab (stehen, beten, Dua …). |
 | `src/core/ui.js` | HUD, `ui.prompt(label, fn)` (goldener Aktionsknopf), `ui.toast`, `ui.info`, `ui.hold`, Menü-Knopf, „i“-Knopf am Handy. |
-| `src/core/multi.js` | Zusammen spielen per Raum-Code (MQTT über WebSocket, HiveMQ). |
+| `src/core/multi.js` | Zusammen spielen: alle Online-Spieler am selben Ort automatisch sichtbar (Anfangsbuchstabe), optional privater Raum (MQTT über WebSocket, HiveMQ). |
 | `src/core/sfx.js` | Leise Geräusche (Schritte, Bus, Trinken, Brenner …), alles im Browser erzeugt. |
 | `src/core/stations.js` | Szenenwechsel: `ctx.city(from, where)`, `ctx.balloon(where)`, `ctx.drive(from, to)`, `ctx.reward()` (Kaaba). |
 | `public/assets/models/` | Bus, Ballon, Maqam, Pilger/Pilgerinnen (Tripo/Sketchfab, Quellen in `README.md` dort). |
@@ -74,6 +74,9 @@ Job-Tafel, Tauben … Antippen bzw. goldener Knopf = Handlung. **Keine Aufgabenp
 ### Zusammen spielen (Multiplayer) – Pflicht
 Das Lebensspiel muss von Anfang an **gemeinsam spielbar** sein – auf `src/core/multi.js` aufbauen (Raum-Code, MQTT über
 WebSocket, HiveMQ; funktioniert im Mobilfunk und in Schul-WLANs; keine Namen, kein Chat, kein Konto).
+- **Ohne Raum**: Alle, die gleichzeitig online sind, sehen sich automatisch am selben Ort (eigenes MQTT-Thema je Ort,
+  höchstens die 14 nächsten werden gezeigt). Über dem Kopf nur der **Anfangsbuchstabe** des Vornamens. Optional privater Raum per Code.
+  Abschaltbar im Menü (settings.online).
 - Mitspieler sieht man überall im Lebensspiel (Straßen, Autobahn, Medina), auch **in Fahrzeugen**: eigenes Auto, Bus, Ballon
   der anderen am Himmel. Dazu `myState()` um Fahrzeug-Typ und -Position erweitern (z. B. `v: 'car' | 'bus' | 'balloon'`).
 - Gemeinsame Aktionen: zusammen in einem Auto/Bus mitfahren (Beifahrer), gemeinsam einen Laden betreiben, sich gegenseitig

@@ -149,15 +149,15 @@ setBox.addEventListener('click', (e) => { if (e.target === setBox) setBox.hidden
 // ---------- Zusammen spielen ----------
 {
   const $ = (id) => document.getElementById(id);
-  const COL = ['#e6c46e', '#5fb3e6', '#e67a5f', '#8fd16a', '#c78fe6', '#e6e05f', '#5fe6c4', '#e65fa8'];
-  const where = (s) => (s === 'kaaba' ? 'in der Kaaba' : s === 'city-mecca' ? 'in den Straßen von Mekka' : s === 'city-medina' ? 'in den Straßen von Medina' : s === 'drive' ? 'im Bus' : s === 'balloon' ? 'im Heißluftballon' : s >= content.STATIONS.length ? 'bei der Urkunde' : typeof s === 'number' ? `Station ${s + 1}: ${content.STATIONS[s].title}` : 'noch am Start');
+  const where = (s) => (s === 'kaaba' ? 'in der Kaaba' : s === 'city-mecca' ? 'in den Straßen von Mekka' : s === 'city-medina' ? 'in den Straßen von Medina' : s === 'drive' ? 'im Bus' : s === 'balloon' ? 'im Heißluftballon' : s >= content.STATIONS.length ? 'bei der Urkunde' : typeof s === 'number' ? `Station ${s + 1}: ${content.STATIONS[s].title}` : 'am Start');
   const render = (st) => {
-    $('multiOff').hidden = st.on || !!st.code; $('multiOn').hidden = !(st.on || st.code);
-    $('multiShow').textContent = st.code || '----';
-    $('multiMe').textContent = st.me ? `Du bist Pilger ${st.me}${st.host ? ' (Gastgeber)' : ''}. Sag den anderen den Code.` : 'Verbinde …';
-    $('multiList').innerHTML = st.others.sort((a, b) => a.n - b.n).map((o) => `<li><i style="background:${COL[(o.n - 1) % 8]}">${o.n}</i> Pilger ${o.n} – ${where(o.s)}</li>`).join('') || '<li class="small">Noch niemand verbunden.</li>';
-    $('multiBtn').classList.toggle('on', st.on);
-    $('multiCount').hidden = !st.on; $('multiCount').textContent = String(st.others.length + 1);
+    $('multiOnline').checked = st.online;
+    $('multiOff').hidden = !!st.code; $('multiOn').hidden = !st.code; $('multiShow').textContent = st.code || '----';
+    $('multiStat').textContent = !st.online ? 'Aus – du spielst allein.' : !st.connected ? 'Verbinde …' : (st.code ? `Privater Raum ${st.code}` : 'Online') + ` · hier bei dir: ${st.others.length}`;
+    $('multiList').innerHTML = st.online ? st.others.map((o) => `<li><i style="background:${o.col}">${o.i || '•'}</i> ${where(o.s)}</li>`).join('') : '';
+    const n = st.online && st.connected ? st.others.length : 0;
+    $('multiBtn').classList.toggle('on', n > 0);
+    $('multiCount').hidden = !n; $('multiCount').textContent = String(n);
   };
   multi.onChange = render; render(multi.status());
   $('multiBtn').addEventListener('click', () => { $('multi').hidden = false; });
@@ -167,6 +167,7 @@ setBox.addEventListener('click', (e) => { if (e.target === setBox) setBox.hidden
   $('multiJoin').addEventListener('click', () => multi.join($('multiCode').value));
   $('multiCode').addEventListener('keydown', (e) => { if (e.key === 'Enter') multi.join($('multiCode').value); });
   $('multiLeave').addEventListener('click', () => multi.leave());
+  $('multiOnline').addEventListener('change', (e) => multi.setOnline(e.target.checked));
 }
 
 // ---------- Menü (ein Knopf statt vier) ----------

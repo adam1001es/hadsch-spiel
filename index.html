@@ -124,20 +124,22 @@
   <section id="multi" hidden>
     <div class="set-card">
       <div class="set-head"><b>Zusammen spielen</b><button id="multiClose" type="button" aria-label="Schließen">✕</button></div>
-      <div id="multiOff">
-        <p class="small">Spielt den Hadsch gemeinsam: Einer erstellt einen Raum, die anderen geben den 4-stelligen Code ein. Ihr seht euch dann als Pilger mit Nummer – in derselben Station.</p>
-        <div class="set-row"><button id="multiCreate" class="primary" type="button">Neuen Raum erstellen</button></div>
-        <div class="set-row"><span>Raum beitreten</span>
-          <div class="multi-join"><input id="multiCode" type="text" inputmode="numeric" maxlength="4" placeholder="z. B. 4821" autocomplete="off"><button id="multiJoin" type="button">Beitreten</button></div>
+      <label class="set-row set-sw"><span>Andere Pilger online sehen</span><input id="multiOnline" type="checkbox"></label>
+      <p id="multiStat" class="small"></p>
+      <ul id="multiList" class="multi-list"></ul>
+      <details class="multi-private"><summary>Privater Raum (z. B. für eine Klasse)</summary>
+        <div id="multiOff">
+          <div class="set-row"><button id="multiCreate" class="primary" type="button">Privaten Raum erstellen</button></div>
+          <div class="set-row"><span>Raum beitreten</span>
+            <div class="multi-join"><input id="multiCode" type="text" inputmode="numeric" maxlength="4" placeholder="z. B. 4821" autocomplete="off"><button id="multiJoin" type="button">Beitreten</button></div>
+          </div>
         </div>
-      </div>
-      <div id="multiOn" hidden>
-        <div class="multi-code"><span>Raum-Code</span><b id="multiShow">----</b></div>
-        <p id="multiMe" class="small"></p>
-        <ul id="multiList" class="multi-list"></ul>
-        <div class="set-row"><button id="multiLeave" type="button">Raum verlassen</button></div>
-      </div>
-      <p class="small">Es werden keine Namen übertragen – nur Station, Position und Haltung deiner Figur. Max. 8 Spieler. Die Verbindung läuft über einen öffentlichen Nachrichtendienst (HiveMQ).</p>
+        <div id="multiOn" hidden>
+          <div class="multi-code"><span>Raum-Code</span><b id="multiShow">----</b></div>
+          <div class="set-row"><button id="multiLeave" type="button">Raum verlassen (wieder alle sehen)</button></div>
+        </div>
+      </details>
+      <p class="small">Alle, die gerade spielen, sehen sich am selben Ort. Über dem Kopf steht nur der Anfangsbuchstabe des Vornamens – kein Name, kein Chat. Die Verbindung läuft über einen öffentlichen Nachrichtendienst (HiveMQ).</p>
     </div>
   </section>
   <!-- Einstellungen: Sprache, Vorlesen, Rezitation -->
