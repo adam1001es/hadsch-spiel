@@ -374,3 +374,20 @@ export const KAABA_INSIDE = {
   back: 'Zurück zur Urkunde',
   again: 'Nochmal spielen',
 };
+
+// ---------------------------------------------------------------------------
+// Unterhaltung nach dem Hadsch: Heißluftballon-Flug über Mekka und Medina (vereinfachte, verkleinerte Darstellung).
+export const BALLOON = {
+  enter: 'Mit dem Heißluftballon über Mekka und Medina fliegen',
+  title: 'Ballonflug',
+  mecca: 'Über Mekka',
+  medina: 'Über Medina',
+  intro: 'Zum Abschluss ein Flug mit dem Heißluftballon! Halte den Brenner-Knopf, um zu steigen. Lässt du los, sinkt der Ballon langsam. Mit dem Joystick (am Laptop W A S D) lenkst du, rechts wischen dreht die Ansicht.',
+  burner: 'Halten: Brenner (steigen)',
+  toMedina: 'Nach Medina fliegen',
+  toMecca: 'Nach Mekka fliegen',
+  land: 'Landen',
+  meccaInfo: 'Unter dir liegt die Masjid al-Haram mit der Kaaba. Von hier oben siehst du, wie die Pilger beim Tawaf um die Kaaba kreisen. Daneben steht der hohe Uhrturm.',
+  medinaInfo: 'Das ist die Masjid an-Nabawi, die Moschee des Propheten ﷺ in Medina, mit der Grünen Kuppel. Viele Pilger besuchen Medina vor oder nach dem Hadsch – es gehört aber nicht zu den Pflichten des Hadsch.',
+  note: 'Vereinfachte, verkleinerte Darstellung – die echten Entfernungen sind viel größer (Mekka – Medina ca. 340 km).',
+};

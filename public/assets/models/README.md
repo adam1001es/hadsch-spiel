@@ -4,7 +4,7 @@
 |---|---|---|
 | `man.glb` | „Middle Eastern Hajj“ von **trisutrisno**, https://skfb.ly/pD6o9, Lizenz **CC BY 4.0** | Arme aus der T-Haltung gesenkt (später noch 12° näher an den Körper), Tuchbahn unter dem linken Arm an den Körper gelegt, Haut und Stoff getrennt (Hautfarbe pro Person), vereinfacht (~2.900 Dreiecke), zusätzliches Tuchstück `cover` für die bedeckte rechte Schulter (außerhalb des Umrah-Tawaf) |
 | `kameez.glb` | „Shalwar Kameez Man / Pakistani / muslim“ von **Abdullah5007**, https://skfb.ly/pvCuE, Lizenz **CC BY 4.0** | von FBX umgewandelt, Arme gesenkt, unsichtbare Teile entfernt, vereinfacht (~4.000 Dreiecke), Hauttextur farbneutral, Kameez/Shalwar/Schuhe einzeln färbbar |
-| `bus.glb` | weißer Reisebus, vom Projekt-Inhaber mit **Tripo AI** erstellt | Front nach +z, Tür rechts (−x), 11,6 m lang, von 2 Mio. auf 14.000 Dreiecke vereinfacht (Textur-Nähte fest), Textur 2048 px |
+| `bus.glb` | weißer Reisebus (zweite Version), vom Projekt-Inhaber mit **Tripo AI** erstellt | Front nach +z, 12 m lang, Höhe ×0,8, von 1,9 Mio. auf 14.000 Dreiecke vereinfacht, Textur 2048 px |
 | `haram.glb` | „Masjid al-Haram (Great Mosque of Mecca)“ von **alfinann (nawafilla)**, https://skfb.ly/pszEs, Lizenz **CC BY 4.0** | auf unsere Kaaba ausgerichtet (Maßstab über die Kaaba-Breite), Kaaba/Lampen/Boden des Modells entfernt, Teile weiter als 350 m weggelassen, nach Material zusammengefasst und vereinfacht (~170.000 Dreiecke), Farben aufgehellt |
 | `mosque2.glb` | „M-01 [mosque]“ von **Designs Forge**, https://skfb.ly/opINs, Lizenz **CC BY 4.0** | von STL umgewandelt und aufgerichtet, Eingang nach +z, Breite 44 m, vereinfacht (~58.000 Dreiecke), heller Stein; genutzt als Moschee am Miqat und in Muzdalifa |
 | `palms.glb` | „Palm Trees“ von **YadroGames**, https://skfb.ly/ovANy, Lizenz **CC BY 4.0** | von FBX umgewandelt, vier Palmen (palm1–4) je Stamm + Blätter (grün / gelblich), Fuß im Ursprung, Maßstab ×2 (7,8–10,6 m), Texturen 512 px |
@@ -15,5 +15,6 @@
 | `boy.glb` | Junge im Ihram (rechte Schulter frei), vom Projekt-Inhaber mit **Tripo AI** erstellt | wie `man2.glb` bearbeitet, 0,95 m groß (~5.700 Dreiecke); nur im Tawaf der Umrah |
 | `woman2.glb` | Pilgerin in Kleid und langem Khimar, vom Projekt-Inhaber mit **Tripo AI** erstellt | wie `man2.glb` bearbeitet, 1,64 m (~10.500 Dreiecke), Stoff pro Person einfärbbar |
 | `maqam.glb` | Maqam Ibrahim, vom Projekt-Inhaber mit **Tripo AI** erstellt | 3 m hoch, Fuß bei y = 0, von 1,8 Mio. auf ~61.000 Dreiecke vereinfacht (Gitter und Textur-Nähte bleiben erhalten), Textur 1024 px |
+| `balloon.glb` | Heißluftballon, vom Projekt-Inhaber mit **Tripo AI** erstellt | 22 m hoch, Korbboden bei y = 0, von 2 Mio. auf 12.000 Dreiecke vereinfacht, Textur 1024 px; Ballonflug nach dem Hadsch |
 
 Das Umwandlungs-Werkzeug liegt nicht im Repository (lokal unter `tools/`).

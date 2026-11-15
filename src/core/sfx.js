@@ -118,3 +118,22 @@ export function sun(rising) {
   const t = ac.currentTime, notes = rising ? [220, 330, 440] : [440, 330, 220];
   notes.forEach((f, i) => { tone(t + i * 0.5, 3.2, f, { gain: 0.035, attack: 0.6 }); tone(t + i * 0.5, 3.2, f * 2.005, { gain: 0.01, attack: 0.8 }); });
 }
+
+// Ballon-Brenner: tiefes, weiches Fauchen, solange keep() aufgerufen wird
+let burn = null, burnUntil = 0;
+export function burnerKeep() {
+  if (!on()) return;
+  const t = ac.currentTime; burnUntil = t + 0.25;
+  if (burn) return;
+  const s = ac.createBufferSource(); s.buffer = noiseBuf; s.loop = true;
+  const f = ac.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 900; f.Q.value = 0.7;
+  const g = ac.createGain(); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.07, t + 0.15);
+  s.connect(f).connect(g).connect(master); s.start();
+  burn = { s, g };
+  const tick = () => {
+    if (!burn) return;
+    if (ac.currentTime > burnUntil) { const b = burn; burn = null; b.g.gain.setTargetAtTime(0, ac.currentTime, 0.1); setTimeout(() => b.s.stop(), 600); return; }
+    setTimeout(tick, 100);
+  };
+  tick();
+}

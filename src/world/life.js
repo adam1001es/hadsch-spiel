@@ -29,7 +29,8 @@ export function createLife(ctx, { kind = 'desert', height = 0 } = {}) {
   const birds = new THREE.InstancedMesh(g, mat, N); birds.frustumCulled = false; world.add(birds);
   const dm = new THREE.Object3D();
   // Mittelpunkt folgt dem Spieler langsam (die Vögel bleiben in Sichtweite, ohne ihm nachzujagen)
-  const center = new THREE.Vector3(); if (ctx.player) center.copy(ctx.player.pos);
+  const target = () => ctx.balloonPos || ctx.player?.pos; // im Ballonflug folgen die Vögel dem Ballon
+  const center = new THREE.Vector3(); if (target()) center.copy(target()).setY(0);
   // Schwärme: kreisen um einen Mittelpunkt, jeder Vogel mit eigenem Abstand/Höhe
   const B = Array.from({ length: N }, (_, i) => ({ r: (kind === 'haram' ? 25 : 30) + Math.random() * (kind === 'haram' ? 30 : 70), a: Math.random() * 6.28, h: height + (kind === 'haram' ? 18 : 16) + Math.random() * 20, sp: (0.18 + Math.random() * 0.12) * (i % 2 ? 1 : -1), s: kind === 'haram' ? 1.3 : 2.2, wob: Math.random() * 6 }));
 
@@ -52,7 +53,7 @@ export function createLife(ctx, { kind = 'desert', height = 0 } = {}) {
   return {
     update(dt) {
       t += dt; uT.value = t;
-      if (ctx.player) center.lerp(ctx.player.pos, Math.min(1, dt * 0.05));
+      const tp = target(); if (tp) { center.x += (tp.x - center.x) * Math.min(1, dt * 0.05); center.z += (tp.z - center.z) * Math.min(1, dt * 0.05); }
       const h = ((sky.hour % 24) + 24) % 24, night = h < 6.1 || h > 18.7;
       birds.visible = !night; // nachts fliegen keine Vögel
       if (birds.visible) {

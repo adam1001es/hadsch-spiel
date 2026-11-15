@@ -220,6 +220,7 @@ export function create(ctx) {
     ui.info(`<p><b>${T.end}</b></p><p class="tr">${T.real}</p>`);
     ui.actions([
       { label: T.back, onClick: () => ctx.backToEnding?.() },
+      { label: '🎈 Ballonflug', onClick: () => ctx.balloon?.('mecca') },
       { label: T.again, kind: 'primary', onClick: () => location.reload() },
     ]);
   }

@@ -20,7 +20,7 @@ export function createMulti(ctx) {
   const load = async () => (Peer ||= (await import('peerjs')).Peer);
 
   function myState() {
-    const p = ctx.player; if (!p || ctx.stationIndex == null) return null;
+    const p = ctx.player; if (!p || ctx.stationIndex == null || ctx.stationIndex === 'balloon') return null;
     return { s: ctx.stationIndex, x: +p.pos.x.toFixed(2), y: +p.pos.y.toFixed(2), z: +p.pos.z.toFixed(2), h: +p.fig.root.rotation.y.toFixed(2), p: p.fig.poseName || 'stand',
       c: p.fig.cloth.color.getHex(), k: p.fig.skinM.color.getHex(), f: ctx.profile?.gender === 'f' ? 1 : 0, n: myNum };
   }
