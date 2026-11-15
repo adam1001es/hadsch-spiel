@@ -4,6 +4,7 @@ import { TEXT, ARAFAT_DHIKR, RABBANA } from '../content/hajj.js';
 import { heightFn, buildTerrain, fbm } from '../world/terrain.js';
 import { tents, trees, sign, rock, bus, roads } from '../world/props.js';
 import { createCrowd } from '../world/crowd.js';
+import { createAgents } from '../world/agents.js';
 import { createPlayer } from '../core/player.js';
 import * as sfx from '../core/sfx.js';
 import { createFlow, createMarker, goTo, promptAt, pray, duaFacing, pointGoal } from '../core/kit.js';
@@ -62,14 +63,24 @@ export function create(ctx, st) {
   // Pilger: viele sitzend, einige stehend in Dua
   const N = engine.isMobile ? 700 : 1300;
   const crowd = createCrowd(world, N, { ihram: true });
+  const standing = []; // stehende Pilger: heben ab und zu die Hände zur Dua
   for (let i = 0; i < N; i++) {
     let x, z; do { x = (Math.random() - 0.5) * 380; z = -170 + Math.random() * 260; } while (Math.abs(x) < 5 || Math.hypot(x - HILL.x, z - HILL.z) < 25);
-    const sit = Math.random() < 0.6;
-    crowd.set(i, x, h(x, z), z, Math.PI / 2 + (Math.random() - 0.5) * 0.6, sit ? 0.62 : 1);
+    const sit = Math.random() < 0.6, ry = Math.PI / 2 + (Math.random() - 0.5) * 0.6;
+    crowd.set(i, x, h(x, z), z, ry, sit ? 0.62 : 1);
+    if (!sit) standing.push([i, x, z, ry, Math.random() * 30]);
     // Schirm neben sitzenden Pilgern (Stange steht seitlich, Dach beschattet die Person)
     if (i < UMB) { dm.position.set(x + 0.45, h(x + 0.45, z), z); dm.rotation.set(0.12, Math.random() * 6, 0); dm.updateMatrix(); umb.setMatrixAt(i, dm.matrix); umbR.setMatrixAt(i, dm.matrix); umbP.setMatrixAt(i, dm.matrix); }
   }
   crowd.commit(); world.add(umb, umbR, umbP);
+  // Einige Pilger gehen: die Straße entlang, zum Jabal ar-Rahma und zurück, bleiben zur Dua stehen
+  const rr = (a, b) => a + Math.random() * (b - a);
+  const walkers = createCrowd(world, engine.isMobile ? 26 : 44, { ihram: true });
+  const wAgents = createAgents(walkers, engine.isMobile ? 26 : 44, () => {
+    const x0 = rr(-3.5, 3.5);
+    return [{ x: x0, z: rr(40, 90) }, { x: x0 + rr(-1, 1), z: rr(-40, 30), wait: rr(8, 14), act: 'dua', face: Math.PI / 2 }, { x: HILL.x + rr(-14, 14), z: HILL.z + rr(22, 30), wait: rr(10, 16), act: 'dua', face: Math.PI }, { x: rr(-3, 3), z: rr(-90, -60) }];
+  }, { speed: 1.0, y: (x, z) => h(x, z) });
+  let duaT = 0;
 
   const coach = bus(world, 6.2, BOUND + 16, 0); // Reisebus hinter der Grenze
   let boundActive = true, boundHint = 0;
@@ -130,7 +141,15 @@ export function create(ctx, st) {
     update(dt) {
       boundHint -= dt;
       flow.update(dt);
+      // Stehende Pilger in der Nähe: Hände zur Dua heben (ca. 10 s), dann wieder senken
+      duaT += dt;
+      for (const st of standing) {
+        if (Math.abs(st[1] - player.pos.x) > 45 || Math.abs(st[2] - player.pos.z) > 45) continue;
+        const c = (duaT + st[4]) % 24, up = Math.min(1, Math.max(0, Math.min(c - 2, 14 - c)));
+        crowd.gesture(st[0], up > 0 ? -2 - up : 0); crowd.set(st[0], st[1], h(st[1], st[2]), st[2], st[3], 1);
+      }
       crowd.commit(); // Detailstufen der Pilgerinnen mit der Kamera mitführen
+      wAgents.update(dt);
       player.update(dt);
       marker.update(dt);
       marker.group.position.y = h(marker.group.position.x, marker.group.position.z);

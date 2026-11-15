@@ -3,6 +3,7 @@ import { TEXT } from '../content/hajj.js';
 import { pbr } from '../world/assets.js';
 import { sign } from '../world/props.js';
 import { createCrowd } from '../world/crowd.js';
+import { createAgents } from '../world/agents.js';
 import { createPlayer } from '../core/player.js';
 import { createFlow, createMarker, goTo, duaFacing, pointGoal, sunnah, viewLine, clearView, createAutopilot, autoAfter } from '../core/kit.js';
 
@@ -75,15 +76,24 @@ export function create(ctx, st) {
   // Pilger am Beckenrand
   const N = engine.isMobile ? 260 : 420;
   const crowd = createCrowd(world, N, { ihram: firstDay });
-  const cs = [];
-  for (let i = 0; i < N; i++) {
-    const k = list[i % list.length], z0 = POS[k];
-    const side = Math.random() < 0.5 ? 1 : -1;
-    let x = (Math.random() * 2 - 1) * (A + 3);
-    if (side > 0 && Math.abs(x) < 3.5) x += x < 0 ? -4 : 4; // Platz für den Spieler frei lassen
-    const z = z0 + side * (RIM_R + 0.6 + Math.random() * 4);
-    cs.push([x, z, side > 0 ? Math.PI : 0, Math.random() * 6]);
-  }
+  // Aktive Pilger: kommen den Weg entlang (Richtung −z), stellen sich an den Beckenrand, werfen sieben Steine
+  // (Arm hoch), gehen um das Ende der Wand herum und weiter. Auch auf der Rückseite der Wand wird geworfen.
+  const rr = (a, b) => a + Math.random() * (b - a), zc0 = zMin + 3, zc1 = zMax - 3, clampZ = (z) => Math.max(zc0, Math.min(zc1, z));
+  const route = (i) => {
+    const z0 = POS[list[i % list.length]], sx = Math.random() < 0.5 ? -1 : 1, end = sx * (A + RIM_R + rr(2, 5));
+    let x = rr(-A - 2, A + 2); if (Math.abs(x) < 3) x += x < 0 ? -3.5 : 3.5;
+    if (Math.random() < 0.6) return [
+      { x: rr(-30, 30), z: clampZ(z0 + rr(28, 45)) },
+      { x, z: z0 + RIM_R + rr(0.6, 3), wait: rr(9, 14), act: 'throw', face: Math.PI },
+      { x: end, z: z0 + 2 }, { x: end, z: z0 - RIM_R - 4 }, { x: rr(-30, 30), z: clampZ(z0 - rr(25, 40)) },
+    ];
+    return [
+      { x: end, z: clampZ(z0 + rr(14, 22)) }, { x: end, z: z0 - 2 },
+      { x, z: z0 - RIM_R - rr(0.6, 3), wait: rr(9, 14), act: 'throw', face: 0 },
+      { x: rr(-30, 30), z: clampZ(z0 - rr(25, 40)) },
+    ];
+  };
+  const agents = createAgents(crowd, N, route, { speed: 1.15, clear: clearView });
 
   const colliders = [{ type: 'rect', x0: -39, x1: 39, z0: zMin + 1, z1: zMax - 1 }];
   for (const k of list) colliders.push({ type: 'fn', fn(p, r) {
@@ -251,10 +261,7 @@ export function create(ctx, st) {
         }
         s.m.position.copy(s.p);
       }
-      // Pilger am Rand werfen
-      const v = viewLine(ctx);
-      for (let i = 0; i < N; i++) { const c = cs[i]; const [x, z] = clearView(v, c[0], c[1]); crowd.set(i, x, Math.abs(Math.sin(time * 2 + c[3])) * 0.03, z, c[2]); }
-      crowd.commit();
+      agents.update(dt, viewLine(ctx)); // Pilger kommen, werfen und gehen weiter
     },
     dispose() { flow.dispose(); },
   };

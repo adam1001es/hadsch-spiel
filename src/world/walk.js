@@ -26,17 +26,17 @@ export const WALK = {
   m_skin: { hip: 0.92, legAmp: 0.42, lift: 0.05, armX: 0.24, armAmp: 0.42, shy: 1.4 },
   m_cover: { hip: 0 },
   // zweiter Pilger im Ihram (beide Schultern bedeckt, Arme unter dem Tuch): nur Hände schwingen leicht
-  n_cloth: { hip: 0.92, legAmp: 0.3, lift: 0.03, armX: 9, fold: false },
-  n_skin: { hip: 0.92, legAmp: 0.4, lift: 0.05, armX: 9 },
+  n_cloth: { hip: 0.92, legAmp: 0.3, lift: 0.03, armX: 0.19, armAmp: 0.12, shy: 1.42, armMinY: 0.95, fold: false },
+  n_skin: { hip: 0.92, legAmp: 0.4, lift: 0.05, armX: 0.13, armAmp: 0.12, shy: 1.42, armMinY: 0.5 }, // Hände (|x| > 0.13) hängen tiefer als die Hüfte → nicht wie Beine bewegen
   // Pilger im Ihram mit freier rechter Schulter (Idtiba', Tawaf der Umrah): rechter Arm frei, linker unter dem Tuch
-  o_cloth: { hip: 0.92, legAmp: 0.3, lift: 0.03, armX: 9, fold: false },
-  o_skin: { hip: 0.92, legAmp: 0.4, lift: 0.05, armX: 9 },
+  o_cloth: { hip: 0.92, legAmp: 0.3, lift: 0.03, armX: 0.19, armAmp: 0.15, shy: 1.42, armMinY: 0.95, fold: false },
+  o_skin: { hip: 0.92, legAmp: 0.4, lift: 0.05, armX: 0.14, armAmp: 0.15, shy: 1.42, armMinY: 0.5 },
   // Junge im Ihram (ca. 0,95 m, rechte Schulter frei)
-  b_cloth: { hip: 0.45, legAmp: 0.28, lift: 0.02, armX: 9, fold: false },
-  b_skin: { hip: 0.45, legAmp: 0.38, lift: 0.03, armX: 9 },
+  b_cloth: { hip: 0.45, legAmp: 0.28, lift: 0.02, armX: 0.16, armAmp: 0.15, shy: 0.7, armMinY: 0.45, fold: false },
+  b_skin: { hip: 0.45, legAmp: 0.38, lift: 0.03, armX: 0.125, armAmp: 0.15, shy: 0.7, armMinY: 0.25 },
   // zweite Pilgerin (Kleid und langer Khimar, eigenes Modell des Nutzers): Kleid schwingt leicht, Arme bleiben am Körper
-  v_cloth: { hip: 0.86, legAmp: 0.16, armX: 9, fold: false },
-  v_skin: { hip: 0.86, legAmp: 0.3, lift: 0.04, armX: 9 },
+  v_cloth: { hip: 0.86, legAmp: 0.16, armX: 0.15, armAmp: 0.12, shy: 1.36, armMinY: 0.75, fold: false },
+  v_skin: { hip: 0.86, legAmp: 0.3, lift: 0.04, armX: 0.12, armAmp: 0.12, shy: 1.36, armMinY: 0.45 },
   // Pilger im Shalwar Kameez
   k_top: { hip: 0.92, legAmp: 0.3, armX: 0.175, armAmp: 0.4, shy: 1.38, fold: false },
   k_bottom: { hip: 0.92, legAmp: 0.44, lift: 0.05, armX: 9 },
@@ -78,8 +78,11 @@ ${face ? `{ // Gesichtsform: Breite (x), Länge (y), Kinnpartie (z) – nur ober
 }` : ''}
 {
   vec3 wk = ${instanced ? 'aWalk' : 'uWalk'};
-  float kneel = wk.z, amt = wk.y * (1.0 - kneel);
-  ${instanced ? 'vec2 armP = vec2(0.45 * kneel); vec2 elbP = vec2(0.6 * kneel);' : 'vec2 armP = uArm; vec2 elbP = uElbow;'}
+  float kneel = max(wk.z, 0.0), amt = wk.y * (1.0 - kneel);
+  // Menge: aWalk.z > 0 = Knien; −1…0 = Wurf (rechter Arm hoch); −3…−2 = Dua (beide Hände erhoben)
+  ${instanced ? `vec2 armP = vec2(0.45 * kneel); vec2 elbP = vec2(0.6 * kneel);
+  if (wk.z < -1.5) { float d = clamp(-wk.z - 2.0, 0.0, 1.0); armP = vec2(0.85 * d); elbP = vec2(1.1 * d); }
+  else if (wk.z < 0.0) { armP = vec2(2.6 * -wk.z, 0.0); elbP = vec2(0.5 * -wk.z, 0.0); }` : 'vec2 armP = uArm; vec2 elbP = uElbow;'}
   if (amt > 0.001 || kneel > 0.001 || armP.x + armP.y + elbP.x + elbP.y > 0.001${body ? ' || uBody.x > 0.001 || abs(uKnee.x) + abs(uKnee.y) > 0.001' : ''}) {
     vec3 v = transformed; v.y += ${f(yOff)};
     float sideF = clamp(v.x / 0.07, -1.0, 1.0);

@@ -4,9 +4,10 @@ import { heightFn, buildTerrain } from '../world/terrain.js';
 import { palms, mosqueModel, sign, bus, roads, plaza } from '../world/props.js';
 import { archFacade, patternWall } from '../world/ornament.js';
 import { createCrowd } from '../world/crowd.js';
+import { createAgents } from '../world/agents.js';
 import { createPlayer } from '../core/player.js';
 import * as sfx from '../core/sfx.js';
-import { createFlow, createMarker, goTo, promptAt, holdAction, sunnah, isFemale } from '../core/kit.js';
+import { createFlow, createMarker, goTo, promptAt, holdAction, sunnah, isFemale, viewLine, clearView } from '../core/kit.js';
 
 const T = TEXT.miqat;
 
@@ -41,9 +42,20 @@ export function create(ctx, st) {
   palms(world, plist);
   // Pilger rund um die Moschee
   const N = 160, crowd = createCrowd(world, N, { ihram: true });
-  const cp = [];
-  for (let i = 0; i < N; i++) { cp.push([(Math.random() - 0.5) * 70, -22 - Math.random() * 7, Math.random() * 6]); crowd.set(i, cp[i][0], 0, cp[i][1], cp[i][2]); }
-  crowd.commit();
+  // Aktive Pilger: kommen aus dem Bus oder der Moschee, gehen zum Waschhaus (Ghusl), beten vor der Moschee,
+  // stehen in Gruppen zusammen und gehen zurück zum Bus. Türen: Bus (31,5 | 18), Waschhaus (−30 | −0,5), Moschee (0 | −33)
+  const r = (a, b) => a + Math.random() * (b - a);
+  const BUS = () => ({ x: r(30.5, 32.5), z: r(16, 20) }), WASH = () => ({ x: r(-31.5, -28.5), z: r(-0.8, 0) }), MOSQ = () => ({ x: r(-5, 5), z: -32.5 });
+  const prayRow = () => ({ x: r(-22, 22), z: -30 + Math.floor(r(0, 3)) * 1.3, wait: r(14, 24), act: 'pray', face: Math.PI });
+  const chat = () => ({ x: r(-20, 25), z: r(-16, 6), wait: r(6, 14), act: 'stand', face: r(0, 6.28) });
+  const ROUTES = [
+    () => [BUS(), { x: r(5, 20), z: r(0, 10) }, { ...WASH(), wait: r(2, 4), act: 'stand', face: Math.PI }],
+    () => [WASH(), { x: r(-20, -8), z: r(-12, -6) }, prayRow(), MOSQ()],
+    () => [MOSQ(), prayRow(), chat(), BUS()],
+    () => [MOSQ(), chat(), { x: r(-10, 10), z: r(-8, 4) }, WASH()],
+    () => [BUS(), chat(), prayRow(), MOSQ()],
+  ];
+  const agents = createAgents(crowd, N, () => ROUTES[Math.floor(Math.random() * ROUTES.length)](), { speed: 1.05, clear: clearView });
 
   const colliders = [
     mosq.collider,
@@ -115,9 +127,7 @@ export function create(ctx, st) {
       player.update(dt);
       marker.update(dt);
       for (const m of glow) m.emissiveIntensity = sky.art * 1.2;
-      // Pilger stehen und beten leicht wiegend
-      for (let i = 0; i < N; i += 7) crowd.set(i, cp[i][0], 0, cp[i][1], cp[i][2] + Math.sin(t + i) * 0.2);
-      crowd.commit();
+      agents.update(dt, viewLine(ctx)); // Pilger gehen ihre Wege (Ghusl, Gebet, Bus)
     },
     dispose() { flow.dispose(); },
   };

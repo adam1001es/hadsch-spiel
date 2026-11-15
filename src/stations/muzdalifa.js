@@ -3,9 +3,10 @@ import { TEXT } from '../content/hajj.js';
 import { heightFn, buildTerrain } from '../world/terrain.js';
 import { lamps, carpets, gravelBasin, mosqueModel, pebbleGeometry, roads } from '../world/props.js';
 import { createCrowd } from '../world/crowd.js';
+import { createAgents } from '../world/agents.js';
 import { createPlayer } from '../core/player.js';
 import * as sfx from '../core/sfx.js';
-import { createFlow, createMarker, goTo, pray, holdAction, duaFacing, pointGoal, sunnah, createAutopilot, autoAfter } from '../core/kit.js';
+import { createFlow, createMarker, goTo, pray, holdAction, duaFacing, pointGoal, sunnah, createAutopilot, autoAfter , viewLine, clearView} from '../core/kit.js';
 
 const T = TEXT.muzdalifa;
 const MASHAR = { x: -20, z: -150 };
@@ -64,6 +65,13 @@ export function create(ctx, st) {
     else crowd.set(i, x + 0.8, 0.03, z, -Math.PI / 2, 1);                              // steht im Gebet
   }
   crowd.commit();
+  // Einige Pilger sind unterwegs: gehen von der Straße zu einem Kiesfeld, heben Kiesel auf und gehen zurück
+  const rr = (a, b) => a + Math.random() * (b - a), WN = engine.isMobile ? 22 : 36;
+  const walkers = createCrowd(world, WN, { ihram: true });
+  const wAgents = createAgents(walkers, WN, () => {
+    const q = BASINS[Math.floor(Math.random() * BASINS.length)], a = rr(0, 6.28), k = rr(0.2, 0.8), side = Math.random() < 0.5 ? -1 : 1;
+    return [{ x: side * rr(1, 3), z: rr(-130, 140) }, { x: side * rr(1, 3), z: q.z + rr(-6, 6) }, { x: q.x + Math.cos(a) * q.rx * k, z: q.z + Math.sin(a) * q.rz * k, wait: rr(8, 14), act: 'pick' }, { x: side * rr(1, 3), z: q.z + rr(-10, 10) }, { x: side * rr(1, 3), z: Math.random() < 0.5 ? -135 : 145 }];
+  }, { speed: 1.0, clear: clearView });
 
   // Kiesel nur in den Kiesfeldern (dicht), dunkelgrau wie die Steine von Muzdalifa
   const pp = [], dm = new THREE.Object3D(), col = new THREE.Color();
@@ -186,6 +194,7 @@ export function create(ctx, st) {
       time += dt;
       flow.update(dt);
       crowd.commit(); // Detailstufen der Pilgerinnen mit der Kamera mitführen
+      wAgents.update(dt, viewLine(ctx));
       auto.update(dt);
       player.update(dt);
       marker.update(dt); mExit.update(dt);

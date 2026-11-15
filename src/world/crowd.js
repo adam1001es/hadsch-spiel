@@ -92,6 +92,7 @@ export function createCrowd(world, n, { men = 0.6, ihram = true, idtiba = false 
   // 1. Personen erzeugen: einfache Figur (für die Ferne) + Modellteile (für die Nähe), gleiche Farben
   const people = new Array(n), model = new Array(n), scale = new Float32Array(n), use = {};
   const sh = new Float32Array(n).fill(1), sw = new Float32Array(n).fill(1); // Höhe, Breite (Statur)
+  const ges = new Float32Array(n); // Geste (Wurf −1…0, Dua −3…−2), siehe walk.js
   const mk = new Float32Array(n).fill(1); // Ausgleich Modell ↔ einfache Figur (Junge: einfache Figur kindgroß, Modell schon klein)
   const tint = (hex, v = 0.06) => { const c = new THREE.Color(hex); return c.multiplyScalar(1 - v / 2 + Math.random() * v); };
   for (let i = 0; i < n; i++) {
@@ -218,6 +219,8 @@ export function createCrowd(world, n, { men = 0.6, ihram = true, idtiba = false 
   shadowM.frustumCulled = false; shadowM.renderOrder = 1; shadowM.count = n; world.add(shadowM);
   const sd = new THREE.Object3D();
   const api = {
+    // Geste für Person i (wirkt beim nächsten set): 0 = keine, −1…0 = Wurf (rechter Arm), −3…−2 = Dua (beide Hände)
+    gesture(i, v) { ges[i] = v; },
     n,
     // Position (x, y, z), Drehung ry, Höhe sy (z. B. 0.62 = sitzend), Neigung rx (z. B. π/2 = liegend)
     set(i, x, y, z, ry = 0, sy = 1, rx = 0) {
@@ -249,10 +252,10 @@ export function createCrowd(world, n, { men = 0.6, ihram = true, idtiba = false 
       if (useModel) {
         const sl = slotOf[i];
         if (mk[i] !== 1) { d.scale.multiplyScalar(mk[i]); d.updateMatrix(); }
-        for (const m of POOLS[model[i].s].meshes) { m.setMatrixAt(sl, m.userData.key === model[i].skip ? ZERO : d.matrix); if (m.userData.walk) m.userData.walk.setXYZ(sl, phase[i], amt[i], kneel[i]); if (m.userData.face) m.userData.face.setXYZ(sl, faceF[i * 3], faceF[i * 3 + 1], faceF[i * 3 + 2]); }
+        for (const m of POOLS[model[i].s].meshes) { m.setMatrixAt(sl, m.userData.key === model[i].skip ? ZERO : d.matrix); if (m.userData.walk) m.userData.walk.setXYZ(sl, phase[i], amt[i], kneel[i] || ges[i]); if (m.userData.face) m.userData.face.setXYZ(sl, faceF[i * 3], faceF[i * 3 + 1], faceF[i * 3 + 2]); }
         for (let k = 0; k < L.length; k++) L[k][1].setMatrixAt(L[k][2], ZERO);
       } else {
-        for (let k = 0; k < L.length; k++) { L[k][1].setMatrixAt(L[k][2], d.matrix); const ud = L[k][1].userData; if (ud.walk) ud.walk.setXYZ(L[k][2], phase[i], amt[i], kneel[i]); if (ud.face) ud.face.setXYZ(L[k][2], faceF[i * 3], faceF[i * 3 + 1], faceF[i * 3 + 2]); }
+        for (let k = 0; k < L.length; k++) { L[k][1].setMatrixAt(L[k][2], d.matrix); const ud = L[k][1].userData; if (ud.walk) ud.walk.setXYZ(L[k][2], phase[i], amt[i], kneel[i] || ges[i]); if (ud.face) ud.face.setXYZ(L[k][2], faceF[i * 3], faceF[i * 3 + 1], faceF[i * 3 + 2]); }
       }
     },
     commit() {
