@@ -106,6 +106,9 @@ Spielstand (Geld, Hasanat, Besitz, Position) in `localStorage` (`hp-life`), mit 
    Fertig: `src/life/interact.js` – `createInteract(ctx, player)`, dann `add({ obj|objs, label, run, color: 'gold'|'green'|'blue', x, z, radius, near, push, when })`,
    `update(dt)` im Loop, `dispose()`. Leuchten = Fresnel-Kopie je Mesh (teilt Geometrie/Instanzen), additiv, Tiefentest an (verdeckt die Figur nicht).
    Der Aktionsknopf übernimmt die Farbe (`ui.prompt(..., { tone })`).
+   Multiplayer: Leuchten und Knopf sind lokal (jeder sieht sie nur für sich), Mitspieler bleiben sichtbar und werden nicht
+   überstrahlt (getestet mit lokalem MQTT-Broker, `?mqtt=ws://127.0.0.1:8888`). Später können Mitspieler selbst ein Ziel sein:
+   `interact.add({ obj: figur.root, color: 'green', label: 'Datteln schenken', … })` – der Aktionspunkt folgt bewegten Objekten.
 2. Geldanzeige (Riyal + Hasanat) und Speichern; Multiplayer in allen Lebensspiel-Orten prüfen (Mitspieler sichtbar, auch in Fahrzeugen).
 3. Erster Job: Datteln verkaufen am Stand (kleines Minispiel), dann Zamzam verteilen (Sadaqa).
 4. Größere Stadt: mehrere Straßen/Plätze statt einer Straße, Kreuzungen, Ampeln.
