@@ -11,6 +11,7 @@ export function createAgents(crowd, n, route, { speed = 1.1, y = () => 0, clear 
     A.push({ pts, k, x: pts[k].x, z: pts[k].z, wait: (pts[k].wait || 0) * Math.random(), act: pts[k].act || null, t: Math.random() * 10, ry: Math.random() * 6.28, sp: speed * (0.8 + Math.random() * 0.4) });
   }
   return {
+    list: A, // aktuelle Positionen (z. B. damit Autos bremsen)
     update(dt, view) {
       for (let i = 0; i < n; i++) {
         const a = A[i]; a.t += dt;

@@ -51,7 +51,7 @@ export function clockTower(world, x, z) {
 }
 
 // Masjid an-Nabawi vereinfacht: großes flaches Gebäude mit Arkaden, zwei Innenhöfe mit Schirmen, zehn Minarette, Grüne Kuppel
-export function nabawi(world) {
+export function nabawi(world, { umbrellas = true } = {}) {
   const W = 300, D = 220, H = 14;
   const g = new THREE.Group(); world.add(g);
   const cream = new THREE.MeshStandardMaterial({ color: 0xece4d4, roughness: 0.75 });
@@ -100,7 +100,7 @@ export function nabawi(world) {
   const plaza = new THREE.Mesh(new THREE.PlaneGeometry(W + 160, D + 160).rotateX(-Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0xf0ece4, roughness: 0.5 })); plaza.position.y = 0.06; g.add(plaza);
   const bigU = new THREE.InstancedMesh(new THREE.ConeGeometry(7, 2.5, 4, 1, true).rotateY(Math.PI / 4), umbM, 80); n = 0;
   for (let x = -W / 2 - 50; x <= W / 2 + 50; x += 16) for (const z of [-D / 2 - 30, D / 2 + 30]) { if (n < 80) { dm.position.set(x, 9, z); dm.rotation.set(0, 0, 0); dm.scale.set(1, 1, 1); dm.updateMatrix(); bigU.setMatrixAt(n++, dm.matrix); } }
-  bigU.count = n; g.add(bigU);
+  bigU.count = n; if (umbrellas) g.add(bigU); // Lebensspiel: eigene, große Schirme
   return { half: [W / 2 + 80, D / 2 + 80] };
 }
 

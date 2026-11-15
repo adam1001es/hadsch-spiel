@@ -30,7 +30,7 @@ function loadHaram() {
 
 // Masjid al-Haram stark vereinfacht: Marmorboden, drei Arkaden-Ringe, Minarette, Uhrturm.
 // glow: Liste von Materialien, deren Leuchten nachts hochgeregelt wird.
-export function buildHaram(world) {
+export function buildHaram(world, { tower: withTower = true } = {}) {
   const glow = [], simple = [];
   const track = (o) => { simple.push(o); return o; };
   const floor = new THREE.Mesh(new THREE.CircleGeometry(420, 96), new THREE.MeshStandardMaterial({ ...pbr('marble_floor', [840 / 1.5, 840 / 1.5]), color: 0xe6e1d8, roughness: 0.74, envMapIntensity: 0.9, normalScale: new THREE.Vector2(0.5, 0.5) })); // gedämpfter, leicht glänzender Marmor (blendet nicht)
@@ -59,7 +59,7 @@ export function buildHaram(world) {
     add(new THREE.ConeGeometry(1.7, 7, 12), goldM, H * 0.9 + 4.5);
   });
 
-  const tower = new THREE.Group(); tower.position.set(80, 0, 330); world.add(tower);
+  const tower = new THREE.Group(); tower.position.set(80, 0, 330); if (withTower) world.add(tower); // Lebensspiel: eigener, genauer Uhrturm
   const tm = new THREE.MeshStandardMaterial({ color: 0xd2c8b4, roughness: 0.8 });
   const tw = (geo, y, m = tm) => { const o = new THREE.Mesh(geo, m); o.position.y = y; tower.add(o); };
   tw(new THREE.BoxGeometry(170, 55, 110), 27.5);

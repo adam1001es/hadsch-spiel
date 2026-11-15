@@ -32,3 +32,23 @@ export const MATERIALS = [
   { id: 'wood', name: 'Palmholz' },
   { id: 'tile', name: 'Fliese' },
 ];
+
+// Die Städte (Lebensspiel): Infotafeln an echten Orten – vereinfachte Lerndarstellung
+export const CITY = {
+  haramDo: '📜 Über die Masjid al-Haram',
+  haram: '<b>Masjid al-Haram</b> – die Heilige Moschee in Mekka mit der Kaaba in der Mitte. Sie ist die größte Moschee der Welt und wurde '
+    + 'immer wieder erweitert. Der große Marmorplatz im Süden liegt zwischen der Moschee und dem Uhrturm; zu den Gebetszeiten beten hier '
+    + 'Tausende Menschen unter freiem Himmel.',
+  clockDo: '📜 Über den Uhrturm',
+  clock: '<b>Abraj al-Bait</b> – der Gebäudekomplex direkt südlich der Haram mit Hotels, Geschäften und dem Uhrturm. Der Turm ist etwa '
+    + '601 Meter hoch und gehört zu den höchsten Gebäuden der Welt; jedes der vier Zifferblätter misst etwa 43 Meter. Ganz oben glänzt ein goldener Halbmond.',
+  nabawiDo: '📜 Über die Masjid an-Nabawi',
+  nabawi: '<b>Masjid an-Nabawi</b> – die Moschee des Propheten ﷺ in Medina. Er hat sie nach der Hidschra selbst mit seinen Gefährten gebaut; '
+    + 'heute ist sie um ein Vielfaches größer. Unter der <b>Grünen Kuppel</b> liegt die Grabkammer des Propheten ﷺ. '
+    + 'Auf dem Vorplatz spenden riesige Schirme Schatten – tagsüber werden sie geöffnet, abends wieder geschlossen.',
+  street: (medina) => (medina ? ['طريق الملك فيصل', 'König-Faisal-Straße'] : ['شارع إبراهيم الخليل', 'Ibrahim-al-Khalil-Straße']),
+  shops: [['تمور', 'Datteln'], ['عطور', 'Parfüm · Oud'], ['مكتبة', 'Bücher'], ['مطعم', 'Restaurant'], ['ملابس', 'Kleidung'], ['سبح وسجاد', 'Tasbih & Teppiche'], ['ذهب', 'Goldschmied'], ['هدايا', 'Geschenke'], ['حلويات', 'Süßes'], ['عصير', 'Saft']],
+  hotel: ['فندق', 'Hotel'],
+  taxi: '🚕 Taxi-Stand',
+  crossInfo: 'Rot heißt warten – die Autos halten aber auch so für Fußgänger an.',
+};

@@ -21,7 +21,8 @@ Bereits gebaut und wiederverwendbar:
 
 | Datei | Inhalt |
 |---|---|
-| `src/stations/meccaCity.js` | Straßen von Mekka/Medina (`where: 'mecca' \| 'medina'`): Marmor-Fußgängerzone, Läden, Dattelstand, Zamzam, Tauben füttern, Ballon, Bushaltestelle. Erlebnis-Orte in `SPOTS` (Knopf erscheint in der Nähe). |
+| `src/stations/meccaCity.js` | Mekka/Medina nach echtem Stadtplan (Koordinaten wie Hadsch-Stationen, Moschee bei 0,0, Süden +z): Mekka = Haram-Modell, Marmorplatz, Abraj al-Bait, Ibrahim-al-Khalil-Boulevard mit Läden, Querstraße mit Verkehr, Südplatz (Bus, Ballon, Bauhof-Wegweiser). Medina = Nabawi, Vorplatz mit Schirmen, Hotels, König-Faisal-Boulevard, Straße, Platz. `LAYOUT` je Stadt. Erlebnis-Orte leuchten (interact.js), Infotafeln an Wahrzeichen. |
+| `src/world/cityscape.js` | **Stadtbausteine (Lebensspiel):** Hochhäuser per InstancedMesh mit Fassaden in Metern (Stile mecca/glass/medina, Ladensockel, Rücksprünge), `abrajAlBait()` (601 m, Uhr zeigt Spielzeit), `createTraffic()` (Autos/Taxis/Busse, Ampel, Zebrastreifen, bremsen für Menschen), `umbrellas()` (Nabawi-Schirme), `walkable()` (Vereinigung von Rechtecken). |
 | `src/world/hejaz.js` | **Eine Landschaft** mit Mekka (0,0), Medina (0,−3400) und kurviger Autobahn (`roadX(z)`, Höhe `H(x,z)`), fahrende Busse. Maßstab stark verkleinert (Anzeige rechnet ×100 → echte km). |
 | `src/stations/balloon.js` | Ballonflug in der Hejaz-Welt (Brenner halten = steigen, Reise-Autopilot zur anderen Stadt). Exportiert `city()` (Häuserblöcke), `clockTower()`, `nabawi()`. |
 | `src/stations/drive.js` | Busfahrt zwischen den Städten (Kamera hinter dem Bus). |
