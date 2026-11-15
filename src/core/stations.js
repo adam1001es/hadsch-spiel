@@ -96,7 +96,7 @@ export function createStations(ctx) {
     ctx.sky.reset();
     ctx.input.reset();
     ctx.ui.reset();
-    index = i; tutorial = null;
+    index = i; tutorial = null; ctx.stationIndex = i; // für „Zusammen spielen“: wer ist in welcher Station
     if (i >= STATIONS.length) { paused = false; ctx.mission = null; current = info.ending(ctx); ctx.ui.fade(false); return; } // nach der letzten Lernkarte nicht pausiert lassen
     const st = STATIONS[i];
     const L = { ...personal(TEXT.learn[i]), context: contextFor(i) };
@@ -122,8 +122,8 @@ export function createStations(ctx) {
     current = make(ctx); current.update?.(0.016);
     ctx.ui.fade(false);
   }
-  ctx.reward = () => scene(kaabaInside.create);
-  ctx.backToEnding = () => scene(info.ending);
+  ctx.reward = () => { ctx.stationIndex = 'kaaba'; return scene(kaabaInside.create); };
+  ctx.backToEnding = () => { ctx.stationIndex = STATIONS.length; return scene(info.ending); };
 
   ctx.next = async () => {
     if (busy) return;

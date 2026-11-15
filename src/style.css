@@ -236,3 +236,20 @@ html[data-rtl] .tr { direction: ltr; text-align: left; }
 #holdPct { position: fixed; z-index: 7; right: var(--sr); bottom: calc(var(--sb) + 100px); width: 92px; text-align: center; font: 700 18px var(--f-body); color: #fff; text-shadow: 0 1px 4px rgba(0,0,0,.7); pointer-events: none; }
 #holdPct[hidden] { display: none; }
 #hold { background-image: conic-gradient(rgba(230,196,110,.55) var(--p, 0%), transparent 0); }
+
+/* Zusammen spielen (unter dem Ton-Knopf) */
+#multiBtn { position: fixed; z-index: 30; top: calc(env(safe-area-inset-top, 0px) + 160px); right: var(--sr); width: 40px; height: 40px; padding: 0; border-radius: 50%; display: grid; place-items: center; background: rgba(20, 37, 31, .7); color: #e6c46e; border: 1.5px solid rgba(230,196,110,.8); box-shadow: 0 2px 10px rgba(0,0,0,.3); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+#multiBtn svg { width: 22px; height: 22px; }
+#multiBtn.on { background: #2f6b55; }
+#multiCount { position: absolute; top: -4px; right: -4px; min-width: 18px; height: 18px; border-radius: 9px; background: #e6c46e; color: #14251f; font: 700 11px/18px var(--f-body); text-align: center; padding: 0 4px; }
+#multiCount[hidden] { display: none; }
+#multi { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; background: rgba(6,12,20,.55); padding: 16px; }
+#multi[hidden], #multiOff[hidden], #multiOn[hidden] { display: none; }
+.multi-join { display: flex; gap: 8px; }
+.multi-join input { flex: 1; min-width: 0; font: 600 20px var(--f-body); letter-spacing: 4px; text-align: center; padding: 8px; border-radius: 10px; border: 1px solid rgba(0,0,0,.2); }
+.multi-code { text-align: center; padding: 8px 0; }
+.multi-code span { display: block; font-size: 13px; color: #5a5a50; }
+.multi-code b { font-size: 40px; letter-spacing: 8px; color: #2f6b55; }
+.multi-list { list-style: none; padding: 0; margin: 4px 0; }
+.multi-list li { display: flex; align-items: center; gap: 8px; padding: 5px 0; font-size: 14px; }
+.multi-list i { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; font: 700 12px var(--f-body); font-style: normal; color: #14251f; }

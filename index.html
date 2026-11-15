@@ -91,6 +91,30 @@
     <svg class="on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M15.5 9a4 4 0 0 1 0 6"/><path d="M18 6.5a7.5 7.5 0 0 1 0 11"/></svg>
     <svg class="off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M16 9.5l5 5M21 9.5l-5 5"/></svg>
   </button>
+  <!-- Zusammen spielen (Raum-Code) -->
+  <button id="multiBtn" type="button" aria-label="Zusammen spielen" title="Zusammen spielen">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><circle cx="17" cy="9" r="2.6"/><path d="M15.5 14.2c3 .2 5.5 2.6 5.5 5.8"/></svg>
+    <span id="multiCount" hidden></span>
+  </button>
+  <section id="multi" hidden>
+    <div class="set-card">
+      <div class="set-head"><b>Zusammen spielen</b><button id="multiClose" type="button" aria-label="Schließen">✕</button></div>
+      <div id="multiOff">
+        <p class="small">Spielt den Hadsch gemeinsam: Einer erstellt einen Raum, die anderen geben den 4-stelligen Code ein. Ihr seht euch dann als Pilger mit Nummer – in derselben Station.</p>
+        <div class="set-row"><button id="multiCreate" class="primary" type="button">Neuen Raum erstellen</button></div>
+        <div class="set-row"><span>Raum beitreten</span>
+          <div class="multi-join"><input id="multiCode" type="text" inputmode="numeric" maxlength="4" placeholder="z. B. 4821" autocomplete="off"><button id="multiJoin" type="button">Beitreten</button></div>
+        </div>
+      </div>
+      <div id="multiOn" hidden>
+        <div class="multi-code"><span>Raum-Code</span><b id="multiShow">----</b></div>
+        <p id="multiMe" class="small"></p>
+        <ul id="multiList" class="multi-list"></ul>
+        <div class="set-row"><button id="multiLeave" type="button">Raum verlassen</button></div>
+      </div>
+      <p class="small">Es werden keine Namen übertragen – nur Station, Position und Haltung deiner Figur. Max. 8 Spieler. Ein Vermittlungsdienst (PeerJS) stellt die Verbindung her, danach gehen die Daten direkt zwischen euren Geräten.</p>
+    </div>
+  </section>
   <!-- Einstellungen: Sprache, Vorlesen, Rezitation -->
   <button id="setBtn" type="button" aria-label="Einstellungen" title="Einstellungen">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.6 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.6-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>

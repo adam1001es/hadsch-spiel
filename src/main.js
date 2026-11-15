@@ -7,6 +7,7 @@ import { createStations } from './core/stations.js';
 import { preview } from './stations/tawaf.js';
 import * as content from './content/hajj.js';
 import { progressStore } from './core/progress.js';
+import { createMulti } from './core/multi.js';
 import { preloadPeople, setCrowdCamera, peopleStatus } from './world/crowd.js';
 import { initI18n, LANGS, settings, saveSettings, lang, unlockVoice, voiceAvailable, speak, stopSpeaking, stopAudio } from './core/i18n.js';
 initI18n();
@@ -24,6 +25,7 @@ const ctx = { engine, sky, ui, input, content, progress: { sunnah: new Set(), do
 ctx.ready = peopleReady;
 window.__hp = ctx; // für automatische Tests
 const stations = createStations(ctx);
+const multi = createMulti(ctx); ctx.multi = multi;
 
 let current = preview(ctx);
 const clock = new THREE.Clock();
@@ -33,6 +35,7 @@ engine.renderer.setAnimationLoop(() => {
   engine.adapt(raw);
   sky.update(dt);
   if (current) current.update(dt); else stations.update(dt);
+  multi.update(dt);
   engine.renderer.render(engine.scene, engine.camera);
 });
 
@@ -131,3 +134,26 @@ document.getElementById('setBtn').addEventListener('click', () => {
 });
 document.getElementById('setClose').addEventListener('click', () => { setBox.hidden = true; });
 setBox.addEventListener('click', (e) => { if (e.target === setBox) setBox.hidden = true; });
+
+// ---------- Zusammen spielen ----------
+{
+  const $ = (id) => document.getElementById(id);
+  const COL = ['#e6c46e', '#5fb3e6', '#e67a5f', '#8fd16a', '#c78fe6', '#e6e05f', '#5fe6c4', '#e65fa8'];
+  const where = (s) => (s === 'kaaba' ? 'in der Kaaba' : s >= content.STATIONS.length ? 'bei der Urkunde' : typeof s === 'number' ? `Station ${s + 1}: ${content.STATIONS[s].title}` : 'noch am Start');
+  const render = (st) => {
+    $('multiOff').hidden = st.on || !!st.code; $('multiOn').hidden = !(st.on || st.code);
+    $('multiShow').textContent = st.code || '----';
+    $('multiMe').textContent = st.me ? `Du bist Pilger ${st.me}${st.host ? ' (Gastgeber)' : ''}. Sag den anderen den Code.` : 'Verbinde …';
+    $('multiList').innerHTML = st.others.sort((a, b) => a.n - b.n).map((o) => `<li><i style="background:${COL[(o.n - 1) % 8]}">${o.n}</i> Pilger ${o.n} – ${where(o.s)}</li>`).join('') || '<li class="small">Noch niemand verbunden.</li>';
+    $('multiBtn').classList.toggle('on', st.on);
+    $('multiCount').hidden = !st.on; $('multiCount').textContent = String(st.others.length + 1);
+  };
+  multi.onChange = render; render(multi.status());
+  $('multiBtn').addEventListener('click', () => { $('multi').hidden = false; });
+  $('multiClose').addEventListener('click', () => { $('multi').hidden = true; });
+  $('multi').addEventListener('click', (e) => { if (e.target.id === 'multi') $('multi').hidden = true; });
+  $('multiCreate').addEventListener('click', () => multi.create());
+  $('multiJoin').addEventListener('click', () => multi.join($('multiCode').value));
+  $('multiCode').addEventListener('keydown', (e) => { if (e.key === 'Enter') multi.join($('multiCode').value); });
+  $('multiLeave').addEventListener('click', () => multi.leave());
+}
