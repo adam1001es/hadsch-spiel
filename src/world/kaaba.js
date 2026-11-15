@@ -110,5 +110,5 @@ export function buildKaaba(world) {
     maqam.parent.add(m); maqam.parent.remove(maqam);
   });
 
-  return { kaaba: k };
+  return { kaaba: k, door, sitara };
 }

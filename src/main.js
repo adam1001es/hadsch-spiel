@@ -79,6 +79,14 @@ content.STATIONS.forEach((st, i) => {
   b.addEventListener('click', () => begin(i));
   jump.appendChild(b);
 });
+// Erlebnis-Bereiche (Kaaba, Straßen von Mekka, Ballon) direkt wählbar
+for (const bx of ctx.bonus || []) {
+  const b = document.createElement('button'); b.type = 'button'; b.className = 'bonus'; b.textContent = '★ ' + bx.title;
+  b.addEventListener('click', () => { readProfile(); startScreen.hidden = true; ui.el.stick.classList.remove('off'); current = null; bx.go(); });
+  jump.appendChild(b);
+}
+// direkt per Link: …#kaaba, …#mekka, …#ballon
+{ const bm = { '#kaaba': 0, '#mekka': 1, '#ballon': 2 }[location.hash]; if (bm != null) setTimeout(() => { readProfile(); startScreen.hidden = true; current = null; ctx.bonus[bm].go(); }, 0); }
 // Weiterspielen, wenn es einen gespeicherten Stand gibt
 const resume = document.getElementById('resumeBtn');
 if (prog.next > 0 && prog.next < content.STATIONS.length) {

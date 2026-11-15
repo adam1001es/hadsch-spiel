@@ -306,3 +306,24 @@ body.fast #focusBlur { opacity: 1; }
 .cg-sep { color: #c9a24e; font-size: 22px; margin: 4px 0; }
 .cg-wish { margin: 12px 0; font-weight: 600; color: #1d5642; font-size: 16px; }
 .cg-frame button { display: block; width: 100%; margin-top: 8px; }
+
+/* Knopf und Hinweise oben (unter Titel/Zielpfeil), damit sie die Figur unten in der Mitte nicht verdecken */
+#prompt { bottom: auto; top: calc(var(--stackH, 110px) + 62px); }
+#toast { bottom: auto; top: calc(var(--stackH, 110px) + 118px); }
+#hint { top: calc(var(--stackH, 110px) + 170px); transform: translateX(-50%); }
+/* Handy: Aufgaben-/Infokarte zugeklappt nur als kleiner runder „i“-Knopf links (Aktionsknöpfe daneben) */
+@media (max-width: 700px) {
+  #panel.collapsed { right: auto; display: flex; align-items: center; gap: 8px; padding: 0; background: transparent; border: 0; box-shadow: none; max-width: calc(100vw - var(--sl) - var(--sr) - 60px); }
+  #panel.collapsed::before { content: 'i'; flex: none; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; font: 700 italic 20px Marcellus, serif; color: #14251f; background: var(--panel); border: 1.5px solid rgba(169,124,44,.75); box-shadow: 0 2px 10px rgba(0,0,0,.3); }
+  #panel.collapsed.unread::before { box-shadow: 0 0 0 3px #c0392b, 0 2px 10px rgba(0,0,0,.3); }
+  #panel.collapsed #mission, #panel.collapsed #info, #panel.collapsed .task-list, #panel.collapsed #panelToggle { display: none !important; }
+  #panel.collapsed.no-mission .panel-body::before { content: none; }
+  #panel.collapsed #actions { margin: 0; flex-wrap: nowrap; overflow-x: auto; }
+  #panel.collapsed #actions button { padding: 7px 11px; font-size: 13px; background: var(--panel); white-space: nowrap; }
+  #panel.collapsed #actions button.primary { background: var(--green); }
+  #panel.collapsed .panel-body:not(:has(#actions button)) { display: none; }
+  #prompt, #toast { top: calc(var(--stackH, 110px) + 56px); }
+  #toast { top: calc(var(--stackH, 110px) + 112px); }
+}
+
+#coach.prompt { bottom: auto; top: calc(var(--stackH, 110px) + 120px); }

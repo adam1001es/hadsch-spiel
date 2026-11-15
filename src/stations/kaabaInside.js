@@ -221,7 +221,7 @@ export function create(ctx) {
     ui.actions([
       { label: T.back, onClick: () => ctx.backToEnding?.() },
 
-      { label: '🕌 Hinaus in die Straßen von Mekka', kind: 'primary', onClick: () => ctx.city?.() },
+      { label: '🕌 Hinaus in die Straßen von Mekka', kind: 'primary', onClick: () => ctx.leaveKaaba?.() },
     ]);
   }
   run();

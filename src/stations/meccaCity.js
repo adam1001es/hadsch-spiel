@@ -9,7 +9,7 @@ import { createCrowd } from '../world/crowd.js';
 import { createAgents } from '../world/agents.js';
 import { createLife } from '../world/life.js';
 import { createPlayer } from '../core/player.js';
-import { createMarker, viewLine, clearView, pointGoal } from '../core/kit.js';
+import { viewLine, clearView } from '../core/kit.js';
 import { city, clockTower } from './balloon.js';
 import * as sfx from '../core/sfx.js';
 
@@ -66,7 +66,7 @@ export function create(ctx, { from } = {}) {
   lamps(world, ll, glow);
   palms(world, [[-6, 0, ZMIN + 10, 1, 0.8], [6, 0, ZMIN + 10, 2, 0.8], [-6, 0, 35, 3, 0.75], [6, 0, 35, 1, 0.75]]);
 
-  // Erlebnis-Orte
+  // Erlebnis-Orte (ohne Pfeile und Aufgaben – einfach hingehen, in der Nähe erscheint ein Knopf)
   const SPOTS = [];
   // Dattelmarkt
   { const x = -11, z = 22; stand(world, x, z, Math.PI / 2, 0x2f6b55);
@@ -102,11 +102,7 @@ export function create(ctx, { from } = {}) {
   balloonLoad.then((sc) => { if (sc && balloon.parent) { const m = sc.clone(true); m.traverse((o) => { if (o.isMesh) o.castShadow = true; }); balloon.add(m); } });
   SPOTS.push({ key: 'balloon', name: T.balloon, x: 2.5, z: BZ + 4, label: T.balloonDo, run() { ctx.balloon?.('mecca'); } });
 
-  const markers = SPOTS.map((s) => { const m = createMarker(world, { r: 1.4, height: 5 }); m.show(s.x, s.z); return m; });
   const done = SPOTS.map(() => false);
-  const tasks = SPOTS.map((s) => ({ t: s.name }));
-  const showMission = () => ui.mission(tasks, done.map((d) => (d ? 'ok' : 'open')));
-  showMission();
 
   // Pilger in der Fußgängerzone
   const N = engine.isMobile ? 70 : 120, crowd = createCrowd(world, N, { ihram: false, men: 0.55 });
@@ -135,16 +131,14 @@ export function create(ctx, { from } = {}) {
     update(dt) {
       t += dt;
       player.update(dt);
-      for (const m of markers) m.update(dt);
       for (const m of glow) m.emissiveIntensity = 0.4;
       agents.update(dt, viewLine(ctx));
       life.update(dt);
       // nächster Ort: Knopf zeigen; Pfeil zum nächsten noch nicht erlebten Ort
       let near = -1, best = 1e9, goal = -1, gd = 1e9;
       SPOTS.forEach((s, i) => { const d = player.distTo(s.x, s.z); if (d < 2.6 && d < best) { best = d; near = i; } if (!done[i] && d < gd) { gd = d; goal = i; } });
-      if (near >= 0) ui.prompt(SPOTS[near].label, () => { const i = near; SPOTS[i].run(); if (!done[i]) { done[i] = true; markers[i].hide(); showMission(); } }, { key: SPOTS[near].key });
+      if (near >= 0) ui.prompt(SPOTS[near].label, () => { const i = near; SPOTS[i].run(); done[i] = true; }, { key: SPOTS[near].key });
       else ui.prompt(null);
-      if (goal >= 0 && near < 0) pointGoal(ui, player, SPOTS[goal].name, SPOTS[goal].x, SPOTS[goal].z); else ui.goal(null);
       // Tauben: picken, weichen dem Spieler aus, kommen beim Füttern zusammen
       feed = Math.max(0, feed - dt);
       const px = player.pos.x, pz = player.pos.z;

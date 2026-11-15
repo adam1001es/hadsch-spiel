@@ -415,7 +415,7 @@ export const MECCA_CITY = {
   title: 'Die Straßen von Mekka',
   day: 'Nach dem Hadsch',
   enter: 'Hinaus in die Straßen von Mekka',
-  intro: 'Willkommen in den Straßen rund um die Masjid al-Haram! Schau dich um – die leuchtenden Ringe zeigen, was du hier machen kannst.',
+  intro: 'Willkommen in den Straßen rund um die Masjid al-Haram! Hier gibt es keine Aufgaben mehr – schau dich einfach um: Dattelmarkt, Zamzam, Tauben und der Heißluftballon warten auf dich.',
   balloon: 'Heißluftballon',
   balloonDo: '🎈 Einsteigen und losfliegen',
   pigeons: 'Tauben am Platz',

@@ -10,6 +10,7 @@ import * as info from '../stations/info.js';
 import * as kaabaInside from '../stations/kaabaInside.js';
 import * as balloon from '../stations/balloon.js';
 import * as meccaCity from '../stations/meccaCity.js';
+import * as kaabaDoor from '../stations/kaabaDoor.js';
 import { progressStore } from './progress.js';
 import { createLife } from '../world/life.js';
 
@@ -83,12 +84,22 @@ export function createStations(ctx) {
 
   // Stationsauswahl über die Rauten oben im HUD
   ctx.ui.el.dots.addEventListener('click', async () => {
-    if (paused || busy || index < 0 || index >= STATIONS.length) return;
+    if (paused || busy || index < 0) return;
     paused = true;
-    const sel = await ctx.ui.chooser(STATIONS, index, progressStore.get().done);
+    const sel = await ctx.ui.chooser([...STATIONS, ...BONUS], index, progressStore.get().done);
     paused = false;
-    if (sel != null && sel !== index) { lastPlayed = -1; go(sel); }
+    if (sel == null) return;
+    if (sel >= STATIONS.length) { BONUS[sel - STATIONS.length].go(); return; }
+    if (sel !== index) { lastPlayed = -1; go(sel); }
   });
+
+  // Erlebnis-Bereiche nach dem Hadsch: jederzeit über die Stationsauswahl erreichbar
+  const BONUS = [
+    { title: 'In der Kaaba', day: 'Belohnung', go: () => { index = STATIONS.length; ctx.reward(); } },
+    { title: 'Die Straßen von Mekka', day: 'Erleben', go: () => { index = STATIONS.length; ctx.city(); } },
+    { title: 'Ballonflug über Mekka und Medina', day: 'Erleben', go: () => { index = STATIONS.length; ctx.balloon('mecca'); } },
+  ];
+  ctx.bonus = BONUS;
 
   async function go(i) {
     await ctx.ui.fade(true);
@@ -118,13 +129,16 @@ export function createStations(ctx) {
   // Belohnung nach dem Hadsch: in die Kaaba eintreten (und zurück zur Urkunde)
   async function scene(make) {
     await ctx.ui.fade(true);
+    await ctx.ready;
     current?.dispose?.(); life?.dispose(); life = null;
     ctx.engine.clearWorld(); ctx.sky.reset(); ctx.input.reset(); ctx.ui.reset();
     paused = false; tutorial = null; ctx.mission = null;
     current = make(ctx); current.update?.(0.016);
     ctx.ui.fade(false);
   }
-  ctx.reward = () => { ctx.stationIndex = 'kaaba'; return scene(kaabaInside.create); };
+  // Kaaba: von außen (Tür öffnet sich) hinein, und wieder hinaus in die Straßen von Mekka
+  ctx.reward = () => { ctx.stationIndex = 'kaaba'; return scene((c) => kaabaDoor.create(c, { dir: 'in', then: () => scene(kaabaInside.create) })); };
+  ctx.leaveKaaba = () => scene((c) => kaabaDoor.create(c, { dir: 'out', then: () => ctx.city() }));
   ctx.balloon = (where = 'mecca') => { ctx.stationIndex = 'balloon'; return scene((c) => balloon.create(c, { where })); };
   ctx.city = (from) => { ctx.stationIndex = 'city'; return scene((c) => meccaCity.create(c, { from })); };
   ctx.backToEnding = () => { ctx.stationIndex = STATIONS.length; return scene(info.ending); };
