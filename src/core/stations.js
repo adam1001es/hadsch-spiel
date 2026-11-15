@@ -97,7 +97,7 @@ export function createStations(ctx) {
     ctx.input.reset();
     ctx.ui.reset();
     index = i; tutorial = null;
-    if (i >= STATIONS.length) { current = info.ending(ctx); ctx.ui.fade(false); return; }
+    if (i >= STATIONS.length) { paused = false; ctx.mission = null; current = info.ending(ctx); ctx.ui.fade(false); return; } // nach der letzten Lernkarte nicht pausiert lassen
     const st = STATIONS[i];
     const L = { ...personal(TEXT.learn[i]), context: contextFor(i) };
     ctx.ui.station(i, STATIONS.length, st);
@@ -118,6 +118,7 @@ export function createStations(ctx) {
     await ctx.ui.fade(true);
     current?.dispose?.(); life?.dispose(); life = null;
     ctx.engine.clearWorld(); ctx.sky.reset(); ctx.input.reset(); ctx.ui.reset();
+    paused = false; tutorial = null; ctx.mission = null;
     current = make(ctx); current.update?.(0.016);
     ctx.ui.fade(false);
   }

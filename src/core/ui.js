@@ -211,7 +211,7 @@ export function createUI() {
     prayer(p) { const a = AUDIO.get(p); return `<div class="ar"${a ? ` data-audio="${a}"` : ''}>${p.ar}</div><p class="tr">${p.tr}</p><p>${p.de}</p>`; },
     // Aufgabenliste: tasks [{t, s}], state: Array 'open' | 'ok' | 'skip'. Zeigt die aktuelle Aufgabe oben in der Infokarte.
     mission(tasks, state) {
-      if (!tasks) { el.mission.hidden = true; el.mission.innerHTML = ''; layout(); return; }
+      if (!tasks) { el.mission.hidden = true; el.mission.innerHTML = ''; el.panel.querySelector('.task-list')?.remove(); layout(); return; } // auch die aufgeklappte Liste entfernen
       const curAny = state.findIndex((x) => x === 'open');
       const doneN = state.filter((x) => x !== 'open').length;
       const now = curAny < 0 ? 'Alles erledigt ✓' : tasks[curAny].t + (tasks[curAny].s ? ' (Sunnah)' : '');
