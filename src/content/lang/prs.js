@@ -234,7 +234,7 @@ export default {
 "Haare kürzen (Taqsir)": "موها را کوتاه کن (تقصیر)",
 "Haare oder Nägel schneiden": "کوتاه کردن مو یا ناخن",
 "Hadsch mabrur": "حج مبرور",
-"Hadsch-Pfad": "راه حج",
+"Hadsch 3D": "حج سه‌بعدی",
 "Hady · Opfer": "هدی · قربانی",
 "Hady-Gutschein zeigen": "کوپن قربانی را نشان بده",
 "Hady-Schalter": "باجه قربانی",

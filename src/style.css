@@ -253,3 +253,10 @@ html[data-rtl] .tr { direction: ltr; text-align: left; }
 .multi-list { list-style: none; padding: 0; margin: 4px 0; }
 .multi-list li { display: flex; align-items: center; gap: 8px; padding: 5px 0; font-size: 14px; }
 .multi-list i { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; font: 700 12px var(--f-body); font-style: normal; color: #14251f; }
+
+/* Sprachauswahl auf dem Startbildschirm: eingeklappt, nur die aktuelle Sprache sichtbar */
+.start-lang-box { text-align: center; margin-bottom: 8px; }
+.start-lang-box summary { display: inline-block; list-style: none; cursor: pointer; padding: 6px 14px; border-radius: 999px; border: 1px solid rgba(0,0,0,.15); background: rgba(255,255,255,.75); font-size: 14px; color: #1f2a24; }
+.start-lang-box summary::-webkit-details-marker { display: none; }
+.start-lang-box[open] summary { background: #2f6b55; color: #fff; border-color: #2f6b55; }
+.start-lang-box .start-lang { margin-top: 8px; }

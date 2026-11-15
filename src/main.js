@@ -113,6 +113,7 @@ function langButtons(host) {
   }
 }
 langButtons(document.getElementById('setLang')); langButtons(document.getElementById('startLang'));
+document.getElementById('startLangSum').textContent = '🌐 ' + lang().name + ' ▾'; // Sprachauswahl auf dem Startbildschirm eingeklappt
 const setVoice = document.getElementById('setVoice'), setRecite = document.getElementById('setRecite'), voiceNote = document.getElementById('setVoiceNote');
 setVoice.checked = settings.voice; setRecite.checked = settings.recite;
 const soundBtn = document.getElementById('soundBtn');

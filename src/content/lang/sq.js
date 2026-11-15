@@ -234,7 +234,7 @@ export default {
 "Haare kürzen (Taqsir)": "Shkurto flokët (taksir)",
 "Haare oder Nägel schneiden": "Prerja e flokëve ose e thonjve",
 "Hadsch mabrur": "Haxh mebrur",
-"Hadsch-Pfad": "Rruga e Haxhit",
+"Hadsch 3D": "Haxhi 3D",
 "Hady · Opfer": "Hedj · Kurban",
 "Hady-Gutschein zeigen": "Trego kuponin e kurbanit",
 "Hady-Schalter": "Sporteli i kurbanit",

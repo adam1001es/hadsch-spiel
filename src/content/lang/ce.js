@@ -234,7 +234,7 @@ export default {
 "Haare kürzen (Taqsir)": "Месаш доца де (такъсир)",
 "Haare oder Nägel schneiden": "Месаш я мӀараш хадор",
 "Hadsch mabrur": "ТӀеэцна хьаж",
-"Hadsch-Pfad": "Хьажан некъ",
+"Hadsch 3D": "Хьаж 3D",
 "Hady · Opfer": "ХӀадй · СагӀа",
 "Hady-Gutschein zeigen": "СагӀин купон гайта",
 "Hady-Schalter": "СагӀин касса",

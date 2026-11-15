@@ -370,7 +370,7 @@ export const KAABA_INSIDE = {
   tawbah: 'Bab at-Tawbah: Diese Tür in der Ecke führt zu einer Treppe auf das Dach.',
   lamps: 'Die Lampen sind alte Geschenke. Heute gibt es elektrisches Licht.',
   dua: 'Halten: Dua',
-  end: 'Möge Allah deinen Hadsch annehmen. Danke, dass du den Hadsch-Pfad gegangen bist!',
+  end: 'Möge Allah deinen Hadsch annehmen. Danke, dass du den Hadsch mitgemacht hast!',
   back: 'Zurück zur Urkunde',
   again: 'Nochmal spielen',
 };

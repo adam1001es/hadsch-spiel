@@ -234,7 +234,7 @@ export default {
 "Haare kürzen (Taqsir)": "Skrati kosu (taksir)",
 "Haare oder Nägel schneiden": "Šišanje kose ili sječenje noktiju",
 "Hadsch mabrur": "Hadždž mebrur",
-"Hadsch-Pfad": "Put hadža",
+"Hadsch 3D": "Hadž 3D",
 "Hady · Opfer": "Hedj · Kurban",
 "Hady-Gutschein zeigen": "Pokaži vaučer za kurban",
 "Hady-Schalter": "Šalter za kurban",

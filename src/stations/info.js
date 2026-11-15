@@ -37,7 +37,7 @@ export function ending(ctx) {
   ui.counter(`Sunnah: ${done.length} von ${SUNNAH_LIST.length}`);
   ui.el.panel.classList.remove('collapsed');
   ui.info(`${ui.prayer(ENDING)}
-    <div class="cert"><div class="k">Urkunde</div><b>${pf.name || 'Du'}</b>${pf.age ? ` (${pf.age >= 18 ? '18+' : pf.age} Jahre)` : ''} ${pf.name ? 'hat' : 'hast'} ${nDone >= 12 ? 'alle 12 Stationen' : `${nDone} von 12 Stationen`} des Hadsch-Pfads geschafft.</div>
+    <div class="cert"><div class="k">Urkunde</div><b>${pf.name || 'Du'}</b>${pf.age ? ` (${pf.age >= 18 ? '18+' : pf.age} Jahre)` : ''} ${pf.name ? 'hat' : 'hast'} ${nDone >= 12 ? 'alle 12 Stationen' : `${nDone} von 12 Stationen`} des Hadsch geschafft.</div>
     <p><button type="button" class="primary" id="toKaaba">🕋 ${KAABA_INSIDE.enter}</button></p>
     <p><button type="button" class="primary" id="toBalloon">🎈 ${BALLOON.enter}</button></p>
     ${ctx.progress.quizN ? `<p><b>Quiz:</b> ${ctx.progress.quizOk} von ${ctx.progress.quizN} Fragen beim ersten Versuch richtig ${ctx.progress.quizOk === ctx.progress.quizN ? '– hervorragend!' : ''}</p>` : ''}

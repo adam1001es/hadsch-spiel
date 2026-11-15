@@ -1,4 +1,4 @@
-# Hadsch-Pfad
+# Hadsch 3D
 
 3D-Lernspiel über die Stationen des Hadsch, spielbar im Handy-Browser (Three.js + Vite).
 

@@ -234,7 +234,7 @@ export default {
 "Haare kürzen (Taqsir)": "Saçları kısalt (taksir)",
 "Haare oder Nägel schneiden": "Saç veya tırnak kesmek",
 "Hadsch mabrur": "Hacc-ı mebrur",
-"Hadsch-Pfad": "Hac Yolu",
+"Hadsch 3D": "Hac 3D",
 "Hady · Opfer": "Hedy · Kurban",
 "Hady-Gutschein zeigen": "Kurban kuponunu göster",
 "Hady-Schalter": "Kurban gişesi",
