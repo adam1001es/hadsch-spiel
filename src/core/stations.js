@@ -11,6 +11,7 @@ import * as kaabaInside from '../stations/kaabaInside.js';
 import * as balloon from '../stations/balloon.js';
 import * as meccaCity from '../stations/meccaCity.js';
 import * as kaabaDoor from '../stations/kaabaDoor.js';
+import * as drive from '../stations/drive.js';
 import { progressStore } from './progress.js';
 import { createLife } from '../world/life.js';
 
@@ -96,8 +97,7 @@ export function createStations(ctx) {
   // Erlebnis-Bereiche nach dem Hadsch: jederzeit über die Stationsauswahl erreichbar
   const BONUS = [
     { title: 'In der Kaaba', day: 'Belohnung', go: () => { index = STATIONS.length; ctx.reward(); } },
-    { title: 'Die Straßen von Mekka', day: 'Erleben', go: () => { index = STATIONS.length; ctx.city(); } },
-    { title: 'Ballonflug über Mekka und Medina', day: 'Erleben', go: () => { index = STATIONS.length; ctx.balloon('mecca'); } },
+    { title: 'Die Straßen von Mekka und Medina', day: 'Erleben', go: () => { index = STATIONS.length; ctx.city(); } },
   ];
   ctx.bonus = BONUS;
 
@@ -140,7 +140,8 @@ export function createStations(ctx) {
   ctx.reward = () => { ctx.stationIndex = 'kaaba'; return scene((c) => kaabaDoor.create(c, { dir: 'in', then: () => scene(kaabaInside.create) })); };
   ctx.leaveKaaba = () => scene((c) => kaabaDoor.create(c, { dir: 'out', then: () => ctx.city() }));
   ctx.balloon = (where = 'mecca') => { ctx.stationIndex = 'balloon'; return scene((c) => balloon.create(c, { where })); };
-  ctx.city = (from) => { ctx.stationIndex = 'city'; return scene((c) => meccaCity.create(c, { from })); };
+  ctx.city = (from, where = 'mecca') => { ctx.stationIndex = 'city-' + where; return scene((c) => meccaCity.create(c, { from, where })); };
+  ctx.drive = (from, to) => { ctx.stationIndex = 'drive'; return scene((c) => drive.create(c, { from, to })); };
   ctx.backToEnding = () => { ctx.stationIndex = STATIONS.length; return scene(info.ending); };
 
   ctx.next = async () => {

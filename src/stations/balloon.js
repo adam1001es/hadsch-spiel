@@ -1,13 +1,10 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { BALLOON as T } from '../content/hajj.js';
-import { heightFn, buildTerrain } from '../world/terrain.js';
-import { buildKaaba } from '../world/kaaba.js';
-import { buildHaram, matafRadius } from '../world/haram.js';
-import { createCrowd } from '../world/crowd.js';
 import { createFigure } from '../core/player.js';
 import { peopleModels } from '../world/crowd.js';
 import { createLife } from '../world/life.js';
+import { buildHejaz, H, MED } from '../world/hejaz.js';
 import * as sfx from '../core/sfx.js';
 
 // Unterhaltung nach dem Hadsch: Heißluftballon über Mekka oder Medina.
@@ -54,7 +51,7 @@ export function clockTower(world, x, z) {
 }
 
 // Masjid an-Nabawi vereinfacht: großes flaches Gebäude mit Arkaden, zwei Innenhöfe mit Schirmen, zehn Minarette, Grüne Kuppel
-function nabawi(world) {
+export function nabawi(world) {
   const W = 300, D = 220, H = 14;
   const g = new THREE.Group(); world.add(g);
   const cream = new THREE.MeshStandardMaterial({ color: 0xece4d4, roughness: 0.75 });
@@ -110,33 +107,21 @@ function nabawi(world) {
 export function create(ctx, { where = 'mecca' } = {}) {
   const { engine, sky, ui, input } = ctx;
   const world = engine.world;
-  sky.setHour(where === 'mecca' ? 16.8 : 9.5);
+  sky.setHour(16.2);
   sky.state.shadowSize = 120;
   ui.el.day.textContent = T.title;
-  ui.el.title.textContent = where === 'mecca' ? T.mecca : T.medina;
   ui.el.panel.classList.remove('collapsed');
-  ui.info(`<p>${T.intro}</p><p>${where === 'mecca' ? T.meccaInfo : T.medinaInfo}</p><p class="tr">${T.note}</p>`);
-
-  let crowd = null, cN = 0, ang = null, rad = null, spd = null;
-  const h = where === 'mecca' ? heightFn({ r0: 380, r1: 750, amp: 230 }) : heightFn({ r0: 650, r1: 1100, amp: 110 });
-  buildTerrain(world, h);
-  if (where === 'mecca') {
-    buildKaaba(world); buildHaram(world);
-    clockTower(world, -250, -250);
-    city(world, { h, rIn: 360, rOut: 760, n: engine.isMobile ? 450 : 800, avoid: (x, z) => Math.hypot(x + 250, z + 250) < 120 });
-    // Pilger beim Tawaf (von oben gut sichtbar): kreisen gegen den Uhrzeigersinn
-    cN = engine.isMobile ? 260 : 450; crowd = createCrowd(world, cN, { ihram: true });
-    ang = new Float32Array(cN).map(() => Math.random() * 6.283); spd = new Float32Array(cN).map(() => 0.05 + Math.random() * 0.03);
-    rad = new Float32Array(cN).map((_, i) => { const a = ang[i]; return 11 + Math.random() * (matafRadius(Math.cos(a), -Math.sin(a)) - 14); });
-  } else {
-    const { half } = nabawi(world);
-    city(world, { h, rIn: 0, rOut: 700, n: engine.isMobile ? 450 : 800, avoid: (x, z) => Math.abs(x) < half[0] && Math.abs(z) < half[1] });
-  }
+  // Eine Welt mit Mekka, Medina und der Autobahn dazwischen – der Flug ist durchgehend sichtbar
+  const land = buildHejaz(world, engine);
+  const h = H;
+  const C = { mecca: { x: 0, z: 0, info: T.meccaInfo, name: T.mecca }, medina: { x: MED.x, z: MED.z, info: T.medinaInfo, name: T.medina } };
+  let here = where;
+  const showPlace = (w) => { here = w; ui.el.title.textContent = C[w].name; ui.info(`<p>${T.intro}</p><p>${C[w].info}</p><p class="tr">${T.note}</p>`); setActions(); };
 
   // Ballon (3D-Modell) mit dem Spieler im Korb; Brennerflamme
-  const MIN_ALT = where === 'mecca' ? 110 : 80; // über Minaretten und Dächern
+  const MIN_ALT = 90; // über Minaretten und Dächern
   const balloon = new THREE.Group(); world.add(balloon);
-  const pos = new THREE.Vector3(where === 'mecca' ? 220 : 300, where === 'mecca' ? 130 : 100, where === 'mecca' ? 220 : 260), vel = new THREE.Vector3();
+  const pos = new THREE.Vector3(C[where].x + 220, 130, C[where].z + 220), vel = new THREE.Vector3();
   balloonLoad ||= new GLTFLoader().loadAsync('./assets/models/balloon.glb').then((g) => g.scene).catch(() => null);
   balloonLoad.then((sc) => { if (sc && balloon.parent) { const m = sc.clone(true); m.traverse((o) => { if (o.isMesh) o.castShadow = true; }); balloon.add(m); } });
   const fig = createFigure(balloon, { color: ctx.profile?.gender === 'f' ? 0x2c3a4a : 0xf6f4ee, covered: ctx.profile?.gender === 'f', ring: false, models: peopleModels() });
@@ -147,43 +132,64 @@ export function create(ctx, { where = 'mecca' } = {}) {
   ctx.balloonPos = pos;
   const life = createLife(ctx, { kind: 'desert', height: 30 });
 
+  // Reise: der Ballon fliegt selbst über die Wüste zur anderen Stadt (Straße unter dir), man kann sich dabei umschauen
+  let trip = null;
+  function setActions() {
+    const other = here === 'mecca' ? 'medina' : 'mecca';
+    ui.actions(trip ? [{ label: T.stop, onClick: () => { trip = null; setActions(); } }] : [
+      { label: other === 'medina' ? T.toMedina : T.toMecca, onClick: () => { trip = other; ui.toast(T.flying, 2500); ui.el.panel.classList.add('collapsed'); setActions(); } },
+      { label: T.land, kind: 'primary', onClick: () => ctx.city?.('balloon', here) },
+    ]);
+  }
   ui.hold(T.burner);
-  ui.actions([
-    { label: where === 'mecca' ? T.toMedina : T.toMecca, onClick: () => ctx.balloon?.(where === 'mecca' ? 'medina' : 'mecca') },
-    { label: T.land, kind: 'primary', onClick: () => ctx.city?.('balloon') },
-  ]);
+  showPlace(where);
   const camPos = new THREE.Vector3(), look = new THREE.Vector3(); let first = true, t = 0;
-  input.yaw = Math.atan2(pos.x, pos.z); input.pitch = 0.55; // Blick schräg nach unten auf die Moschee
-  const R = where === 'mecca' ? 700 : 750;
+  input.yaw = Math.atan2(pos.x - C[where].x, pos.z - C[where].z); input.pitch = 0.55; // Blick schräg nach unten auf die Moschee
 
   return {
     update(dt) {
       t += dt; input.update?.(dt);
-      // Steigen / Sinken
       const ground = Math.max(0, h(pos.x, pos.z));
-      if (input.holding) { vel.y += (5 - vel.y) * Math.min(1, dt * 1.5); sfx.burnerKeep(); }
-      else vel.y += (-1.6 - vel.y) * Math.min(1, dt * 0.8);
-      flame.visible = input.holding; flame.scale.setScalar(0.85 + Math.random() * 0.3); glow.intensity = input.holding ? 30 : 0;
-      // Lenken relativ zur Blickrichtung (sanft, wie ein Ballon im Wind)
-      const mx = input.move.x, my = input.move.y, yaw = input.yaw;
-      const fx = -Math.sin(yaw), fz = -Math.cos(yaw), rx = Math.cos(yaw), rz = -Math.sin(yaw);
-      const want = new THREE.Vector3((rx * mx - fx * my) * 16, 0, (rz * mx - fz * my) * 16);
-      vel.x += (want.x + 1.2 - vel.x) * Math.min(1, dt * 0.9); vel.z += (want.z - vel.z) * Math.min(1, dt * 0.9); // +1,2 m/s leichter Wind
+      const want = new THREE.Vector3(), yaw = input.yaw;
+      if (trip) {
+        // Flug: auf Reisehöhe steigen, Kurs auf die Stadt, über ihr anhalten
+        const tg = C[trip], dx = tg.x + 200 - pos.x, dz = tg.z + 200 - pos.z, dd = Math.hypot(dx, dz);
+        const sp = Math.min(85, 10 + dd * 0.12);
+        want.set((dx / (dd || 1)) * sp, 0, (dz / (dd || 1)) * sp);
+        vel.y += ((pos.y < ground + 230 && dd > 500 ? 8 : dd < 500 && pos.y > ground + 140 ? -4 : 0) - vel.y) * Math.min(1, dt);
+        if (pos.y < ground + 230 && dd > 500) sfx.burnerKeep();
+        flame.visible = vel.y > 1; glow.intensity = flame.visible ? 30 : 0;
+        // Kamera schaut in Flugrichtung, solange man nicht selbst dreht
+        if (Math.abs(input.move.x) + Math.abs(input.move.y) < 0.1) input.yaw += Math.atan2(Math.sin(Math.atan2(-dx, -dz) - yaw), Math.cos(Math.atan2(-dx, -dz) - yaw)) * Math.min(1, dt * 0.6);
+        if (dd < 60) { const w = trip; trip = null; showPlace(w); ui.toast(C[w].name, 2500); }
+        vel.x += (want.x - vel.x) * Math.min(1, dt * 0.6); vel.z += (want.z - vel.z) * Math.min(1, dt * 0.6);
+      } else {
+        if (input.holding) { vel.y += (5 - vel.y) * Math.min(1, dt * 1.5); sfx.burnerKeep(); }
+        else vel.y += (-1.6 - vel.y) * Math.min(1, dt * 0.8);
+        flame.visible = input.holding; glow.intensity = input.holding ? 30 : 0;
+        // Lenken relativ zur Blickrichtung (sanft, wie ein Ballon im Wind)
+        const mx = input.move.x, my = input.move.y;
+        const fx = -Math.sin(yaw), fz = -Math.cos(yaw), rx = Math.cos(yaw), rz = -Math.sin(yaw);
+        want.set((rx * mx - fx * my) * 16, 0, (rz * mx - fz * my) * 16);
+        vel.x += (want.x + 1.2 - vel.x) * Math.min(1, dt * 0.9); vel.z += (want.z - vel.z) * Math.min(1, dt * 0.9); // +1,2 m/s leichter Wind
+      }
+      flame.scale.setScalar(0.85 + Math.random() * 0.3);
       pos.addScaledVector(vel, dt);
       pos.y = Math.min(MAX_ALT, Math.max(ground + MIN_ALT, pos.y)); if (pos.y <= ground + MIN_ALT && vel.y < 0) vel.y = 0;
-      const r = Math.hypot(pos.x, pos.z); if (r > R) { pos.x *= R / r; pos.z *= R / r; }
+      pos.x = Math.max(-1000, Math.min(1000, pos.x)); pos.z = Math.max(MED.z - 1000, Math.min(1000, pos.z));
+      // Stadt wechselt, wenn man selbst hinüberfliegt
+      if (!trip) { const near = Math.hypot(pos.x - C.medina.x, pos.z - C.medina.z) < Math.hypot(pos.x, pos.z) ? 'medina' : 'mecca'; if (near !== here && Math.hypot(pos.x - C[near].x, pos.z - C[near].z) < 900) showPlace(near); }
       balloon.position.copy(pos); balloon.rotation.y = Math.sin(t * 0.2) * 0.3; balloon.rotation.z = Math.sin(t * 0.7) * 0.015;
       fig.update(dt, 0);
       // Vogelperspektive: Kamera hinter/über dem Ballon, Pitch = Höhe des Blicks
-      const dist = 34 + input.pitch * 30, up = 6 + input.pitch * 40;
-      const wantPos = new THREE.Vector3(pos.x + Math.sin(yaw) * dist, pos.y + up, pos.z + Math.cos(yaw) * dist);
+      const dist = 34 + input.pitch * 30, up = 6 + input.pitch * 40, y2 = input.yaw;
+      const wantPos = new THREE.Vector3(pos.x + Math.sin(y2) * dist, pos.y + up, pos.z + Math.cos(y2) * dist);
       const wantLook = new THREE.Vector3(pos.x, pos.y + 4 - input.pitch * 25, pos.z);
       const k = first ? 1 : 1 - Math.exp(-dt * 4); camPos.lerp(wantPos, k); look.lerp(wantLook, k); first = false;
       engine.camera.position.copy(camPos); engine.camera.lookAt(look);
       sky.state.focus.copy(pos).setY(0);
-      ui.counter(`Höhe ${Math.round(pos.y - ground)} m`);
-      // Pilger beim Tawaf
-      if (crowd) { for (let i = 0; i < cN; i++) { ang[i] += spd[i] * dt * 12 / rad[i]; const a = ang[i]; crowd.set(i, rad[i] * Math.cos(a), 0, -rad[i] * Math.sin(a), Math.atan2(-Math.sin(a), -Math.cos(a))); } crowd.commit(); }
+      ui.counter(trip ? `${T.flying} · ${(Math.hypot(C[trip].x - pos.x, C[trip].z - pos.z) / 10).toFixed(0)} km` : `Höhe ${Math.round(pos.y - ground)} m`);
+      land.update(dt);
       life.update(dt);
     },
     dispose() { ui.hold(null); ui.counter(''); delete ctx.balloonPos; },

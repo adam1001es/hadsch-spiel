@@ -387,9 +387,11 @@ export const BALLOON = {
   toMedina: 'Nach Medina fliegen',
   toMecca: 'Nach Mekka fliegen',
   land: 'Landen',
+  stop: 'Anhalten',
+  flying: 'Flug unterwegs',
   meccaInfo: 'Unter dir liegt die Masjid al-Haram mit der Kaaba. Von hier oben siehst du, wie die Pilger beim Tawaf um die Kaaba kreisen. Daneben steht der hohe Uhrturm.',
   medinaInfo: 'Das ist die Masjid an-Nabawi, die Moschee des Propheten ﷺ in Medina, mit der Grünen Kuppel. Viele Pilger besuchen Medina vor oder nach dem Hadsch – es gehört aber nicht zu den Pflichten des Hadsch.',
-  note: 'Vereinfachte, verkleinerte Darstellung – die echten Entfernungen sind viel größer (Mekka – Medina ca. 340 km).',
+  note: 'Vereinfachte, verkleinerte Darstellung – die Kilometer-Anzeige zeigt die echte Entfernung (Mekka – Medina ca. 340 km).',
 };
 
 // ---------------------------------------------------------------------------
@@ -413,8 +415,17 @@ export const CONGRATS = {
 // Die Straßen von Mekka (Unterhaltung nach dem Hadsch, vereinfachte Darstellung)
 export const MECCA_CITY = {
   title: 'Die Straßen von Mekka',
+  titleMedina: 'Die Straßen von Medina',
   day: 'Nach dem Hadsch',
   enter: 'Hinaus in die Straßen von Mekka',
+  introMedina: 'Willkommen in Medina! Am Ende der Straße siehst du die Masjid an-Nabawi mit der Grünen Kuppel. Der Besuch in Medina gehört nicht zu den Pflichten des Hadsch, aber viele Pilger kommen vor oder nach dem Hadsch hierher.',
+  datesInfoMedina: 'Medina ist berühmt für ihre Datteln, besonders die dunklen Ajwa-Datteln. Pilger bringen sie gern als Geschenk mit nach Hause.',
+  bus: 'Bushaltestelle',
+  busToMedina: '🚌 Mit dem Bus nach Medina',
+  busToMecca: '🚌 Mit dem Bus nach Mekka',
+  driving: 'Busfahrt',
+  driveInfo: 'Der Bus fährt über die Autobahn durch die Wüste und die Berge des Hedschas. In echt dauert die Fahrt zwischen Mekka und Medina etwa 4–5 Stunden (ca. 340 km); es gibt auch einen Schnellzug.',
+  skip: 'Ankommen',
   intro: 'Willkommen in den Straßen rund um die Masjid al-Haram! Hier gibt es keine Aufgaben mehr – schau dich einfach um: Dattelmarkt, Zamzam, Tauben und der Heißluftballon warten auf dich.',
   balloon: 'Heißluftballon',
   balloonDo: '🎈 Einsteigen und losfliegen',

@@ -71,6 +71,7 @@ const begin = (i, check = true) => {
 ui.el.stick.classList.add('off');
 document.getElementById('startBtn').addEventListener('click', () => begin(0));
 const jump = document.getElementById('jump');
+{ const box = document.getElementById('jumpBox'); box.open = true; box.addEventListener('toggle', () => { box.open = true; }); } // Stationen immer aufgeklappt
 const prog = progressStore.get();
 content.STATIONS.forEach((st, i) => {
   const b = document.createElement('button');
@@ -86,7 +87,7 @@ for (const bx of ctx.bonus || []) {
   jump.appendChild(b);
 }
 // direkt per Link: …#kaaba, …#mekka, …#ballon
-{ const bm = { '#kaaba': 0, '#mekka': 1, '#ballon': 2 }[location.hash]; if (bm != null) setTimeout(() => { readProfile(); startScreen.hidden = true; current = null; ctx.bonus[bm].go(); }, 0); }
+{ const bm = { '#kaaba': 0, '#mekka': 1 }[location.hash]; if (location.hash === '#ballon' || location.hash === '#medina') setTimeout(() => { readProfile(); startScreen.hidden = true; current = null; location.hash === '#ballon' ? ctx.balloon('mecca') : ctx.city(null, 'medina'); }, 0); if (bm != null) setTimeout(() => { readProfile(); startScreen.hidden = true; current = null; ctx.bonus[bm].go(); }, 0); }
 // Weiterspielen, wenn es einen gespeicherten Stand gibt
 const resume = document.getElementById('resumeBtn');
 if (prog.next > 0 && prog.next < content.STATIONS.length) {
@@ -149,7 +150,7 @@ setBox.addEventListener('click', (e) => { if (e.target === setBox) setBox.hidden
 {
   const $ = (id) => document.getElementById(id);
   const COL = ['#e6c46e', '#5fb3e6', '#e67a5f', '#8fd16a', '#c78fe6', '#e6e05f', '#5fe6c4', '#e65fa8'];
-  const where = (s) => (s === 'kaaba' ? 'in der Kaaba' : s === 'city' ? 'in den Straßen von Mekka' : s === 'balloon' ? 'im Heißluftballon' : s >= content.STATIONS.length ? 'bei der Urkunde' : typeof s === 'number' ? `Station ${s + 1}: ${content.STATIONS[s].title}` : 'noch am Start');
+  const where = (s) => (s === 'kaaba' ? 'in der Kaaba' : s === 'city-mecca' ? 'in den Straßen von Mekka' : s === 'city-medina' ? 'in den Straßen von Medina' : s === 'drive' ? 'im Bus' : s === 'balloon' ? 'im Heißluftballon' : s >= content.STATIONS.length ? 'bei der Urkunde' : typeof s === 'number' ? `Station ${s + 1}: ${content.STATIONS[s].title}` : 'noch am Start');
   const render = (st) => {
     $('multiOff').hidden = st.on || !!st.code; $('multiOn').hidden = !(st.on || st.code);
     $('multiShow').textContent = st.code || '----';

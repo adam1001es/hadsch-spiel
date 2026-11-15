@@ -327,3 +327,8 @@ body.fast #focusBlur { opacity: 1; }
 }
 
 #coach.prompt { bottom: auto; top: calc(var(--stackH, 110px) + 120px); }
+
+/* Startbildschirm: keine Spiel-Knöpfe darüber; Stationsliste immer offen */
+body:has(#start:not([hidden])) #panel, body:has(#start:not([hidden])) #goal { display: none !important; }
+#jumpBox > summary { list-style: none; pointer-events: none; }
+#jumpBox > summary::-webkit-details-marker { display: none; }

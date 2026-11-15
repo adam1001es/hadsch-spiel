@@ -10,7 +10,8 @@ import { createAgents } from '../world/agents.js';
 import { createLife } from '../world/life.js';
 import { createPlayer } from '../core/player.js';
 import { viewLine, clearView } from '../core/kit.js';
-import { city, clockTower } from './balloon.js';
+import { city, clockTower, nabawi } from './balloon.js';
+import { bus } from '../world/props.js';
 import * as sfx from '../core/sfx.js';
 
 // Die Straßen von Mekka: Fußgängerzone vor der Masjid al-Haram (Blick auf den Uhrturm), mit Läden und Dingen zum Erleben:
@@ -45,13 +46,14 @@ function stand(world, x, z, ry, color) {
   return g;
 }
 
-export function create(ctx, { from } = {}) {
+export function create(ctx, { from, where = 'mecca' } = {}) {
+  const medina = where === 'medina';
   const { engine, sky, ui } = ctx;
   const world = engine.world;
   sky.setHour(15.5);
   sky.state.shadowSize = 60;
   ui.el.day.textContent = T.day;
-  ui.el.title.textContent = T.title;
+  ui.el.title.textContent = medina ? T.titleMedina : T.title;
 
   const h = heightFn({ r0: 420, r1: 800, amp: 200 });
   buildTerrain(world, h);
@@ -59,8 +61,9 @@ export function create(ctx, { from } = {}) {
     const L = ZMAX - ZMIN + 80, f = new THREE.Mesh(new THREE.PlaneGeometry(HALF * 2 + 2, L).rotateX(-Math.PI / 2), new THREE.MeshStandardMaterial({ ...pbr('marble_floor', [(HALF * 2 + 2) / 1.5, L / 1.5]), color: 0xf2eee6, roughness: 0.7 }));
     f.position.set(0, 0.03, (ZMIN + ZMAX) / 2 - 20); f.receiveShadow = true; world.add(f); }
   shops(world, -1); shops(world, 1);
-  clockTower(world, 0, -330);
-  city(world, { h, rIn: 60, rOut: 600, n: engine.isMobile ? 350 : 600, avoid: (x, z) => (Math.abs(x) < 45 && z > -260) || Math.hypot(x, z + 330) < 130 });
+  if (medina) { const g = new THREE.Group(); g.position.set(0, 0, -340); world.add(g); nabawi(g); } // Masjid an-Nabawi am Ende der Straße
+  else clockTower(world, 0, -330); // Uhrturm an der Masjid al-Haram
+  city(world, { h, rIn: 60, rOut: 600, n: engine.isMobile ? 350 : 600, avoid: (x, z) => (Math.abs(x) < 45 && z > -260) || (medina ? Math.abs(x) < 250 && Math.abs(z + 340) < 200 : Math.hypot(x, z + 330) < 130) });
   const glow = [];
   const ll = []; for (let z = ZMIN; z <= ZMAX; z += 16) ll.push([-HALF + 1.2, 0, z, Math.PI / 2], [HALF - 1.2, 0, z + 8, -Math.PI / 2]);
   lamps(world, ll, glow);
@@ -75,7 +78,7 @@ export function create(ctx, { from } = {}) {
     for (let i = 0; i < 300; i++) { const k = i % 3; dm.position.set(x + (Math.random() - 0.5) * 0.9, 0.93 + Math.random() * 0.06, z - 1.2 + k * 1.2 + (Math.random() - 0.5) * 0.7); dm.rotation.set(Math.random() * 3, Math.random() * 3, 0); dm.scale.setScalar(1); dm.updateMatrix(); dates.setMatrixAt(i, dm.matrix); }
     world.add(dates);
     sign(world, x - 1.6, z, Math.PI / 2, ['تمور', 'Datteln'], { w: 2.6, h: 0.9, y: 3.3 });
-    SPOTS.push({ key: 'dates', name: T.dates, x: x + 2.2, z, label: T.datesDo, run() { ui.info(`<p>${T.datesInfo}</p>`); ui.toast('Bismillah – lecker!', 1800); } }); }
+    SPOTS.push({ key: 'dates', name: T.dates, x: x + 2.2, z, label: T.datesDo, run() { ui.info(`<p>${medina ? T.datesInfoMedina : T.datesInfo}</p>`); ui.toast('Bismillah – lecker!', 1800); } }); }
   // Zamzam-Brunnen: Reihe blauer Kanister und Spender
   { const x = 11, z = 2; stand(world, x, z, -Math.PI / 2, 0x2b4f8a);
     const can = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.16, 0.16, 0.45, 10), new THREE.MeshStandardMaterial({ color: 0x3f7fd0, roughness: 0.4 }), 12);
@@ -100,7 +103,11 @@ export function create(ctx, { from } = {}) {
   const BZ = -82, balloon = new THREE.Group(); balloon.position.set(0, 0, BZ); world.add(balloon);
   balloonLoad ||= new GLTFLoader().loadAsync('./assets/models/balloon.glb').then((g) => g.scene).catch(() => null);
   balloonLoad.then((sc) => { if (sc && balloon.parent) { const m = sc.clone(true); m.traverse((o) => { if (o.isMesh) o.castShadow = true; }); balloon.add(m); } });
-  SPOTS.push({ key: 'balloon', name: T.balloon, x: 2.5, z: BZ + 4, label: T.balloonDo, run() { ctx.balloon?.('mecca'); } });
+  SPOTS.push({ key: 'balloon', name: T.balloon, x: 2.5, z: BZ + 4, label: T.balloonDo, run() { ctx.balloon?.(where); } });
+  // Bus in die andere Stadt (Haltestelle am Anfang der Straße)
+  const other = medina ? 'mecca' : 'medina';
+  bus(world, -10, 40, 0);
+  SPOTS.push({ key: 'bus', name: T.bus, x: -6.3, z: 38, label: medina ? T.busToMecca : T.busToMedina, run() { sfx.bus(); ctx.drive?.(where, other); } });
 
   const done = SPOTS.map(() => false);
 
@@ -116,14 +123,14 @@ export function create(ctx, { from } = {}) {
   const colliders = [
     { type: 'rect', x0: -HALF + 0.6, x1: HALF - 0.6, z0: ZMIN - 15, z1: ZMAX },
     { type: 'box', x: -11, z: 22, hw: 0.9, hd: 2 }, { type: 'box', x: 11, z: 2, hw: 0.9, hd: 2 },
-    { type: 'circle', x: 0.3, z: BZ - 0.9, r: 1.2 },
+    { type: 'circle', x: 0.3, z: BZ - 0.9, r: 1.2 }, { type: 'box', x: -10, z: 40, hw: 1.6, hd: 6 },
   ];
-  const start = from === 'balloon' ? { x: 4, z: BZ + 8 } : { x: 0, z: ZMAX - 6 };
+  const start = from === 'balloon' ? { x: 4, z: BZ + 8 } : from === 'bus' ? { x: -5.5, z: 33 } : { x: 0, z: ZMAX - 6 };
   const player = createPlayer(ctx, { x: start.x, z: start.z, heading: Math.PI, color: ctx.profile?.gender === 'f' ? 0x2c3a4a : 0xf6f4ee, speed: 2.2, fastSpeed: 3.6, colliders, surface: 'stone' });
   const life = createLife(ctx, { kind: 'haram' });
 
   ui.el.panel.classList.remove('collapsed');
-  ui.info(`<p>${T.intro}</p><p class="tr">${T.more}</p>`);
+  ui.info(`<p>${medina ? T.introMedina : T.intro}</p><p class="tr">${T.more}</p>`);
   ui.actions([{ label: T.cert, onClick: () => ctx.backToEnding?.() }]);
 
   let t = 0;
