@@ -334,3 +334,11 @@ body.fast #focusBlur { opacity: 1; }
 body:has(#start:not([hidden])) #panel, body:has(#start:not([hidden])) #goal { display: none !important; }
 #jumpBox > summary { list-style: none; pointer-events: none; }
 #jumpBox > summary::-webkit-details-marker { display: none; }
+
+/* Sandstein-Bauhof: Werkzeugleiste unten rechts (Figur bleibt frei, Joystick links) */
+#buildbar { position: fixed; z-index: 7; right: var(--sr); bottom: var(--sb); display: flex; flex-direction: column; gap: 8px; align-items: flex-end; }
+#buildbar button { display: flex; align-items: center; gap: 8px; padding: 8px 14px 8px 8px; border-radius: 999px; background: rgba(20,37,31,.86); color: #f5efe0; border: 1.5px solid #e6c46e; font-size: 14px; box-shadow: 0 3px 12px rgba(0,0,0,.3); }
+#buildbar .mat i { width: 34px; height: 34px; border-radius: 8px; background-size: cover; border: 1.5px solid rgba(255,246,220,.8); }
+#buildbar .mode { padding: 10px 16px; }
+#buildbar.removing .mode { background: #e6c46e; color: #14251f; }
+#buildbar.removing .mat { opacity: .45; }

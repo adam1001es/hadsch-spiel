@@ -82,13 +82,20 @@ jeden Ort zu Fuß, mit Bus, Taxi, eigenem Auto oder Ballon; Schilder an der Stra
 | **Geschäftsviertel** | Hochhäuser bei Mekka | Büro im Wolkenkratzer: bewerben (Fragen beantworten), arbeiten (Minispiele: Lager, Kasse, Buchhaltung), handeln (fair, ohne Zins), später eigene Firma | realistischer Alltag, Geld |
 | **Autohaus & Tankstelle** | Stadtrand an der Autobahn | Autos ansehen, kaufen (erfundene Modelle), tanken, Taxi-Job annehmen | kaufen/fahren |
 | **Wohnen** | Wohnviertel | eigene Wohnung kaufen/einrichten, Spielstand „zu Hause“ | Besitz |
-| **Sandstein-Bauhof** | Wüste außerhalb der Stadt, Schild an der Autobahn | Bauspiel mit **Sandstein- und Lehmziegeln** auf einem Raster: Häuser, Brunnen, Mauern frei bauen, zusammen mit Mitspielern; fertige Häuser kann man vermieten (Einkommen) | Kreativ-Bauen (eigene Idee, kein Nachbau eines Block-Spiels) |
+| **Sandstein-Bauhof** ✅ (erste Version) | Wüste außerhalb der Stadt; Wegweiser in Mekka, `#bauhof` | Bauspiel mit **Sandstein- und Lehmziegeln** auf einem Raster: Häuser, Brunnen, Mauern frei bauen, zusammen mit Mitspielern; fertige Häuser kann man vermieten (Einkommen) | Kreativ-Bauen (eigene Idee, kein Nachbau eines Block-Spiels) |
 | **Oase & Dattelplantage** | bei Medina | ernten, sortieren, verkaufen; Bewässerung | Arbeit/Natur |
 | **Ausflugsziele** | Jabal an-Nur, Quba, Uhud | hinfahren/hinwandern, Lerntext lesen | Lernen |
 | **Himmel** | überall | Ballonflug zwischen den Städten | Reisen |
 
 Ein gemeinsames Fundament für alle Zonen: `interact.js` (Randleuchten), Geld/Hasanat (`hp-life`), Multiplayer (`multi.js`),
 dieselbe Spielfigur und Steuerung. Neue Zonen hängen sich als Ort in der Hejaz-Welt an, nicht als eigenes Spiel.
+
+**Sandstein-Bauhof (gebaut):** `src/stations/buildyard.js`, Texte in `src/content/life.js`. Raster 48×48 Zellen à 0,5 m, 24 Lagen;
+6 Baustoffe mit eigenen Canvas-Texturen (Sandstein, Lehmziegel, Korallenstein, Marmor, Palmholz, Fliese), ein InstancedMesh je Baustoff.
+Tippen/Klicken = Stein setzen bzw. abbauen (Voxel-Strahl, Reichweite 12 m), Stapel am Rand leuchten (Material nehmen), Figur steigt eine
+Stufe hoch, Mauern halten auf. Speichern: `hp-bauhof` bzw. `hp-bauhof-raum-<Code>`. Zusammen bauen nur im privaten Raum:
+`multi.send/on` (Ereignisse `b` = Stein, `bq`/`bs` = Bau anfragen/schicken); öffentlich baut jeder für sich (kein Kaputtmachen durch Fremde).
+Später: Häuser vermieten (Einkommen), Bauaufträge, Dach-/Treppenteile, Wegweiser an der Autobahn in der Hejaz-Welt.
 
 ### Modelle vom Nutzer (Sketchfab)
 - Format: **GLB, Texture size 1k**. Vor dem Einbau verkleinern (Ziel 1–2 MB je Modell, 5–15 Tsd. Flächen), Quelle + Lizenz in

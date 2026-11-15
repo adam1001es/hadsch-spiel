@@ -14,6 +14,7 @@ import { city, clockTower, nabawi } from './balloon.js';
 import { bus } from '../world/props.js';
 import * as sfx from '../core/sfx.js';
 import { createInteract } from '../life/interact.js';
+import { BUILDYARD } from '../content/life.js';
 
 // Die Straßen von Mekka: Fußgängerzone vor der Masjid al-Haram (Blick auf den Uhrturm), mit Läden und Dingen zum Erleben:
 // Dattelmarkt, Zamzam-Brunnen, Tauben füttern, Heißluftballon. Leicht gebaut (Instanzen, einfache Läden), Pilger gehen umher.
@@ -124,7 +125,10 @@ export function create(ctx, { from, where = 'mecca' } = {}) {
     { type: 'box', x: -11, z: 22, hw: 0.9, hd: 2 }, { type: 'box', x: 11, z: 2, hw: 0.9, hd: 2 },
     { type: 'circle', x: 0.3, z: BZ - 0.9, r: 1.2 }, { type: 'box', x: -10, z: 40, hw: 1.6, hd: 6 },
   ];
-  const start = from === 'balloon' ? { x: 4, z: BZ + 8 } : from === 'bus' ? { x: -5.5, z: 33 } : { x: 0, z: ZMAX - 6 };
+  // Wegweiser zum Sandstein-Bauhof in der Wüste (nur in Mekka)
+  if (!medina) { const sg = sign(world, 10.5, 44, -Math.PI / 2, BUILDYARD.sign, { w: 3.4, h: 1.1, y: 2.6 });
+    SPOTS.push({ obj: sg, color: 'blue', radius: 8, near: 2.6, push: 0.03, key: 'bauhof', x: 8.8, z: 44, label: BUILDYARD.go, run() { sfx.bus(); ctx.bauhof?.('city'); } }); }
+  const start = from === 'bauhof' ? { x: 8, z: 41 } : from === 'balloon' ? { x: 4, z: BZ + 8 } : from === 'bus' ? { x: -5.5, z: 33 } : { x: 0, z: ZMAX - 6 };
   const player = createPlayer(ctx, { x: start.x, z: start.z, heading: Math.PI, color: ctx.profile?.gender === 'f' ? 0x2c3a4a : 0xf6f4ee, speed: 2.2, fastSpeed: 3.6, colliders, surface: 'stone' });
   const life = createLife(ctx, { kind: 'haram' });
   const interact = createInteract(ctx, player);

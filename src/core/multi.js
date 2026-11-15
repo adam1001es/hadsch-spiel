@@ -22,6 +22,9 @@ export function createMulti(ctx) {
   const figs = new Map();
   let sendT = 0, listT = 0, onChange = () => {};
   const load = async () => (await import('mqtt')).default;
+  // Ereignisse zwischen Mitspielern am selben Ort (z. B. Stein gesetzt im Bauhof): Thema „<Ort>/ev/<id>“, nicht gespeichert
+  const listeners = new Map(); // Typ → Set(fn(daten, von: { id, ...zustand }))
+  const evSub = () => sub.slice(0, -1) + 'ev/+';
   const base = () => ROOT + (code ? 'raum/' + code : 'alle') + '/';
   const locKey = () => (ctx.stationIndex == null ? 'start' : String(ctx.stationIndex));
   const initial = () => ((ctx.profile?.name || '').trim()[0] || '•').toUpperCase();
@@ -41,8 +44,8 @@ export function createMulti(ctx) {
     if (!client || !connected) return;
     const t = base() + locKey() + '/+';
     if (t === sub) return;
-    if (sub) { client.publish(sub.slice(0, -1) + myId, ''); client.unsubscribe(sub); }
-    clearOthers(); sub = t; loc = ctx.stationIndex; client.subscribe(sub); changed();
+    if (sub) { client.publish(sub.slice(0, -1) + myId, ''); client.unsubscribe([sub, evSub()]); }
+    clearOthers(); sub = t; loc = ctx.stationIndex; client.subscribe([sub, evSub()]); changed();
   }
 
   async function connect() {
@@ -52,8 +55,12 @@ export function createMulti(ctx) {
     client = mqtt.connect(BROKER, { clientId: 'h3d_' + myId, clean: true, connectTimeout: 10000, reconnectPeriod: 4000, keepalive: 30 });
     client.on('connect', () => { connected = true; sub = ''; resubscribe(); changed(); });
     client.on('message', (topic, buf) => {
-      if (topic.slice(0, topic.lastIndexOf('/') + 1) !== sub.slice(0, -1)) return;
       const id = topic.slice(topic.lastIndexOf('/') + 1); if (id === myId) return;
+      if (topic === evSub().slice(0, -1) + id) { // Ereignis eines Mitspielers am selben Ort
+        try { const ev = JSON.parse(buf.toString()); const fs = listeners.get(ev.t); if (fs) for (const f of fs) f(ev.d, { id, ...(states[id] || {}) }); } catch { /* ungültig */ }
+        return;
+      }
+      if (topic.slice(0, topic.lastIndexOf('/') + 1) !== sub.slice(0, -1)) return;
       if (!buf.length) { delete states[id]; delete seen[id]; return; }
       try { states[id] = JSON.parse(buf.toString()); seen[id] = Date.now(); } catch { /* ungültig */ }
     });
@@ -77,7 +84,12 @@ export function createMulti(ctx) {
   if (settings.online !== false) setTimeout(connect, 1500);
 
   return {
-    status,
+    status, myId,
+    get room() { return code; }, // privater Raum (leer = alle online)
+    // Ereignis an alle anderen am selben Ort senden; false, wenn (noch) nicht verbunden
+    send(t, d) { if (!client || !connected || !sub || ctx.stationIndex !== loc) return false; client.publish(evSub().slice(0, -1) + myId, JSON.stringify({ t, d }), { qos: 0 }); return true; },
+    // Auf Ereignisse hören; gibt eine Funktion zum Abmelden zurück
+    on(t, fn) { if (!listeners.has(t)) listeners.set(t, new Set()); listeners.get(t).add(fn); return () => listeners.get(t)?.delete(fn); },
     set onChange(fn) { onChange = fn; },
     setOnline(on) { settings.online = on; saveSettings(); if (on) connect(); else disconnect(); changed(); },
     create() { code = String(1000 + Math.floor(Math.random() * 9000)); if (!client) connect(); else { sub = ''; resubscribe(); } ctx.ui.toast('Privater Raum ' + code, 2500); changed(); },

@@ -29,7 +29,7 @@ export function createInput(canvas, holdBtn, stickEl) {
   canvas.addEventListener('pointerdown', (e) => {
     const left = e.clientX < window.innerWidth * 0.5 && e.pointerType !== 'mouse'; // Joystick nur bei Touch
     if (left && s.stick && !stick) {
-      stick = { id: e.pointerId, x: e.clientX, y: e.clientY };
+      stick = { id: e.pointerId, x: e.clientX, y: e.clientY, t: performance.now(), moved: 0 };
       showStick(e.clientX, e.clientY);
     } else if (!look) {
       look = { id: e.pointerId, x: e.clientX, y: e.clientY, sx: e.clientX, sy: e.clientY, t: performance.now() };
@@ -41,6 +41,7 @@ export function createInput(canvas, holdBtn, stickEl) {
   canvas.addEventListener('pointermove', (e) => {
     if (stick && stick.id === e.pointerId) {
       let dx = e.clientX - stick.x, dy = e.clientY - stick.y;
+      stick.moved = Math.max(stick.moved, Math.hypot(dx, dy));
       const l = Math.hypot(dx, dy);
       if (l > R) { dx *= R / l; dy *= R / l; }
       knob.style.transform = `translate(${dx}px, ${dy}px)`;
@@ -59,6 +60,8 @@ export function createInput(canvas, holdBtn, stickEl) {
 
   const end = (e) => {
     if (stick && stick.id === e.pointerId) {
+      // kurzes Tippen auf der Joystick-Seite zählt auch als Tippen (z. B. Stein setzen im Bauhof)
+      if (stick.moved < 10 && performance.now() - stick.t < 300 && e.type === 'pointerup') s.onTap?.(e.clientX, e.clientY);
       stick = null; s.move.x = s.move.y = 0; s.fast = false; hideStick();
     } else if (look && look.id === e.pointerId) {
       const moved = Math.hypot(e.clientX - look.sx, e.clientY - look.sy);
