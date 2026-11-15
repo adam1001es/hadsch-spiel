@@ -141,7 +141,7 @@ setBox.addEventListener('click', (e) => { if (e.target === setBox) setBox.hidden
 {
   const $ = (id) => document.getElementById(id);
   const COL = ['#e6c46e', '#5fb3e6', '#e67a5f', '#8fd16a', '#c78fe6', '#e6e05f', '#5fe6c4', '#e65fa8'];
-  const where = (s) => (s === 'kaaba' ? 'in der Kaaba' : s >= content.STATIONS.length ? 'bei der Urkunde' : typeof s === 'number' ? `Station ${s + 1}: ${content.STATIONS[s].title}` : 'noch am Start');
+  const where = (s) => (s === 'kaaba' ? 'in der Kaaba' : s === 'city' ? 'in den Straßen von Mekka' : s === 'balloon' ? 'im Heißluftballon' : s >= content.STATIONS.length ? 'bei der Urkunde' : typeof s === 'number' ? `Station ${s + 1}: ${content.STATIONS[s].title}` : 'noch am Start');
   const render = (st) => {
     $('multiOff').hidden = st.on || !!st.code; $('multiOn').hidden = !(st.on || st.code);
     $('multiShow').textContent = st.code || '----';

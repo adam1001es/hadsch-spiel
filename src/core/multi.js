@@ -20,7 +20,8 @@ export function createMulti(ctx) {
   const load = async () => (Peer ||= (await import('peerjs')).Peer);
 
   function myState() {
-    const p = ctx.player; if (!p || ctx.stationIndex == null || ctx.stationIndex === 'balloon') return null;
+    if (ctx.stationIndex === 'balloon') return { s: 'balloon', n: myNum }; // im Ballon: nur „wo bin ich“, keine Figur
+    const p = ctx.player; if (!p || ctx.stationIndex == null) return null;
     return { s: ctx.stationIndex, x: +p.pos.x.toFixed(2), y: +p.pos.y.toFixed(2), z: +p.pos.z.toFixed(2), h: +p.fig.root.rotation.y.toFixed(2), p: p.fig.poseName || 'stand',
       c: p.fig.cloth.color.getHex(), k: p.fig.skinM.color.getHex(), f: ctx.profile?.gender === 'f' ? 1 : 0, n: myNum };
   }
@@ -98,7 +99,7 @@ export function createMulti(ctx) {
       const world = ctx.engine.world;
       for (const [id, f] of figs) if (!states[id] || f.world !== world || states[id].s !== ctx.stationIndex) { f.world.remove(f.fig.root); figs.delete(id); }
       for (const [id, s] of Object.entries(states)) {
-        if (s.s !== ctx.stationIndex || !ctx.player) continue;
+        if (s.s !== ctx.stationIndex || s.s === 'balloon' || !ctx.player || s.x == null) continue;
         let f = figs.get(id);
         if (!f) {
           const fig = createFigure(world, { color: s.c, covered: !!s.f, ring: false, models: peopleModels() });
