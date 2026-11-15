@@ -183,7 +183,7 @@ export function createCrowd(world, n, { men = 0.6, ihram = true, idtiba = false 
     // detailreiche Modelle bekommen weniger Plätze (gleiches Dreiecks-Budget je Gruppe wie ein Modell mit ~5.500 Dreiecken)
     const tris = Object.values(pool.src).reduce((a, p) => a + (p.geometry.index ? p.geometry.index.count : p.geometry.attributes.position.count) / 3, 0);
     pool.cap = Math.min(CAP, cnt, Math.max(12, Math.floor(CAP * Math.min(1, 5500 / tris))));
-    pool.meshes = []; pool.byKey = {}; pool.used = new Uint8Array(Math.max(1, pool.cap));
+    pool.meshes = []; pool.byKey = {}; pool.used = new Uint8Array(Math.max(1, pool.cap)); pool.owner = new Int32Array(Math.max(1, pool.cap)).fill(-1);
     if (pool.cap > 0) for (const k of pool.keys) { const key = id + '_' + k; const m = makeMesh(key, pool.src[k].geometry, pool.cap, pool.src[k].material); m.count = 0; pool.meshes.push(m); pool.byKey[key] = m; }
   }
   for (const m of Object.values(meshes)) if (m.instanceColor) m.instanceColor.needsUpdate = true;
@@ -198,17 +198,26 @@ export function createCrowd(world, n, { men = 0.6, ihram = true, idtiba = false 
   let colorsDirty = false, setsSinceCommit = 0, dirty = true;
   const anyPool = Object.values(POOLS).some((p) => p && p.cap > 0);
 
+  const camD2 = new Float32Array(n).fill(1e9); // Abstand² zur Kamera beim letzten set
+  let noSteal = false;
   function freeSlot(i) {
     const sl = slotOf[i]; if (sl < 0) return;
     const pool = POOLS[model[i].s];
     for (const m of pool.meshes) m.setMatrixAt(sl, ZERO);
-    pool.used[sl] = 0; slotOf[i] = -1;
+    pool.used[sl] = 0; pool.owner[sl] = -1; slotOf[i] = -1;
   }
   function takeSlot(i) {
     const pool = POOLS[model[i].s];
     let sl = -1; for (let k = 0; k < pool.cap; k++) if (!pool.used[k]) { sl = k; break; }
+    // Alle Plätze belegt: dem am weitesten entfernten Träger den Platz abnehmen, wenn diese Person deutlich näher ist
+    // (so stehen direkt vor der Kamera immer 3D-Figuren, die einfachen Figuren nur weiter hinten)
+    if (sl < 0 && !noSteal) {
+      let far = -1, fd = camD2[i] * 1.5 + 4;
+      for (let k = 0; k < pool.cap; k++) { const o = pool.owner[k]; if (o >= 0 && camD2[o] > fd) { fd = camD2[o]; far = k; } }
+      if (far >= 0) { const o = pool.owner[far]; freeSlot(o); noSteal = true; const q = o * 6; api.set(o, last[q], last[q + 1], last[q + 2], last[q + 3], last[q + 4], last[q + 5]); noSteal = false; sl = far; }
+    }
     if (sl < 0) return -1;
-    pool.used[sl] = 1; slotOf[i] = sl;
+    pool.used[sl] = 1; pool.owner[sl] = i; slotOf[i] = sl;
     for (const [key, color] of model[i].parts) pool.byKey[key].setColorAt(sl, color);
     colorsDirty = true;
     return sl;
@@ -245,7 +254,8 @@ export function createCrowd(world, n, { men = 0.6, ihram = true, idtiba = false 
       const L = people[i];
       let useModel = false;
       if (model[i] && CAM && POOLS[model[i].s].cap > 0) {
-        const near = (x - CAM.position.x) ** 2 + (z - CAM.position.z) ** 2 < NEAR * NEAR;
+        const dd = (x - CAM.position.x) ** 2 + (z - CAM.position.z) ** 2; camD2[i] = dd;
+        const near = dd < NEAR * NEAR;
         if (near && (slotOf[i] >= 0 || takeSlot(i) >= 0)) useModel = true;
         else if (!near) freeSlot(i);
       }
