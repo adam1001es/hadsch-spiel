@@ -391,3 +391,43 @@ export const BALLOON = {
   medinaInfo: 'Das ist die Masjid an-Nabawi, die Moschee des Propheten ﷺ in Medina, mit der Grünen Kuppel. Viele Pilger besuchen Medina vor oder nach dem Hadsch – es gehört aber nicht zu den Pflichten des Hadsch.',
   note: 'Vereinfachte, verkleinerte Darstellung – die echten Entfernungen sind viel größer (Mekka – Medina ca. 340 km).',
 };
+
+// ---------------------------------------------------------------------------
+// Glückwunsch nach dem vollendeten Hadsch (Fenster mit Verzierung)
+export const CONGRATS = {
+  title: 'Mabrūk! Dein Hadsch ist vollendet',
+  hadith: {
+    ar: 'وَالْحَجُّ الْمَبْرُورُ لَيْسَ لَهُ جَزَاءٌ إِلَّا الْجَنَّةُ',
+    de: '„Und ein angenommener Hadsch hat keinen anderen Lohn als das Paradies.“',
+    src: 'Hadith, überliefert bei al-Bukhārī und Muslim',
+  },
+  dua: {
+    ar: 'اللَّهُمَّ ارْزُقْنَا حَجَّ بَيْتِكَ الْحَرَامِ',
+    de: 'O Allah, gewähre uns die Pilgerfahrt zu Deinem heiligen Haus.',
+  },
+  wish: 'In shā’ Allāh ermöglicht Allah dir bald den Hadsch auch im echten Leben.',
+  surprise: 'Überraschung öffnen',
+  later: 'Zur Urkunde',
+};
+
+// Die Straßen von Mekka (Unterhaltung nach dem Hadsch, vereinfachte Darstellung)
+export const MECCA_CITY = {
+  title: 'Die Straßen von Mekka',
+  day: 'Nach dem Hadsch',
+  enter: 'Hinaus in die Straßen von Mekka',
+  intro: 'Willkommen in den Straßen rund um die Masjid al-Haram! Schau dich um – die leuchtenden Ringe zeigen, was du hier machen kannst.',
+  balloon: 'Heißluftballon',
+  balloonDo: '🎈 Einsteigen und losfliegen',
+  pigeons: 'Tauben am Platz',
+  pigeonsDo: '🕊️ Tauben füttern',
+  pigeonsInfo: 'Rund um die Masjid al-Haram leben viele Tauben. Pilger füttern sie gern mit Körnern. Im Haram-Gebiet darf man Tieren nichts zuleide tun – das gehört zu seiner Heiligkeit.',
+  dates: 'Dattelmarkt',
+  datesDo: '🌴 Datteln probieren',
+  datesInfo: 'Datteln sind eine beliebte Speise und ein typisches Geschenk, das Pilger mit nach Hause bringen. Der Prophet ﷺ brach das Fasten gern mit Datteln.',
+  zamzam: 'Zamzam-Brunnen',
+  zamzamDo: '💧 Zamzam trinken',
+  zamzamInfo: 'Zamzam-Wasser gibt es überall rund um die Haram. Viele Pilger nehmen es in Kanistern mit nach Hause – als Geschenk für Familie und Freunde.',
+  cert: 'Urkunde ansehen',
+  back: 'Zurück in die Straßen',
+  more: 'Hier kommt bald noch mehr dazu.',
+};

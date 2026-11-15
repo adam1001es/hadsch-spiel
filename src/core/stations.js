@@ -9,6 +9,7 @@ import * as jamarat from '../stations/jamarat.js';
 import * as info from '../stations/info.js';
 import * as kaabaInside from '../stations/kaabaInside.js';
 import * as balloon from '../stations/balloon.js';
+import * as meccaCity from '../stations/meccaCity.js';
 import { progressStore } from './progress.js';
 import { createLife } from '../world/life.js';
 
@@ -125,6 +126,7 @@ export function createStations(ctx) {
   }
   ctx.reward = () => { ctx.stationIndex = 'kaaba'; return scene(kaabaInside.create); };
   ctx.balloon = (where = 'mecca') => { ctx.stationIndex = 'balloon'; return scene((c) => balloon.create(c, { where })); };
+  ctx.city = (from) => { ctx.stationIndex = 'city'; return scene((c) => meccaCity.create(c, { from })); };
   ctx.backToEnding = () => { ctx.stationIndex = STATIONS.length; return scene(info.ending); };
 
   ctx.next = async () => {

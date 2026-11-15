@@ -1,4 +1,4 @@
-import { ENDING, KAABA_INSIDE, BALLOON } from '../content/hajj.js';
+import { ENDING, KAABA_INSIDE, BALLOON, CONGRATS, MECCA_CITY } from '../content/hajj.js';
 import { buildKaaba } from '../world/kaaba.js';
 import { buildHaram } from '../world/haram.js';
 import { SUNNAH_LIST } from '../core/kit.js';
@@ -39,15 +39,27 @@ export function ending(ctx) {
   ui.info(`${ui.prayer(ENDING)}
     <div class="cert"><div class="k">Urkunde</div><b>${pf.name || 'Du'}</b>${pf.age ? ` (${pf.age >= 18 ? '18+' : pf.age} Jahre)` : ''} ${pf.name ? 'hat' : 'hast'} ${nDone >= 12 ? 'alle 12 Stationen' : `${nDone} von 12 Stationen`} des Hadsch geschafft.</div>
     <p><button type="button" class="primary" id="toKaaba">🕋 ${KAABA_INSIDE.enter}</button></p>
-    <p><button type="button" class="primary" id="toBalloon">🎈 ${BALLOON.enter}</button></p>
+    <p><button type="button" class="primary" id="toCity">🕌 ${MECCA_CITY.enter}</button></p>
     ${ctx.progress.quizN ? `<p><b>Quiz:</b> ${ctx.progress.quizOk} von ${ctx.progress.quizN} Fragen beim ersten Versuch richtig ${ctx.progress.quizOk === ctx.progress.quizN ? '– hervorragend!' : ''}</p>` : ''}
     <ul class="sunnah-list">${SUNNAH_LIST.map(([k, label]) => `<li class="${ctx.progress.sunnah.has(k) ? 'ok' : ''}">${ctx.progress.sunnah.has(k) ? '✓' : '○'} ${label}</li>`).join('')}</ul>
     <p class="tr">Gezählt wird nur, was du wirklich getan hast – Sunnah ist freiwillig.</p>`);
+  // Glückwunsch-Fenster (nur einmal pro Sitzung, direkt nach dem Hadsch)
+  if (!ctx.congratsShown) {
+    ctx.congratsShown = true;
+    const $ = (id) => document.getElementById(id), box = $('congrats');
+    $('cgTitle').textContent = CONGRATS.title;
+    $('cgHadithAr').textContent = CONGRATS.hadith.ar; $('cgHadithDe').textContent = CONGRATS.hadith.de; $('cgHadithSrc').textContent = CONGRATS.hadith.src;
+    $('cgDuaAr').textContent = CONGRATS.dua.ar; $('cgDuaDe').textContent = CONGRATS.dua.de; $('cgWish').textContent = CONGRATS.wish;
+    $('cgSurprise').textContent = '🎁 ' + CONGRATS.surprise; $('cgLater').textContent = CONGRATS.later;
+    $('cgSurprise').onclick = () => { box.hidden = true; ctx.reward?.(); };
+    $('cgLater').onclick = () => { box.hidden = true; };
+    box.hidden = false;
+  }
   document.getElementById('toKaaba')?.addEventListener('click', () => ctx.reward?.());
-  document.getElementById('toBalloon')?.addEventListener('click', () => ctx.balloon?.('mecca'));
+  document.getElementById('toCity')?.addEventListener('click', () => ctx.city?.());
   ui.actions([
     { label: '🕋 ' + KAABA_INSIDE.enter, kind: 'primary', onClick: () => ctx.reward?.() },
-    { label: '🎈 Ballonflug', onClick: () => ctx.balloon?.('mecca') },
+    { label: '🕌 ' + MECCA_CITY.enter, onClick: () => ctx.city?.() },
     { label: 'Nochmal spielen', onClick: () => location.reload() },
   ]);
   let t = 0;

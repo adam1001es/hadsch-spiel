@@ -18,7 +18,7 @@ const MAX_ALT = 340;
 const dm = new THREE.Object3D();
 
 // Häuser rund um einen Mittelpunkt: helle Kästen in Blöcken, nicht auf Bergen und nicht im freien Kern
-function city(world, { h, rIn, rOut, n, avoid = () => false, seed = 1 }) {
+export function city(world, { h, rIn, rOut, n, avoid = () => false, seed = 1 }) {
   let s = seed; const rnd = () => (s = (s * 16807) % 2147483647) / 2147483647;
   const geo = new THREE.BoxGeometry(1, 1, 1); geo.translate(0, 0.5, 0);
   const mat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.85 });
@@ -36,7 +36,7 @@ function city(world, { h, rIn, rOut, n, avoid = () => false, seed = 1 }) {
 }
 
 // Uhrturm (Abraj al-Bait) vereinfacht: Sockelbau, Turm, Uhr mit vier grünen Zifferblättern, goldene Spitze mit Halbmond
-function clockTower(world, x, z) {
+export function clockTower(world, x, z) {
   const g = new THREE.Group(); g.position.set(x, 0, z); g.rotation.y = Math.PI / 4; world.add(g);
   const stone = new THREE.MeshStandardMaterial({ color: 0xe9e2d4, roughness: 0.7 });
   const glass = new THREE.MeshStandardMaterial({ color: 0x8fa6b5, roughness: 0.25, metalness: 0.4 });
@@ -150,7 +150,7 @@ export function create(ctx, { where = 'mecca' } = {}) {
   ui.hold(T.burner);
   ui.actions([
     { label: where === 'mecca' ? T.toMedina : T.toMecca, onClick: () => ctx.balloon?.(where === 'mecca' ? 'medina' : 'mecca') },
-    { label: T.land, kind: 'primary', onClick: () => ctx.backToEnding?.() },
+    { label: T.land, kind: 'primary', onClick: () => ctx.city?.('balloon') },
   ]);
   const camPos = new THREE.Vector3(), look = new THREE.Vector3(); let first = true, t = 0;
   input.yaw = Math.atan2(pos.x, pos.z); input.pitch = 0.55; // Blick schräg nach unten auf die Moschee
