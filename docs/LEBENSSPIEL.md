@@ -71,6 +71,17 @@ Job-Tafel, Tauben … Antippen bzw. goldener Knopf = Handlung. **Keine Aufgabenp
 - Medina: Masjid an-Nabawi (von außen), Dattelplantagen, Quba-Moschee, Uhud-Berg (Lerntext).
 - Respekt: Moscheen/Kaaba nur würdevoll, keine „Spaß“-Aktionen dort; vereinfachte Darstellung, keine echten Personen.
 
+### Zusammen spielen (Multiplayer) – Pflicht
+Das Lebensspiel muss von Anfang an **gemeinsam spielbar** sein – auf `src/core/multi.js` aufbauen (Raum-Code, MQTT über
+WebSocket, HiveMQ; funktioniert im Mobilfunk und in Schul-WLANs; keine Namen, kein Chat, kein Konto).
+- Mitspieler sieht man überall im Lebensspiel (Straßen, Autobahn, Medina), auch **in Fahrzeugen**: eigenes Auto, Bus, Ballon
+  der anderen am Himmel. Dazu `myState()` um Fahrzeug-Typ und -Position erweitern (z. B. `v: 'car' | 'bus' | 'balloon'`).
+- Gemeinsame Aktionen: zusammen in einem Auto/Bus mitfahren (Beifahrer), gemeinsam einen Laden betreiben, sich gegenseitig
+  Datteln/Zamzam schenken (Sadaqa), gemeinsam zum Gebet gehen.
+- Geld/Besitz bleibt pro Gerät (localStorage); im Raum wird nur übertragen, was die anderen sehen müssen.
+- Kein Wettbewerb gegeneinander mit Schaden, kein Stehlen – nur Kooperation und freundlicher Vergleich (z. B. Hasanat-Tafel).
+- Datenschutz: öffentlicher Server → nur Spieldaten, nie Namen; ein eigener Server für Schulen ist später möglich.
+
 ### Speichern
 Spielstand (Geld, Hasanat, Besitz, Position) in `localStorage` (`hp-life`), mit Versionsnummer.
 
@@ -92,7 +103,7 @@ Spielstand (Geld, Hasanat, Besitz, Position) in `localStorage` (`hp-life`), mit 
 ## 4. Vorgeschlagene Reihenfolge
 
 1. `interact.js` mit Randleuchten + Aktionsknopf; bestehende SPOTS (Datteln, Zamzam, Tauben, Ballon, Bus) darauf umstellen.
-2. Geldanzeige (Riyal + Hasanat) und Speichern.
+2. Geldanzeige (Riyal + Hasanat) und Speichern; Multiplayer in allen Lebensspiel-Orten prüfen (Mitspieler sichtbar, auch in Fahrzeugen).
 3. Erster Job: Datteln verkaufen am Stand (kleines Minispiel), dann Zamzam verteilen (Sadaqa).
 4. Größere Stadt: mehrere Straßen/Plätze statt einer Straße, Kreuzungen, Ampeln.
 5. Eigenes Auto kaufen und fahren (Autohaus, erfundene Modelle).
