@@ -13,6 +13,14 @@ const X = new THREE.Vector3(1, 0, 0);
 // [‘aim’, Knochen, Kind-Knochen, Richtung] oder [‘rot’, Knochen, Achse, Grad]. Reihenfolge: Eltern vor Kindern.
 const ARMS_DOWN = (sx = 1) => [['aim', 'L_Upperarm', 'L_Forearm', V(0.12 * sx, -1, 0.05)], ['aim', 'R_Upperarm', 'R_Forearm', V(-0.12 * sx, -1, 0.05)]];
 const DEF = {
+  stand: [ // aufrecht und gerade: Füße schulterbreit, Gewicht auf beiden Beinen, Arme locker gerade an der Seite
+    ['rest', 'Hip'], ['rest', 'Pelvis'], ['rest', 'Waist'], ['rest', 'Spine01'], ['rest', 'Spine02'], ['rest', 'NeckTwist01'], ['rest', 'Head'],
+    ['rest', 'L_Clavicle'], ['rest', 'R_Clavicle'],
+    ['aim', 'L_Thigh', 'L_Calf', V(0.07, -1, 0)], ['aim', 'L_Calf', 'L_Foot', V(0.03, -1, -0.02)], ['aim', 'L_Foot', 'L_ToeBase', V(0.12, -0.3, 1)],
+    ['aim', 'R_Thigh', 'R_Calf', V(-0.07, -1, 0)], ['aim', 'R_Calf', 'R_Foot', V(-0.03, -1, -0.02)], ['aim', 'R_Foot', 'R_ToeBase', V(-0.12, -0.3, 1)],
+    ['aim', 'L_Upperarm', 'L_Forearm', V(0.1, -1, 0.0)], ['aim', 'L_Forearm', 'L_Hand', V(0.04, -1, 0.1)], ['aim', 'L_Hand', 'L_Mid1', V(0.02, -1, 0.06)],
+    ['aim', 'R_Upperarm', 'R_Forearm', V(-0.1, -1, 0.0)], ['aim', 'R_Forearm', 'R_Hand', V(-0.04, -1, 0.1)], ['aim', 'R_Hand', 'R_Mid1', V(-0.02, -1, 0.06)],
+  ],
   qiyam: [ // stehend, rechte Hand über der linken auf der Brust
     ['aim', 'L_Upperarm', 'L_Forearm', V(0.25, -0.95, 0.12)], ['aim', 'L_Forearm', 'L_Hand', V(-0.75, 0.3, 0.55)],
     ['aim', 'R_Upperarm', 'R_Forearm', V(-0.25, -0.95, 0.15)], ['aim', 'R_Forearm', 'R_Hand', V(0.8, 0.32, 0.5)],
@@ -104,7 +112,7 @@ function precompute(g) {
     const used = new Set();
     for (const [kind, bn, a, d] of list) {
       const b = ref.getObjectByName(bn); if (!b) continue; used.add(bn);
-      if (kind === 'rot') rotWorld(ref, b, a, d); else { const c = ref.getObjectByName(a); if (c) aimWorld(ref, b, c, d); }
+      if (kind === 'rot') rotWorld(ref, b, a, d); else if (kind === 'aim') { const c = ref.getObjectByName(a); if (c) aimWorld(ref, b, c, d); } // 'rest' = Ruhehaltung
     }
     ref.updateMatrixWorld(true); mesh.skeleton.update(); mesh.computeBoundingBox();
     POSED[name] = { q: new Map([...used].map((bn) => [bn, ref.getObjectByName(bn).quaternion.clone()])), drop: mesh.boundingBox.min.y - floor0 };
@@ -139,14 +147,15 @@ export function createRiggedFigure(parent) {
       walk.timeScale = 0.75 + Math.min(1.2, walking) * 0.55;
       mixer.update(dt);
       // Haltung darüberlegen
-      const P = target && posed[target], k = 1 - Math.exp(-dt * 7);
+      // Ohne Handlung: eigene aufrechte Stehhaltung (statt der Tripo-Idle-Animation), beim Gehen die Geh-Animation
+      const P = target ? posed[target] : posed.stand, k = 1 - Math.exp(-dt * 7), want = target ? 1 : 1 - wAmt;
       for (const bn of allPoseBones) {
         const b = bones.get(bn), tq = P && P.q.get(bn);
-        const a = amt.get(bn) + ((tq ? 1 : 0) - amt.get(bn)) * k; amt.set(bn, a);
+        const a = amt.get(bn) + ((tq ? want : 0) - amt.get(bn)) * k; amt.set(bn, a);
         if (tq) cur.get(bn).slerp(tq, k);
         if (a > 0.001) b.quaternion.slerp(cur.get(bn), a); else cur.get(bn).copy(b.quaternion);
       }
-      drop += ((P ? P.drop : 0) - drop) * k;
+      drop += ((target && P ? P.drop : 0) - drop) * k;
       model.position.y = -drop;
     },
   };
