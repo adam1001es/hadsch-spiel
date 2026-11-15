@@ -71,6 +71,34 @@ Job-Tafel, Tauben … Antippen bzw. goldener Knopf = Handlung. **Keine Aufgabenp
 - Medina: Masjid an-Nabawi (von außen), Dattelplantagen, Quba-Moschee, Uhud-Berg (Lerntext).
 - Respekt: Moscheen/Kaaba nur würdevoll, keine „Spaß“-Aktionen dort; vereinfachte Darstellung, keine echten Personen.
 
+### Spiel-Übersicht: eine Welt, viele Dinge zum Ausprobieren
+Alles liegt in **einer** zusammenhängenden Welt (Hejaz-Landschaft aus `hejaz.js`) mit **einem** Stil: halbrealistisch, warme
+Sandfarben, weiche Low-Poly-Formen, PBR-Material. Unterschiedlich sind die **Tätigkeiten**, nicht die Grafikstile. Man erreicht
+jeden Ort zu Fuß, mit Bus, Taxi, eigenem Auto oder Ballon; Schilder an der Straße zeigen, was dort wartet (kein Pfeil, kein Zwang).
+
+| Zone | Wo | Was man dort tut | Art |
+|---|---|---|---|
+| **Altstadt & Markt** | Mekka/Medina, Straßen um die Moschee | Datteln, Zamzam, Tauben, Läden besuchen, kleine Jobs (Datteln verkaufen, Zamzam verteilen) | Erleben, erste Riyal/Hasanat |
+| **Geschäftsviertel** | Hochhäuser bei Mekka | Büro im Wolkenkratzer: bewerben (Fragen beantworten), arbeiten (Minispiele: Lager, Kasse, Buchhaltung), handeln (fair, ohne Zins), später eigene Firma | realistischer Alltag, Geld |
+| **Autohaus & Tankstelle** | Stadtrand an der Autobahn | Autos ansehen, kaufen (erfundene Modelle), tanken, Taxi-Job annehmen | kaufen/fahren |
+| **Wohnen** | Wohnviertel | eigene Wohnung kaufen/einrichten, Spielstand „zu Hause“ | Besitz |
+| **Sandstein-Bauhof** | Wüste außerhalb der Stadt, Schild an der Autobahn | Bauspiel mit **Sandstein- und Lehmziegeln** auf einem Raster: Häuser, Brunnen, Mauern frei bauen, zusammen mit Mitspielern; fertige Häuser kann man vermieten (Einkommen) | Kreativ-Bauen (eigene Idee, kein Nachbau eines Block-Spiels) |
+| **Oase & Dattelplantage** | bei Medina | ernten, sortieren, verkaufen; Bewässerung | Arbeit/Natur |
+| **Ausflugsziele** | Jabal an-Nur, Quba, Uhud | hinfahren/hinwandern, Lerntext lesen | Lernen |
+| **Himmel** | überall | Ballonflug zwischen den Städten | Reisen |
+
+Ein gemeinsames Fundament für alle Zonen: `interact.js` (Randleuchten), Geld/Hasanat (`hp-life`), Multiplayer (`multi.js`),
+dieselbe Spielfigur und Steuerung. Neue Zonen hängen sich als Ort in der Hejaz-Welt an, nicht als eigenes Spiel.
+
+### Modelle vom Nutzer (Sketchfab)
+- Format: **GLB, Texture size 1k**. Vor dem Einbau verkleinern (Ziel 1–2 MB je Modell, 5–15 Tsd. Flächen), Quelle + Lizenz in
+  `public/assets/models/README.md` und in der Anleitung nennen (CC BY: Name des Erstellers + Link).
+- **Nicht verwenden**: Modelle aus anderen Spielen oder in deren Look (z. B. Karten mit originalen Block-Texturen eines bekannten
+  Bauspiels – die Texturen gehören dem Spielehersteller, auch wenn das Modell als CC BY markiert ist), echte Automarken/Logos,
+  echte Personen, „Editorial“-Lizenzen.
+  Abgelehnt: „Minecraft 3D Map Desert Village“ (HuyAC) – enthält den Original-Texturatlas des Spiels; stattdessen eigener
+  Sandstein-Bauhof mit eigenen Texturen.
+
 ### Zusammen spielen (Multiplayer) – Pflicht
 Das Lebensspiel muss von Anfang an **gemeinsam spielbar** sein – auf `src/core/multi.js` aufbauen (Raum-Code, MQTT über
 WebSocket, HiveMQ; funktioniert im Mobilfunk und in Schul-WLANs; keine Namen, kein Chat, kein Konto).
@@ -118,4 +146,5 @@ Spielstand (Geld, Hasanat, Besitz, Position) in `localStorage` (`hp-life`), mit 
 5. Eigenes Auto kaufen und fahren (Autohaus, erfundene Modelle).
 6. Laden eröffnen + Einkommen, Zakat-Mechanik.
 7. Taxi-Job, Ausflugsziele (Jabal an-Nur, Quba, Uhud) mit Lerntexten.
+   Danach (siehe Spiel-Übersicht): Geschäftsviertel mit Büro-Job, Sandstein-Bauhof in der Wüste, Oase/Dattelplantage, Wohnung.
 8. Gebetszeiten/Adhan im Tagesablauf.
