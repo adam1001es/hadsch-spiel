@@ -46,7 +46,7 @@ export function create(ctx, { dir = 'in', then } = {}) {
   const N = engine.isMobile ? 120 : 220, crowd = createCrowd(world, N, { ihram: true });
   const A = new Float32Array(N).map(() => Math.random() * 6.28), R = new Float32Array(N).map((_, i) => 12 + Math.random() * (matafRadius(Math.cos(A[i]), -Math.sin(A[i])) - 15));
   // Figur
-  const fig = createFigure(world, { color: ctx.profile?.gender === 'f' ? 0x2c3a4a : 0xf6f4ee, covered: ctx.profile?.gender === 'f', ring: false, models: peopleModels() });
+  const fig = createFigure(world, { color: ctx.profile?.gender === 'f' ? 0x2c3a4a : 0x34506a, covered: ctx.profile?.gender === 'f', ring: false, models: peopleModels() });
   const yAt = (z) => (z >= stairEnd ? 0 : z <= DZ + 0.3 ? BOT : BOT * (stairEnd - z) / (stairEnd - DZ - 0.3));
   const path = dir === 'in' ? [DZ + 6, DZ - 0.4] : [DZ - 0.4, DZ + 6];
   const cam = engine.camera, camPos = new THREE.Vector3(DX + 6, 3.6, DZ + 15), look = new THREE.Vector3(DX, DY - 0.6, DZ);

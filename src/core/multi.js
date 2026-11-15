@@ -115,7 +115,7 @@ export function createMulti(ctx) {
         const s = states[id];
         let f = figs.get(id);
         if (!f) {
-          const fig = createFigure(world, { color: s.c, covered: !!s.f, ring: false, models: peopleModels() });
+          const fig = createFigure(world, { color: s.c, covered: !!s.f, ring: false, models: peopleModels(), rigged: false }); // Mitspieler: leichte Figur
           fig.skinM.color.setHex(s.k); fig.root.add(badge(s.i || '•', colorOf(id)));
           f = { fig, world, x: s.x, z: s.z, h: s.h, c: s.c }; figs.set(id, f);
         }

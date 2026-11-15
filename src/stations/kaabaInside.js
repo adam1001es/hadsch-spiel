@@ -190,7 +190,7 @@ export function create(ctx) {
     { type: 'circle', x: TABLE.x, z: TABLE.z, r: 0.75 },
     { type: 'box', x: W / 2 - 0.75, z: D / 2 - 0.25, hw: 0.75, hd: 0.25 },
   ];
-  const player = createPlayer(ctx, { x: DOOR_X, z: D / 2 - 1.2, heading: Math.PI, color: 0xf3f1ea, speed: 1.6, fastSpeed: 2.4, colliders, camDist: 3.4, camHeight: 1.6, surface: 'marble' });
+  const player = createPlayer(ctx, { x: DOOR_X, z: D / 2 - 1.2, heading: Math.PI, color: 0x34506a, speed: 1.6, fastSpeed: 2.4, colliders, camDist: 3.4, camHeight: 1.6, surface: 'marble' });
   const flow = createFlow();
   const marker = createMarker(world, { r: 0.8, height: 3 });
 

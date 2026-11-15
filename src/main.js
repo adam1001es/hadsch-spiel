@@ -8,6 +8,7 @@ import { preview } from './stations/tawaf.js';
 import * as content from './content/hajj.js';
 import { progressStore } from './core/progress.js';
 import { createMulti } from './core/multi.js';
+import { rigReady } from './core/rigged.js';
 import { preloadPeople, setCrowdCamera, peopleStatus } from './world/crowd.js';
 import { initI18n, LANGS, settings, saveSettings, lang, unlockVoice, voiceAvailable, speak, stopSpeaking, stopAudio } from './core/i18n.js';
 initI18n();
@@ -22,7 +23,7 @@ setCrowdCamera(engine.camera, { near: 26, cap: engine.isMobile ? 70 : 140 }); //
 const ui = createUI();
 const input = createInput(engine.renderer.domElement, ui.el.hold, ui.el.stick);
 const ctx = { engine, sky, ui, input, content, progress: { sunnah: new Set(), done: new Set() } };
-ctx.ready = peopleReady;
+ctx.ready = Promise.all([peopleReady, rigReady]); // 3D-Pilger und Hauptfigur (Skelett) geladen
 window.__hp = ctx; // für automatische Tests
 const stations = createStations(ctx);
 const multi = createMulti(ctx); ctx.multi = multi;

@@ -3,6 +3,7 @@ import { step as sfxStep } from './sfx.js';
 import { izarGeo, torsoGeo, ridaGeo, hairGeo, faceGeo, khimarGeo } from '../world/people.js';
 import { peopleModels } from '../world/crowd.js';
 import { WALK, walkMaterial } from '../world/walk.js';
+import { createRiggedFigure } from './rigged.js';
 
 // Spielfigur mit einfachen Körperhaltungen, freier Bewegung, Kollision und Verfolgerkamera.
 // Figur: Unterkörper (Gewand), Oberkörper + Kopf (Drehpunkt Hüfte), zwei Arme (Drehpunkt Schulter).
@@ -28,7 +29,7 @@ const POSES = {
 };
 
 // covered: Kopf mit Tuch bedeckt (Frauen) – Kopf hat dann die Farbe der Kleidung und ist etwas größer (Tuch)
-export function createFigure(world, { color = 0xf3f1ea, skin = 0xc68642, ring = true, covered = false, models = null } = {}) {
+export function createFigure(world, { color = 0xf3f1ea, skin = 0xc68642, ring = true, covered = false, models = null, rigged = true } = {}) {
   const root = new THREE.Group();
   const body = new THREE.Group(); root.add(body);
   const cloth = new THREE.MeshStandardMaterial({ color, roughness: 0.92 });
@@ -93,11 +94,16 @@ export function createFigure(world, { color = 0xf3f1ea, skin = 0xc68642, ring = 
   }
   if (models) { if (covered) buildVariant('woman', models.woman); else { buildVariant('ihram', models.man); buildVariant('kameez', models.kameez); } }
   const procedural = () => [lowerDress, lowerIzar, upper, torso, rida, ridaIdt, head, hair, khimar, face];
+  // Hauptfigur mit Skelett (Jungen/Männer in Alltagskleidung; Ihram-Versionen folgen)
+  const rig = !covered && models && rigged ? createRiggedFigure(body) : null;
+  let rigOn = false;
   let armGroups = [];
   function outfit() {
     const ih = isIhram();
-    const want = covered ? 'woman' : ih ? 'ihram' : 'kameez';
-    const useModel = !!variants[want];
+    rigOn = !!rig && !ih;
+    if (rig) rig.holder.visible = rigOn;
+    const want = rigOn ? 'rig' : covered ? 'woman' : ih ? 'ihram' : 'kameez';
+    const useModel = rigOn || !!variants[want];
     for (const [id, v] of Object.entries(variants)) v.grp.visible = id === want;
     if (mCover) for (const m of mCover) m.visible = !idtiba; // Idtiba': rechte Schulter frei
     for (const a of armGroups) a.visible = !useModel;
@@ -151,7 +157,7 @@ export function createFigure(world, { color = 0xf3f1ea, skin = 0xc68642, ring = 
     setColor(c) { cloth.color.setHex(c); outfit(); },
     // Idtiba': rechte Schulter frei (nur Männer, nur im Tawaf der Umrah)
     setIdtiba(v) { idtiba = v; outfit(); },
-    pose(name) { target = POSES[name] || POSES.stand; },
+    pose(name) { target = POSES[name] || POSES.stand; rig?.pose(name === 'stand' || name === 'walk' ? null : name); },
     get poseName() { return Object.keys(POSES).find((k) => POSES[k] === target); },
     update(dt, walking = 0) {
       if (ringMesh) ringMesh.material.uniforms.uT.value += dt;
@@ -179,7 +185,8 @@ export function createFigure(world, { color = 0xf3f1ea, skin = 0xc68642, ring = 
       hip.position.y = 0.9 * (1 - cur.drop);
       arms[0].rotation.x = -cur.arm[0] + sw;
       arms[1].rotation.x = -cur.arm[1] - sw;
-      body.position.y = walking > 0.05 ? Math.abs(Math.sin(swing)) * 0.04 : 0;
+      body.position.y = walking > 0.05 && !rigOn ? Math.abs(Math.sin(swing)) * 0.04 : 0;
+      if (rigOn) rig.update(dt, walking);
       body.rotation.x = -cur.lie * Math.PI / 2;
       body.position.y += cur.lie * 0.25;
     },

@@ -124,7 +124,7 @@ export function create(ctx, { where = 'mecca' } = {}) {
   const pos = new THREE.Vector3(C[where].x + 220, 130, C[where].z + 220), vel = new THREE.Vector3();
   balloonLoad ||= new GLTFLoader().loadAsync('./assets/models/balloon.glb').then((g) => g.scene).catch(() => null);
   balloonLoad.then((sc) => { if (sc && balloon.parent) { const m = sc.clone(true); m.traverse((o) => { if (o.isMesh) o.castShadow = true; }); balloon.add(m); } });
-  const fig = createFigure(balloon, { color: ctx.profile?.gender === 'f' ? 0x2c3a4a : 0xf6f4ee, covered: ctx.profile?.gender === 'f', ring: false, models: peopleModels() });
+  const fig = createFigure(balloon, { color: ctx.profile?.gender === 'f' ? 0x2c3a4a : 0x34506a, covered: ctx.profile?.gender === 'f', ring: false, models: peopleModels() });
   fig.root.position.set(0.15, 0.12, -0.75); fig.root.rotation.y = Math.PI / 4; // im Korb (Korb ca. 1,6 m, leicht versetzt)
   const flame = new THREE.Mesh(new THREE.ConeGeometry(0.35, 1.8, 10), new THREE.MeshBasicMaterial({ color: 0xffb040, transparent: true, opacity: 0.85 }));
   flame.position.set(0, 2.9, -0.55); flame.visible = false; balloon.add(flame);

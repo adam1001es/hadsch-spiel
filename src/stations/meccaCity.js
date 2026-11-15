@@ -234,7 +234,7 @@ export function create(ctx, { from, where = 'mecca' } = {}) {
     ...(medina ? [-150, 0, 150].map((x) => ({ type: 'circle', x, z: 110, r: 5 })) : []), // Minarette an der Südseite der Nabawi
   ];
   const start = from === 'bauhof' ? { x: L.bauhof[0], z: L.bauhof[1] + 4, h: Math.PI } : from === 'balloon' ? { x: BXb + 4, z: BZb + 8, h: Math.PI } : from === 'bus' ? { x: BUx - 2, z: BUz + 5, h: Math.PI } : { x: bx + 22, z: PZ.z1 - 14, h: Math.PI };
-  const player = createPlayer(ctx, { x: start.x, z: start.z, heading: start.h, color: ctx.profile?.gender === 'f' ? 0x2c3a4a : 0xf6f4ee, speed: 2.2, fastSpeed: 4, colliders, surface: 'stone' });
+  const player = createPlayer(ctx, { x: start.x, z: start.z, heading: start.h, color: ctx.profile?.gender === 'f' ? 0x2c3a4a : 0x34506a, speed: 2.2, fastSpeed: 4, colliders, surface: 'stone' });
   const life = createLife(ctx, { kind: 'haram' });
   const interact = createInteract(ctx, player);
   for (const sp of SPOTS) interact.add(sp);

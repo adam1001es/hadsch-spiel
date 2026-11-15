@@ -17,5 +17,6 @@
 | `maqam.glb` | Maqam Ibrahim, vom Projekt-Inhaber mit **Tripo AI** erstellt | 3 m hoch, Fuß bei y = 0, von 1,8 Mio. auf ~61.000 Dreiecke vereinfacht (Gitter und Textur-Nähte bleiben erhalten), Textur 1024 px |
 | `balloon.glb` | Heißluftballon (zweite Version), vom Projekt-Inhaber mit **Tripo AI** erstellt | 27 m hoch, Korbboden bei y = 0, von 2 Mio. auf 14.000 Dreiecke vereinfacht, Textur 1024 px; Ballonflug nach dem Hadsch |
 | `woman3.glb` | „islamic women“ von **SyahmiZubir**, https://skfb.ly/pNzIQ, Lizenz **CC BY 4.0** | auf 1,62 m skaliert, Haut und Stoff getrennt (Hautfarbe und Kleid pro Person einfärbbar), von 84.000 auf ~6.400 Dreiecke vereinfacht, Textur 1024 px |
+| `player_m.glb` | Hauptfigur Junge/Mann (Kurta-Pyjama), vom Projekt-Inhaber mit **Tripo AI** erstellt und gerigged | Skelett mit 78 Knochen, Animationen Gehen/Stehen (Positionsspuren entfernt), ~54.000 Dreiecke; Gebetshaltungen werden im Spiel aus dem Skelett berechnet (`src/core/rigged.js`) |
 
 Das Umwandlungs-Werkzeug liegt nicht im Repository (lokal unter `tools/`).
