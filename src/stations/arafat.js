@@ -36,7 +36,7 @@ export function create(ctx, st) {
   const pillar = new THREE.Mesh(new THREE.BoxGeometry(1.8, 8, 1.8), new THREE.MeshStandardMaterial({ color: 0xf4f2ec, roughness: 0.6 }));
   pillar.position.set(HILL.x, 30 + 4, HILL.z); pillar.castShadow = true; world.add(pillar);
 
-  roads(world, [{ x1: 0, z1: 160, x2: 0, z2: -120, w: 10 }, { x1: -150, z1: 125, x2: 150, z2: 125, w: 9 }]); // Zufahrtsstraße und Straße vor der Grenze
+  roads(world, [{ x1: 0, z1: 160, x2: 0, z2: -120, w: 10 }, { x1: -150, z1: 125, x2: 150, z2: 125, w: 9 }], { curb: false }); // Zufahrtsstraße und Straße vor der Grenze
   // Grenzschilder (gelb wie in echt), alle 24 m
   for (let x = -120; x <= 120; x += 40) sign(world, x, BOUND, 0, ['حدود عرفات', 'Grenze von Arafat · Beginn'], { w: 5, h: 1.5, y: 4, bg: '#e2b93b', fg: '#1b1b1b' });
 

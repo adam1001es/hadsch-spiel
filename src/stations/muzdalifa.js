@@ -44,9 +44,8 @@ export function create(ctx, st) {
     }
   }
   lamps(world, ll, glow);
-  // Wege zwischen den Blöcken als Asphaltstraßen (wie die Straßen in Muzdalifa)
-  { const gx = new Set(), gz = new Set(); for (const [x, , z] of ll) { gx.add(Math.round(x)); gz.add(Math.round(z)); }
-    roads(world, [...[...gx].map((x) => ({ x1: x, z1: -140, x2: x, z2: 120, w: 6 })), ...[...gz].map((z) => ({ x1: -125, z1: z, x2: 120, z2: z, w: 6 }))], { curb: false }); }
+  // Nur eine Straße wie in echt: die Durchgangsstraße Richtung Mash'ar/Mina; sonst offener Sand- und Kiesboden
+  roads(world, [{ x1: 0, z1: -140, x2: 0, z2: 150, w: 7 }], { curb: false });
   // Warmes Laternenlicht nahe dem Spieler
   const warm = new THREE.PointLight(0xffc27a, 40, 34, 1.5); warm.position.set(3, 8.5, 8); world.add(warm);
   // eigener Schlafplatz: freier Teppich nahe dem Start

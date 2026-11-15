@@ -41,20 +41,23 @@ export function create(ctx, st) {
   sign(world, OWN.x - 4.6, OWN.z, -Math.PI / 2, ['خيمة ١٠٨', 'Dein Zelt · 108'], { w: 3.6, h: 1.1, y: 2.6 });
   // Asphaltstraßen wie in Mina: breite Hauptstraße, Querstraßen zwischen den Zeltblöcken
   const cross = [coord(5) + 4.2 + (coord(6) - 4.2 - coord(5) - 4.2) / 2]; cross.push(coord(10) + 4.2 + (coord(11) - 4.2 - coord(10) - 4.2) / 2);
-  roads(world, [{ x1: 0, z1: -150, x2: 0, z2: 150, w: 12 }, ...cross.flatMap((c) => [{ x1: -150, z1: c, x2: 150, z2: c, w: 8 }, { x1: -150, z1: -c, x2: 150, z2: -c, w: 8 }])]);
+  // Hauptstraße füllt die Lücke zwischen den Zeltreihen; Querstraßen enden an der Hauptstraße (keine Kanten quer darüber)
+  roads(world, [{ x1: 0, z1: -150, x2: 0, z2: 150, w: 26 }, ...cross.flatMap((c) => [-1, 1].flatMap((sx) => [{ x1: sx * 13, z1: c, x2: sx * 150, z2: c, w: 8 }, { x1: sx * 13, z1: -c, x2: sx * 150, z2: -c, w: 8 }]))], { curb: false });
   // Laternen an der Hauptstraße und den Querstraßen
   const ll = [];
-  for (let z = -140; z <= 140; z += 18) ll.push([4.5, 0, z, -Math.PI / 2], [-4.5, 0, z + 9, Math.PI / 2]); // Arm zur Straßenmitte, versetzt
+  for (let z = -140; z <= 140; z += 18) ll.push([12.4, 0, z, -Math.PI / 2], [-12.4, 0, z + 9, Math.PI / 2]); // Arm zur Straßenmitte, versetzt
   lamps(world, ll, glow);
 
   let booth = null, barber = null;
   if (d10) {
     // Hady-Schalter und Friseur-Zelt an der Hauptstraße
-    booth = { x: -6, z: -12 }; barber = { x: 6, z: -66 };
+    booth = { x: -10.5, z: -12 }; barber = { x: 10.5, z: -66 };
     const bm = new THREE.Mesh(new THREE.BoxGeometry(3, 2.6, 2), new THREE.MeshStandardMaterial({ color: 0x2b5d4a, roughness: 0.6 }));
     bm.position.set(booth.x - 1.5, 1.3, booth.z); bm.castShadow = true; world.add(bm);
     sign(world, booth.x - 1.4, booth.z + 1.2, Math.PI / 2, ['الهدي', 'Hady · Opfer'], { w: 2.6, h: 0.9, y: 3.2 });
-    sign(world, barber.x + 1, barber.z, -Math.PI / 2, ['حلاق', 'Friseur'], { w: 2.6, h: 0.9, y: 3.2 });
+    const bb = new THREE.Mesh(new THREE.BoxGeometry(3, 2.6, 2.4), new THREE.MeshStandardMaterial({ color: 0xe9e4da, roughness: 0.7 }));
+    bb.position.set(barber.x + 1.5, 1.3, barber.z); bb.castShadow = true; world.add(bb); // Friseur-Stand am Straßenrand
+    sign(world, barber.x + 1.4, barber.z - 1.3, -Math.PI / 2, ['حلاق', 'Friseur'], { w: 2.6, h: 0.9, y: 3.2 });
   }
 
   // Pilger auf den Straßen

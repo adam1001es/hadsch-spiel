@@ -255,16 +255,21 @@ export function carpets(world, list) {
   cm.castShadow = true; cm.receiveShadow = true; world.add(cm);
 }
 
-// Kiesfeld („Becken“): flache Mulde mit Kiesboden (echtes Kiesbild, Poly Haven CC0) und niedrigem Steinrand.
+let softTex = null;
+function softEdge() {
+  if (softTex) return softTex;
+  const c = document.createElement('canvas'); c.width = c.height = 128; const g = c.getContext('2d');
+  const gr = g.createRadialGradient(64, 64, 0, 64, 64, 64); gr.addColorStop(0, '#fff'); gr.addColorStop(0.62, '#fff'); gr.addColorStop(1, '#000');
+  g.fillStyle = gr; g.fillRect(0, 0, 128, 128);
+  return (softTex = new THREE.CanvasTexture(c));
+}
+// Kiesfeld: Fleck mit Kiesboden (echtes Kiesbild, Poly Haven CC0), weich auslaufend wie natürlicher Kies.
 // Gibt die Positionen für einzelne, aufsammelbare Kiesel zurück (dicht verteilt im Feld).
 export function gravelBasin(world, { x, z, rx = 5, rz = 4, ry = 0, n = 200 }) {
   const grp = new THREE.Group(); grp.position.set(x, 0, z); grp.rotation.y = ry; world.add(grp);
-  const disc = new THREE.Mesh(new THREE.CircleGeometry(1, 40).rotateX(-Math.PI / 2), new THREE.MeshStandardMaterial({ ...pbr('pebbles', [rx / 1.2, rz / 1.2]), roughness: 1 }));
-  disc.scale.set(rx, 1, rz); disc.position.y = 0.025; disc.receiveShadow = true; grp.add(disc);
-  // Rand aus flachen Steinen
-  const rim = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(0.22, 0).scale(1.4, 0.55, 1), new THREE.MeshStandardMaterial({ color: 0x8a7f72, roughness: 0.95, flatShading: true }), 64);
-  for (let i = 0; i < 64; i++) { const a = (i / 64) * Math.PI * 2; dummy.position.set(Math.cos(a) * (rx + 0.15), 0.08, Math.sin(a) * (rz + 0.15)); dummy.rotation.set(0, -a + Math.random() * 0.4, 0); dummy.scale.setScalar(0.8 + Math.random() * 0.5); dummy.updateMatrix(); rim.setMatrixAt(i, dummy.matrix); }
-  rim.castShadow = true; rim.receiveShadow = true; grp.add(rim);
+  // natürlicher Kiesfleck: Ränder laufen weich in den Sand aus (kein künstlicher Steinkranz)
+  const disc = new THREE.Mesh(new THREE.CircleGeometry(1.25, 40).rotateX(-Math.PI / 2), new THREE.MeshStandardMaterial({ ...pbr('pebbles', [rx / 1.0, rz / 1.0]), color: new THREE.Color(1.45, 1.36, 1.22), alphaMap: softEdge(), transparent: true, depthWrite: false, roughness: 1 }));
+  disc.scale.set(rx, 1, rz); disc.position.y = 0.035; disc.receiveShadow = true; grp.add(disc);
   const pts = [], c = Math.cos(ry), sn = Math.sin(ry);
   for (let i = 0; i < n; i++) { const a = Math.random() * Math.PI * 2, r = Math.sqrt(Math.random()) * 0.92; const lx = Math.cos(a) * r * rx, lz = Math.sin(a) * r * rz; pts.push([x + lx * c + lz * sn, z - lx * sn + lz * c]); }
   return pts;
@@ -351,12 +356,26 @@ export function bus(world, x, z, ry = 0) {
 
 // Straßen: Asphalt (Poly Haven, CC0) mit hellen Bordsteinen. segs: [{ x1, z1, x2, z2, w }] (Breite in Metern).
 // Flach knapp über dem Boden; für ebene Bereiche (Mina, Arafat-Ebene, Muzdalifa, Miqat).
+// Asphalt ohne Risse: feine Körnung, leicht fleckig (im Browser gezeichnet, kein Bild-Download)
+let asphaltTex = null;
+function asphaltMap() {
+  if (asphaltTex) return asphaltTex;
+  const c = document.createElement('canvas'); c.width = c.height = 512; const g = c.getContext('2d');
+  g.fillStyle = '#6d6a66'; g.fillRect(0, 0, 512, 512);
+  for (let i = 0; i < 26; i++) { const x = Math.random() * 512, y = Math.random() * 512, r = 40 + Math.random() * 120, gr = g.createRadialGradient(x, y, 0, x, y, r); const v = Math.random() < 0.5 ? '255,250,240' : '0,0,0'; gr.addColorStop(0, `rgba(${v},0.05)`); gr.addColorStop(1, `rgba(${v},0)`); g.fillStyle = gr; for (const ox of [-512, 0, 512]) for (const oy of [-512, 0, 512]) { g.save(); g.translate(ox, oy); g.fillRect(x - r, y - r, r * 2, r * 2); g.restore(); } }
+  const d = g.getImageData(0, 0, 512, 512), a = d.data;
+  for (let i = 0; i < a.length; i += 4) { const n = (Math.random() - 0.5) * 34 + (Math.random() < 0.03 ? 30 : 0); a[i] += n; a[i + 1] += n; a[i + 2] += n * 0.95; }
+  g.putImageData(d, 0, 0);
+  asphaltTex = new THREE.CanvasTexture(c); asphaltTex.wrapS = asphaltTex.wrapT = THREE.RepeatWrapping; asphaltTex.colorSpace = THREE.SRGBColorSpace; asphaltTex.anisotropy = 8;
+  return asphaltTex;
+}
 export function roads(world, segs, { y = 0.03, curb = true } = {}) {
   const curbM = new THREE.MeshStandardMaterial({ color: 0xd9d2c4, roughness: 0.9 });
   const grp = new THREE.Group(); world.add(grp);
   for (const { x1, z1, x2, z2, w } of segs) {
     const len = Math.hypot(x2 - x1, z2 - z1), ang = Math.atan2(x2 - x1, z2 - z1);
-    const m = new THREE.MeshStandardMaterial({ ...pbr('asphalt', [w / 6, len / 6]), color: 0xe2ddd4, roughness: 1, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
+    const map = asphaltMap().clone(); map.needsUpdate = true; map.repeat.set(w / 5, len / 5);
+    const m = new THREE.MeshStandardMaterial({ map, color: 0xffffff, roughness: 0.95, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
     const r = new THREE.Mesh(new THREE.PlaneGeometry(w, len).rotateX(-Math.PI / 2), m);
     r.position.set((x1 + x2) / 2, y, (z1 + z2) / 2); r.rotation.y = ang; r.receiveShadow = true; grp.add(r);
     if (curb) for (const sx of [-1, 1]) {
