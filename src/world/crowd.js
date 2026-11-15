@@ -18,7 +18,7 @@ function pickRegion() {
 // 3D-Modell „Middle Eastern Hajj“ (trisutrisno, CC BY 4.0): Pilger im Ihram, Arme gesenkt, Haut/Stoff getrennt färbbar,
 // „cover“ = Tuchstück über der rechten Schulter (außerhalb des Umrah-Tawaf ist die Schulter bedeckt).
 // 3D-Modell „Shalwar Kameez Man“ (Abdullah5007, CC BY 4.0): Männer ohne Ihram (top, bottom, trim, shoes, head, hands, eyes).
-let MUSLIMA = null, MAN = null, KAM = null;
+let MUSLIMA = null, MAN = null, KAM = null, MAN2 = null;
 const loadParts = (url) => new GLTFLoader().loadAsync(url).then((g) => { const parts = {}; g.scene.traverse((c) => { if (!c.isMesh) return; const ge = c.geometry; if (ge.attributes.__arm) { ge.setAttribute('armW', ge.attributes.__arm); ge.deleteAttribute('__arm'); } parts[c.name] = { geometry: ge, material: c.material }; }); return parts; });
 // Für die Spielfigur: die geladenen Modelle (oder null)
 export const peopleModels = () => ({ woman: MUSLIMA, man: MAN, kameez: KAM });
@@ -32,6 +32,8 @@ export function preloadPeople() {
       .catch((e) => { peopleStatus.woman = 'Fehler: ' + why(e); console.error('muslima.glb', e); }),
     loadParts('./assets/models/man.glb').then((p) => { if (p.cloth && p.skin) { MAN = p; peopleStatus.man = 'geladen ✓'; } else peopleStatus.man = 'Teile fehlen: ' + Object.keys(p).join(','); })
       .catch((e) => { peopleStatus.man = 'Fehler: ' + why(e); console.error('man.glb', e); }),
+    // zweiter Pilger im Ihram (eigenes Modell des Nutzers, mit Tripo erstellt): cloth + skin
+    loadParts('./assets/models/man2.glb').then((p) => { if (p.cloth && p.skin) MAN2 = p; }).catch((e) => console.error('man2.glb', e)),
     loadParts('./assets/models/kameez.glb').then((p) => { if (p.top && p.head) { KAM = p; peopleStatus.kameez = 'geladen ✓'; } else peopleStatus.kameez = 'Teile fehlen'; })
       .catch((e) => { peopleStatus.kameez = 'Fehler: ' + why(e); console.error('kameez.glb', e); }),
   ]);
@@ -77,6 +79,7 @@ export function createCrowd(world, n, { men = 0.6, ihram = true, idtiba = false 
     w: MUSLIMA ? { src: MUSLIMA, keys: Object.keys(MUSLIMA) } : null,
     m: useMan ? { src: MAN, keys: Object.keys(MAN).filter((k) => k !== 'cover' || !idtiba) } : null,
     k: KAM && !ihram ? { src: KAM, keys: Object.keys(KAM) } : null,
+    n: MAN2 && ihram && !idtiba ? { src: MAN2, keys: Object.keys(MAN2) } : null, // beide Schultern bedeckt → nicht im Umrah-Tawaf
   };
 
   // 1. Personen erzeugen: einfache Figur (für die Ferne) + Modellteile (für die Nähe), gleiche Farben
@@ -95,7 +98,8 @@ export function createCrowd(world, n, { men = 0.6, ihram = true, idtiba = false 
         if (Math.random() < 0.8) put('hair', hair, 0.1); // sonst Glatze (z. B. nach dem Rasieren)
         if (useMan) {
           const cloth = tint(0xf6f4ee, 0.05);
-          model[i] = { s: 'm', parts: POOLS.m.keys.map((k) => ['m_' + k, k === 'skin' ? tint(skin, 0.04) : cloth]) };
+          const g = POOLS.n && Math.random() < 0.45 ? 'n' : 'm';
+          model[i] = { s: g, parts: POOLS[g].keys.map((k) => [g + '_' + k, k === 'skin' ? tint(skin, 0.04) : cloth]) };
           sh[i] = 0.94 + Math.random() * 0.1; sw[i] = 0.9 + Math.random() * 0.22;
         }
       } else {
@@ -141,6 +145,7 @@ export function createCrowd(world, n, { men = 0.6, ihram = true, idtiba = false 
     const side = DOUBLE.has(k) ? THREE.DoubleSide : THREE.FrontSide;
     const mat = srcMat ? Object.assign(srcMat.clone(), { side }) : new THREE.MeshStandardMaterial({ roughness: k === 'face' || k === 'head' || k === 'torso' ? 0.65 : 0.92, side });
     if (srcMat && k !== 'm_cover') mat.color.setHex(0xffffff);
+    if (k === 'n_cloth') mat.color.setRGB(1.2, 1.19, 1.16); // Tuch-Textur ist etwas grau → aufhellen wie die anderen Ihram-Tücher
     // Gehbewegung (Beine/Arme) im Shader; Takt je Instanz im Attribut aWalk
     if (WALK[k]) {
       const grp = k.includes('_') ? k[0] : '';
