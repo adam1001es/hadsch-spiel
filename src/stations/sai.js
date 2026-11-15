@@ -5,7 +5,7 @@ import { rock, sign } from '../world/props.js';
 import { patternMat, patternWall } from '../world/ornament.js';
 import { createCrowd } from '../world/crowd.js';
 import { createPlayer } from '../core/player.js';
-import { createFlow, createMarker, goTo, promptAt, holdAction, duaFacing, pointGoal, sunnah, viewLine, clearView, createAutopilot, isFemale, autoAfter } from '../core/kit.js';
+import { createFlow, createMarker, goTo, promptAt, holdAction, duaFacing, pointGoal, sunnah, viewLine, clearView, createAutopilot, isFemale, autoAfter, createFastMode } from '../core/kit.js';
 
 const T = TEXT.sai;
 // Gang entlang z: Safa bei z = −L/2, Marwa bei z = +L/2. Spur Richtung Marwa: x > 0 (links der Mitte, in Laufrichtung).
@@ -110,6 +110,7 @@ export function create(ctx, st) {
   }
 
   // Autopilot (optional, ab Strecke 3): eigene Spur, im grünen Bereich zügig, Spurwechsel nur hinter der Barriere
+  const fast = createFastMode(ctx); // ⏩ Schnell gehen (7 Runden/Strecken)
   const auto = createAutopilot(ctx, {
     available: () => lap >= autoAfter(ctx, 2) && lap < 7,
     steer() {
@@ -127,7 +128,7 @@ export function create(ctx, st) {
     ui.info(`<p>${T.startInfo}</p><p class="tr">${T.go}</p>`);
     hillDua('safa');
     await flow.until(() => lap >= 7);
-    auto.finish();
+    auto.finish(); fast.hide();
     ctx.mission?.done(1); ctx.mission?.done(2);
     ui.actions([]);
     if (umrah) {

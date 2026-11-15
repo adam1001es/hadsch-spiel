@@ -332,9 +332,9 @@ export function createPlayer(ctx, { x = 0, z = 0, heading = 0, color, speed = 1.
       resolve(pos, 0.32, p.colliders);
       pos.y = ground ? ground(pos.x, pos.z) : 0;
       const v = Math.hypot(vel.x, vel.z);
-      walking = v / speed;
+      walking = v / (speed * Math.max(1, p.speedMul)); // im Schnellmodus normal gehen, nicht rennen
       // Leise Schritte je nach Untergrund (surface: 'sand' | 'stone' | 'marble' | 'carpet' oder Funktion (x, z) → Untergrund)
-      if (v > 0.4 && !frozen) { stepDist += v * dt; if (stepDist > 0.75) { stepDist = 0; sfxStep(typeof surface === 'function' ? surface(pos.x, pos.z) : surface, Math.min(1, v / speed)); } } else stepDist = 0.5;
+      if (v > 0.4 && !frozen) { stepDist += v / Math.max(1, p.speedMul) * dt; if (stepDist > 0.75) { stepDist = 0; sfxStep(typeof surface === 'function' ? surface(pos.x, pos.z) : surface, Math.min(1, v / speed)); } } else stepDist = 0.5;
       if (v > 0.15) {
         const want = Math.atan2(vel.x, vel.z);
         const d = Math.atan2(Math.sin(want - head), Math.cos(want - head));

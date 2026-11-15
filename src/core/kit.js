@@ -219,3 +219,13 @@ export function createAutopilot(ctx, { available, steer = null, tick = null, lab
 // Profil-Hilfen: Spielerin? Autopilot für Jüngere (bis 10 Jahre) einen Durchgang früher.
 export const isFemale = (ctx) => ctx.profile?.gender === 'f';
 export const autoAfter = (ctx, n) => (ctx.profile?.age && ctx.profile.age <= 10 ? Math.max(1, n - 1) : n);
+
+// Schnell gehen (für Stationen mit 7 Runden/Strecken): Figur geht deutlich schneller, Gehbewegung bleibt normal (kein Rennen),
+// der Bildrand wird unscharf, damit der Blick auf Figur und Ziel bleibt.
+export function createFastMode(ctx, { mul = 3.2 } = {}) {
+  const { ui, player } = ctx;
+  let on = false;
+  const set = (v) => { on = v; player.speedMul = on ? mul : 1; ui.fast(true, on, () => set(!on)); if (on) ui.toast('Schnell gehen an', 1400); };
+  set(false);
+  return { get on() { return on; }, off() { if (on) set(false); }, hide() { player.speedMul = 1; ui.fast(false); } };
+}

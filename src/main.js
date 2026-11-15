@@ -159,3 +159,15 @@ setBox.addEventListener('click', (e) => { if (e.target === setBox) setBox.hidden
   $('multiCode').addEventListener('keydown', (e) => { if (e.key === 'Enter') multi.join($('multiCode').value); });
   $('multiLeave').addEventListener('click', () => multi.leave());
 }
+
+// ---------- Menü (ein Knopf statt vier) ----------
+{
+  const menuBtn = document.getElementById('menuBtn');
+  const setMenu = (open) => { document.body.classList.toggle('menu-open', open); menuBtn.setAttribute('aria-expanded', String(open)); };
+  menuBtn.addEventListener('click', (e) => { e.stopPropagation(); setMenu(!document.body.classList.contains('menu-open')); });
+  for (const id of ['guideBtn', 'setBtn', 'multiBtn']) document.getElementById(id).addEventListener('click', () => setMenu(false));
+  document.addEventListener('pointerdown', (e) => { if (!e.target.closest('#menuBtn, #guideBtn, #setBtn, #soundBtn, #multiBtn')) setMenu(false); }, true);
+  // Punkt am Menü-Knopf, wenn man mit anderen verbunden ist
+  const dot = document.getElementById('menuDot');
+  new MutationObserver(() => { dot.hidden = !document.getElementById('multiBtn').classList.contains('on'); }).observe(document.getElementById('multiBtn'), { attributes: true, attributeFilter: ['class'] });
+}

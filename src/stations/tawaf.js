@@ -5,7 +5,7 @@ import { createCrowd } from '../world/crowd.js';
 import { RABBANA, TEXT } from '../content/hajj.js';
 import { createPlayer } from '../core/player.js';
 import * as sfx from '../core/sfx.js';
-import { createFlow, createMarker, pointGoal, holdAction, rakatSteps, pick, sunnah, createAutopilot, isFemale, autoAfter } from '../core/kit.js';
+import { createFlow, createMarker, pointGoal, holdAction, rakatSteps, pick, sunnah, createAutopilot, isFemale, autoAfter, createFastMode } from '../core/kit.js';
 
 const TAU = Math.PI * 2;
 const T = TEXT.tawaf;
@@ -137,6 +137,7 @@ export function create(ctx, st) {
   }
 
   // Autopilot (optional, ab Runde 3): läuft außen um Kaaba und Hijr Ismail herum
+  const fast = createFastMode(ctx); // ⏩ Schnell gehen (7 Runden/Strecken)
   const auto = createAutopilot(ctx, {
     available: () => laps >= autoAfter(ctx, 2) && !done,
     steer() {
@@ -147,7 +148,7 @@ export function create(ctx, st) {
   });
 
   function finish() {
-    auto.finish();
+    auto.finish(); fast.hide();
     player.fig.setIdtiba(false); // nach dem Tawaf wieder beide Schultern bedeckt
     ctx.mission?.done(1); if (istilamCount < 7) ctx.mission?.skip(2);
     done = true;

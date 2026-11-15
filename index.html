@@ -75,6 +75,8 @@
   <!-- Bedienung unten: links Joystick, rechts Halten und Autopilot -->
   <button id="hold" type="button" hidden>Halten</button>
   <button id="autoBtn" type="button" hidden>▶ Autopilot</button>
+  <button id="fastBtn" type="button" hidden>⏩ Schnell</button>
+  <div id="focusBlur" aria-hidden="true"></div>
 
   <!-- Lernkarte: Einführung vor jeder Station und Zusammenfassung mit Quiz danach -->
   <section id="learn" hidden aria-live="polite">
@@ -86,6 +88,11 @@
 
   <div id="fade"></div>
 
+  <!-- Menü: ein Knopf, darunter klappen Übersicht, Einstellungen, Ton und Zusammen spielen auf -->
+  <button id="menuBtn" type="button" aria-label="Menü" title="Menü" aria-expanded="false">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 7h14M5 12h14M5 17h14"/></svg>
+    <span id="menuDot" hidden></span>
+  </button>
   <!-- Ton an/aus (Zielansagen und Gebetsaufnahmen) -->
   <button id="soundBtn" type="button" aria-label="Ton an oder aus" title="Ton an/aus" aria-pressed="false">
     <svg class="on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M15.5 9a4 4 0 0 1 0 6"/><path d="M18 6.5a7.5 7.5 0 0 1 0 11"/></svg>

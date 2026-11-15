@@ -16,7 +16,7 @@ export function createUI() {
     day: $('day'), title: $('title'), dots: $('dots'), counter: $('counter'), info: $('info'), actions: $('actions'),
     hold: $('hold'), toast: $('toast'), fade: $('fade'), panel: $('panel'), prompt: $('prompt'), hint: $('hint'),
     goal: $('goal'), goalArrow: $('goalArrow'), goalText: $('goalText'), stick: $('stick'),
-    panelToggle: $('panelToggle'), auto: $('autoBtn'),
+    panelToggle: $('panelToggle'), auto: $('autoBtn'), fast: $('fastBtn'),
     choice: $('choice'), choiceQ: $('choiceQ'), choiceOpts: $('choiceOpts'), choiceFb: $('choiceFb'),
     mission: $('mission'), learn: $('learn'), learnCard: $('learnCard'), coach: $('coach'), coachText: $('coachText'),
   };
@@ -128,6 +128,13 @@ export function createUI() {
       el.auto.classList.toggle('on', on);
       el.auto.textContent = on ? '⏸ Selbst gehen' : '▶ Autopilot';
       if (onToggle) el.auto.onclick = () => onToggle();
+    },
+    // Schnell-gehen-Knopf (Tawaf, Sa'i): show=false blendet aus
+    fast(show, on = false, onToggle = null) {
+      el.fast.hidden = !show; document.body.classList.toggle('fast', !!(show && on));
+      if (!show) return;
+      el.fast.classList.toggle('on', on); el.fast.textContent = on ? '⏩ Schnell: an' : '⏩ Schnell';
+      if (onToggle) el.fast.onclick = () => onToggle();
     },
     // Aktionsknopf vor Ort. Gleicher key → kein Neuaufbau (verhindert Flackern im Frame-Loop).
     prompt(label, fn, { sunnah = false, key = label } = {}) {
@@ -301,7 +308,7 @@ export function createUI() {
     },
     reset() {
       ui.mission(null); ui.coach(null); el.learn.hidden = true;
-      ui.info(''); ui.actions([]); ui.hold(null); ui.counter(''); ui.prompt(null); ui.goal(null); ui.auto(false);
+      ui.info(''); ui.actions([]); ui.hold(null); ui.counter(''); ui.prompt(null); ui.goal(null); ui.auto(false); ui.fast(false);
       el.hint.hidden = true; el.choice.hidden = true; el.stick.classList.remove('off');
     },
   };
