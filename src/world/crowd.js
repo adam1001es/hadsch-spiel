@@ -18,7 +18,7 @@ function pickRegion() {
 // 3D-Modell „Middle Eastern Hajj“ (trisutrisno, CC BY 4.0): Pilger im Ihram, Arme gesenkt, Haut/Stoff getrennt färbbar,
 // „cover“ = Tuchstück über der rechten Schulter (außerhalb des Umrah-Tawaf ist die Schulter bedeckt).
 // 3D-Modell „Shalwar Kameez Man“ (Abdullah5007, CC BY 4.0): Männer ohne Ihram (top, bottom, trim, shoes, head, hands, eyes).
-let MUSLIMA = null, MAN = null, KAM = null, MAN2 = null;
+let MUSLIMA = null, MAN = null, KAM = null, MAN2 = null, MAN3 = null, BOY = null;
 const loadParts = (url) => new GLTFLoader().loadAsync(url).then((g) => { const parts = {}; g.scene.traverse((c) => { if (!c.isMesh) return; const ge = c.geometry; if (ge.attributes.__arm) { ge.setAttribute('armW', ge.attributes.__arm); ge.deleteAttribute('__arm'); } parts[c.name] = { geometry: ge, material: c.material }; }); return parts; });
 // Für die Spielfigur: die geladenen Modelle (oder null)
 export const peopleModels = () => ({ woman: MUSLIMA, man: MAN, kameez: KAM });
@@ -34,6 +34,9 @@ export function preloadPeople() {
       .catch((e) => { peopleStatus.man = 'Fehler: ' + why(e); console.error('man.glb', e); }),
     // zweiter Pilger im Ihram (eigenes Modell des Nutzers, mit Tripo erstellt): cloth + skin
     loadParts('./assets/models/man2.glb').then((p) => { if (p.cloth && p.skin) MAN2 = p; }).catch((e) => console.error('man2.glb', e)),
+    // Pilger und Junge mit freier rechter Schulter (Idtiba'), ebenfalls eigene Modelle des Nutzers
+    loadParts('./assets/models/man3.glb').then((p) => { if (p.cloth && p.skin) MAN3 = p; }).catch((e) => console.error('man3.glb', e)),
+    loadParts('./assets/models/boy.glb').then((p) => { if (p.cloth && p.skin) BOY = p; }).catch((e) => console.error('boy.glb', e)),
     loadParts('./assets/models/kameez.glb').then((p) => { if (p.top && p.head) { KAM = p; peopleStatus.kameez = 'geladen ✓'; } else peopleStatus.kameez = 'Teile fehlen'; })
       .catch((e) => { peopleStatus.kameez = 'Fehler: ' + why(e); console.error('kameez.glb', e); }),
   ]);
@@ -80,11 +83,14 @@ export function createCrowd(world, n, { men = 0.6, ihram = true, idtiba = false 
     m: useMan ? { src: MAN, keys: Object.keys(MAN).filter((k) => k !== 'cover' || !idtiba) } : null,
     k: KAM && !ihram ? { src: KAM, keys: Object.keys(KAM) } : null,
     n: MAN2 && ihram && !idtiba ? { src: MAN2, keys: Object.keys(MAN2) } : null, // beide Schultern bedeckt → nicht im Umrah-Tawaf
+    o: MAN3 && ihram && idtiba ? { src: MAN3, keys: Object.keys(MAN3) } : null, // rechte Schulter frei → nur im Umrah-Tawaf
+    b: BOY && ihram && idtiba ? { src: BOY, keys: Object.keys(BOY) } : null,
   };
 
   // 1. Personen erzeugen: einfache Figur (für die Ferne) + Modellteile (für die Nähe), gleiche Farben
   const people = new Array(n), model = new Array(n), scale = new Float32Array(n), use = {};
   const sh = new Float32Array(n).fill(1), sw = new Float32Array(n).fill(1); // Höhe, Breite (Statur)
+  const mk = new Float32Array(n).fill(1); // Ausgleich Modell ↔ einfache Figur (Junge: einfache Figur kindgroß, Modell schon klein)
   const tint = (hex, v = 0.06) => { const c = new THREE.Color(hex); return c.multiplyScalar(1 - v / 2 + Math.random() * v); };
   for (let i = 0; i < n; i++) {
     const R = pickRegion(), male = Math.random() < men;
@@ -98,7 +104,8 @@ export function createCrowd(world, n, { men = 0.6, ihram = true, idtiba = false 
         if (Math.random() < 0.8) put('hair', hair, 0.1); // sonst Glatze (z. B. nach dem Rasieren)
         if (useMan) {
           const cloth = tint(0xf6f4ee, 0.05);
-          const g = POOLS.n && Math.random() < 0.45 ? 'n' : 'm';
+          const r = Math.random();
+          const g = POOLS.b && r < 0.08 ? 'b' : POOLS.o && r < 0.55 ? 'o' : POOLS.n && r < 0.45 ? 'n' : 'm';
           model[i] = { s: g, parts: POOLS[g].keys.map((k) => [g + '_' + k, k === 'skin' ? tint(skin, 0.04) : cloth]) };
           sh[i] = 0.94 + Math.random() * 0.1; sw[i] = 0.9 + Math.random() * 0.22;
         }
@@ -115,8 +122,10 @@ export function createCrowd(world, n, { men = 0.6, ihram = true, idtiba = false 
           sh[i] = 0.94 + Math.random() * 0.1; sw[i] = 0.9 + Math.random() * 0.22;
         }
       }
-      if (Math.random() < (old ? 0.85 : 0.5)) put('beard', hair, 0.1);
+      const boy = model[i]?.s === 'b';
+      if (!boy && Math.random() < (old ? 0.85 : 0.5)) put('beard', hair, 0.1);
       scale[i] = 0.95 + Math.random() * 0.12;
+      if (boy) { scale[i] = 0.55; mk[i] = 1 / 0.55; }
     } else {
       const col = MUSLIMA ? womanColors(R) : { dress: pick(R.women.dress), hijab: Math.random() < 0.55 ? pick(R.women.khimar) : null, shoes: 0x1e1c1b };
       const hijab = col.hijab ?? col.dress;
@@ -145,7 +154,7 @@ export function createCrowd(world, n, { men = 0.6, ihram = true, idtiba = false 
     const side = DOUBLE.has(k) ? THREE.DoubleSide : THREE.FrontSide;
     const mat = srcMat ? Object.assign(srcMat.clone(), { side }) : new THREE.MeshStandardMaterial({ roughness: k === 'face' || k === 'head' || k === 'torso' ? 0.65 : 0.92, side });
     if (srcMat && k !== 'm_cover') mat.color.setHex(0xffffff);
-    if (k === 'n_cloth') mat.color.setRGB(1.2, 1.19, 1.16); // Tuch-Textur ist etwas grau → aufhellen wie die anderen Ihram-Tücher
+    if (k === 'n_cloth' || k === 'o_cloth' || k === 'b_cloth') mat.color.setRGB(1.2, 1.19, 1.16); // Tuch-Textur ist etwas grau → aufhellen wie die anderen Ihram-Tücher
     // Gehbewegung (Beine/Arme) im Shader; Takt je Instanz im Attribut aWalk
     if (WALK[k]) {
       const grp = k.includes('_') ? k[0] : '';
@@ -231,6 +240,7 @@ export function createCrowd(world, n, { men = 0.6, ihram = true, idtiba = false 
       }
       if (useModel) {
         const sl = slotOf[i];
+        if (mk[i] !== 1) { d.scale.multiplyScalar(mk[i]); d.updateMatrix(); }
         for (const m of POOLS[model[i].s].meshes) { m.setMatrixAt(sl, m.userData.key === model[i].skip ? ZERO : d.matrix); if (m.userData.walk) m.userData.walk.setXYZ(sl, phase[i], amt[i], kneel[i]); if (m.userData.face) m.userData.face.setXYZ(sl, faceF[i * 3], faceF[i * 3 + 1], faceF[i * 3 + 2]); }
         for (let k = 0; k < L.length; k++) L[k][1].setMatrixAt(L[k][2], ZERO);
       } else {
