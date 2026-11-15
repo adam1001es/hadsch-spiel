@@ -1,6 +1,8 @@
 import * as THREE from 'three';
 import { goldDoor } from './textures.js';
 import { pbr, texture } from './assets.js';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+let maqamLoad = null;
 
 // Ausrichtung im Spiel: Schwarzer Stein an Ecke (-x,+z), Tür auf der +z-Seite, Hijr Ismail an der +x-Seite.
 export const KAABA = { w: 12, d: 10.5, h: 13.1, blackStoneAngle: (5 * Math.PI) / 4 };
@@ -99,6 +101,14 @@ export function buildKaaba(world) {
   const pts = [[0, 0], [0.75, 0], [0.75, 1.6], [0.6, 2.1], [0.25, 2.5], [0.05, 2.9], [0, 2.9]].map(([x, y]) => new THREE.Vector2(x, y));
   const maqam = new THREE.Mesh(new THREE.LatheGeometry(pts, 48), goldMat);
   maqam.position.set(-1.5, 0, d / 2 + 9); maqam.castShadow = true; world.add(maqam);
+  // 3D-Modell des Maqam Ibrahim (Marmorsockel, vergoldetes Gitter, Kuppel mit Halbmond); bis es geladen ist, die einfache Glocke
+  maqamLoad ||= new GLTFLoader().loadAsync('./assets/models/maqam.glb').then((g) => g.scene).catch(() => null);
+  maqamLoad.then((sc) => {
+    if (!sc || !maqam.parent) return;
+    const m = sc.clone(true); m.position.copy(maqam.position); m.rotation.y = Math.PI / 8;
+    m.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+    maqam.parent.add(m); maqam.parent.remove(maqam);
+  });
 
   return { kaaba: k };
 }

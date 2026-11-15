@@ -14,5 +14,6 @@
 | `man3.glb` | Pilger im Ihram mit freier rechter Schulter (Idtiba'), vom Projekt-Inhaber mit **Tripo AI** erstellt | wie `man2.glb` bearbeitet (~6.300 Dreiecke); nur im Tawaf der Umrah |
 | `boy.glb` | Junge im Ihram (rechte Schulter frei), vom Projekt-Inhaber mit **Tripo AI** erstellt | wie `man2.glb` bearbeitet, 0,95 m groß (~5.700 Dreiecke); nur im Tawaf der Umrah |
 | `woman2.glb` | Pilgerin in Kleid und langem Khimar, vom Projekt-Inhaber mit **Tripo AI** erstellt | wie `man2.glb` bearbeitet, 1,64 m (~10.500 Dreiecke), Stoff pro Person einfärbbar |
+| `maqam.glb` | Maqam Ibrahim, vom Projekt-Inhaber mit **Tripo AI** erstellt | 3 m hoch, Fuß bei y = 0, von 1,8 Mio. auf ~61.000 Dreiecke vereinfacht (Gitter und Textur-Nähte bleiben erhalten), Textur 1024 px |
 
 Das Umwandlungs-Werkzeug liegt nicht im Repository (lokal unter `tools/`).
