@@ -27,13 +27,16 @@ export const WALK = {
   m_cover: { hip: 0 },
   // zweiter Pilger im Ihram (beide Schultern bedeckt, Arme unter dem Tuch): nur Hände schwingen leicht
   n_cloth: { hip: 0.92, legAmp: 0.3, lift: 0.03, armX: 9, fold: false },
-  n_skin: { hip: 0.92, legAmp: 0.4, lift: 0.05, armX: 0.15, armAmp: 0.22, shy: 1.32, armMinY: 0.75 },
+  n_skin: { hip: 0.92, legAmp: 0.4, lift: 0.05, armX: 9 },
   // Pilger im Ihram mit freier rechter Schulter (Idtiba', Tawaf der Umrah): rechter Arm frei, linker unter dem Tuch
   o_cloth: { hip: 0.92, legAmp: 0.3, lift: 0.03, armX: 9, fold: false },
-  o_skin: { hip: 0.92, legAmp: 0.4, lift: 0.05, armX: 0.17, armAmp: 0.3, shy: 1.42, armMinY: 0.75 },
+  o_skin: { hip: 0.92, legAmp: 0.4, lift: 0.05, armX: 9 },
   // Junge im Ihram (ca. 0,95 m, rechte Schulter frei)
   b_cloth: { hip: 0.45, legAmp: 0.28, lift: 0.02, armX: 9, fold: false },
-  b_skin: { hip: 0.45, legAmp: 0.38, lift: 0.03, armX: 0.12, armAmp: 0.3, shy: 0.72, armMinY: 0.35 },
+  b_skin: { hip: 0.45, legAmp: 0.38, lift: 0.03, armX: 9 },
+  // zweite Pilgerin (Kleid und langer Khimar, eigenes Modell des Nutzers): Kleid schwingt leicht, Arme bleiben am Körper
+  v_cloth: { hip: 0.86, legAmp: 0.16, armX: 9, fold: false },
+  v_skin: { hip: 0.86, legAmp: 0.3, lift: 0.04, armX: 9 },
   // Pilger im Shalwar Kameez
   k_top: { hip: 0.92, legAmp: 0.3, armX: 0.175, armAmp: 0.4, shy: 1.38, fold: false },
   k_bottom: { hip: 0.92, legAmp: 0.44, lift: 0.05, armX: 9 },
@@ -44,10 +47,10 @@ export const WALK = {
 };
 // Gesichtsformen: Kopfmitte und Halsansatz je Gruppe (Meter). Teile mit face: true werden pro Person verformt:
 // Breite, Länge und Kinnpartie (aFace / uFace) – Kopf, Augen und Kopftuch gemeinsam, damit alles zusammenpasst.
-export const HEAD_OF = { '': [1.6, 1.49], w: [1.58, 1.47], m: [1.625, 1.51], n: [1.63, 1.5], o: [1.63, 1.5], b: [0.82, 0.7], k: [1.585, 1.45] };
+export const HEAD_OF = { '': [1.6, 1.49], w: [1.58, 1.47], m: [1.625, 1.51], n: [1.63, 1.5], o: [1.63, 1.5], b: [0.82, 0.7], v: [1.55, 1.42], k: [1.585, 1.45] };
 const FACE_KEYS = ['head', 'face', 'hair', 'beard', 'khimar', 'khimarLong', 'kufi', 'ghutra', 'w_head', 'w_eyes', 'w_hijab', 'w_hijabLong', 'm_skin', 'n_skin', 'o_skin', 'b_skin', 'k_head', 'k_eyes'];
 // Hüfthöhe je Modell-Gruppe (für das Absenken beim Knien in der Menge)
-export const HIP_OF = { '': 0.95, w: 0.88, m: 0.92, n: 0.92, o: 0.92, b: 0.45, k: 0.92 };
+export const HIP_OF = { '': 0.95, w: 0.88, m: 0.92, n: 0.92, o: 0.92, b: 0.45, v: 0.86, k: 0.92 };
 
 const f = (x) => { const s = String(+x.toFixed(4)); return s.includes('.') || s.includes('e') ? s : s + '.0'; };
 export function walkMaterial(mat, p, { instanced = true, yOff = 0, groupHip = 0.95, body = false, faceKey = '', group = '' } = {}) {

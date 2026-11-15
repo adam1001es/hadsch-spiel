@@ -18,7 +18,7 @@ function pickRegion() {
 // 3D-Modell „Middle Eastern Hajj“ (trisutrisno, CC BY 4.0): Pilger im Ihram, Arme gesenkt, Haut/Stoff getrennt färbbar,
 // „cover“ = Tuchstück über der rechten Schulter (außerhalb des Umrah-Tawaf ist die Schulter bedeckt).
 // 3D-Modell „Shalwar Kameez Man“ (Abdullah5007, CC BY 4.0): Männer ohne Ihram (top, bottom, trim, shoes, head, hands, eyes).
-let MUSLIMA = null, MAN = null, KAM = null, MAN2 = null, MAN3 = null, BOY = null;
+let MUSLIMA = null, MAN = null, KAM = null, MAN2 = null, MAN3 = null, BOY = null, WOMAN2 = null;
 const loadParts = (url) => new GLTFLoader().loadAsync(url).then((g) => { const parts = {}; g.scene.traverse((c) => { if (!c.isMesh) return; const ge = c.geometry; if (ge.attributes.__arm) { ge.setAttribute('armW', ge.attributes.__arm); ge.deleteAttribute('__arm'); } parts[c.name] = { geometry: ge, material: c.material }; }); return parts; });
 // Für die Spielfigur: die geladenen Modelle (oder null)
 export const peopleModels = () => ({ woman: MUSLIMA, man: MAN, kameez: KAM });
@@ -37,6 +37,7 @@ export function preloadPeople() {
     // Pilger und Junge mit freier rechter Schulter (Idtiba'), ebenfalls eigene Modelle des Nutzers
     loadParts('./assets/models/man3.glb').then((p) => { if (p.cloth && p.skin) MAN3 = p; }).catch((e) => console.error('man3.glb', e)),
     loadParts('./assets/models/boy.glb').then((p) => { if (p.cloth && p.skin) BOY = p; }).catch((e) => console.error('boy.glb', e)),
+    loadParts('./assets/models/woman2.glb').then((p) => { if (p.cloth && p.skin) WOMAN2 = p; }).catch((e) => console.error('woman2.glb', e)),
     loadParts('./assets/models/kameez.glb').then((p) => { if (p.top && p.head) { KAM = p; peopleStatus.kameez = 'geladen ✓'; } else peopleStatus.kameez = 'Teile fehlen'; })
       .catch((e) => { peopleStatus.kameez = 'Fehler: ' + why(e); console.error('kameez.glb', e); }),
   ]);
@@ -85,6 +86,7 @@ export function createCrowd(world, n, { men = 0.6, ihram = true, idtiba = false 
     n: MAN2 && ihram && !idtiba ? { src: MAN2, keys: Object.keys(MAN2) } : null, // beide Schultern bedeckt → nicht im Umrah-Tawaf
     o: MAN3 && ihram && idtiba ? { src: MAN3, keys: Object.keys(MAN3) } : null, // rechte Schulter frei → nur im Umrah-Tawaf
     b: BOY && ihram && idtiba ? { src: BOY, keys: Object.keys(BOY) } : null,
+    v: WOMAN2 ? { src: WOMAN2, keys: Object.keys(WOMAN2) } : null, // zweite Pilgerin (überall)
   };
 
   // 1. Personen erzeugen: einfache Figur (für die Ferne) + Modellteile (für die Nähe), gleiche Farben
@@ -105,7 +107,9 @@ export function createCrowd(world, n, { men = 0.6, ihram = true, idtiba = false 
         if (useMan) {
           const cloth = tint(0xf6f4ee, 0.05);
           const r = Math.random();
-          const g = POOLS.b && r < 0.08 ? 'b' : POOLS.o && r < 0.55 ? 'o' : POOLS.n && r < 0.45 ? 'n' : 'm';
+          // Umrah-Tawaf: vor allem Pilger mit freier Schulter (o), ab und zu ein Junge (b), Rest altes Modell ohne Schultertuch;
+          // sonst nur der Pilger mit bedeckten Schultern (n)
+          const g = POOLS.b && r < 0.08 ? 'b' : POOLS.o && r < 0.7 ? 'o' : POOLS.n ? 'n' : 'm';
           model[i] = { s: g, parts: POOLS[g].keys.map((k) => [g + '_' + k, k === 'skin' ? tint(skin, 0.04) : cloth]) };
           sh[i] = 0.94 + Math.random() * 0.1; sw[i] = 0.9 + Math.random() * 0.22;
         }
@@ -143,6 +147,8 @@ export function createCrowd(world, n, { men = 0.6, ihram = true, idtiba = false 
         const hasLong = POOLS.w.keys.includes('hijabLong');
         const long = hasLong && Math.random() < (R.id === 'Südostasien' || R.id === 'Iran' ? 0.6 : 0.3);
         model[i] = { s: 'w', skip: long ? 'w_hijab' : 'w_hijabLong', parts: POOLS.w.keys.map((k) => ['w_' + k, colOf[k] || new THREE.Color(0xffffff)]) };
+        // zweite Pilgerin: Kleid und Khimar in einer Farbe (Textur ist weiß → wird eingefärbt)
+        if (POOLS.v && Math.random() < 0.4) { const dc = tint(Math.random() < 0.5 ? hijab : col.dress, 0.03); model[i] = { s: 'v', parts: POOLS.v.keys.map((k) => ['v_' + k, k === 'skin' ? tint(skin, 0.04) : dc]) }; }
       }
     }
     people[i] = list;
@@ -153,8 +159,8 @@ export function createCrowd(world, n, { men = 0.6, ihram = true, idtiba = false 
   const makeMesh = (k, geo, count, srcMat) => {
     const side = DOUBLE.has(k) ? THREE.DoubleSide : THREE.FrontSide;
     const mat = srcMat ? Object.assign(srcMat.clone(), { side }) : new THREE.MeshStandardMaterial({ roughness: k === 'face' || k === 'head' || k === 'torso' ? 0.65 : 0.92, side });
-    if (srcMat && k !== 'm_cover') mat.color.setHex(0xffffff);
-    if (k === 'n_cloth' || k === 'o_cloth' || k === 'b_cloth') mat.color.setRGB(1.2, 1.19, 1.16); // Tuch-Textur ist etwas grau → aufhellen wie die anderen Ihram-Tücher
+    if (srcMat) mat.color.setHex(0xffffff); // auch das Schultertuch (m_cover) in Ihram-Weiß
+    if (k === 'n_cloth' || k === 'o_cloth' || k === 'b_cloth' || k === 'v_cloth') mat.color.setRGB(1.2, 1.19, 1.16); // Tuch-Textur ist etwas grau → aufhellen wie die anderen Ihram-Tücher
     // Gehbewegung (Beine/Arme) im Shader; Takt je Instanz im Attribut aWalk
     if (WALK[k]) {
       const grp = k.includes('_') ? k[0] : '';
@@ -173,7 +179,9 @@ export function createCrowd(world, n, { men = 0.6, ihram = true, idtiba = false 
   for (const [id, pool] of Object.entries(POOLS)) {
     if (!pool) continue;
     const cnt = model.filter((x) => x && x.s === id).length;
-    pool.cap = Math.min(CAP, cnt);
+    // detailreiche Modelle bekommen weniger Plätze (gleiches Dreiecks-Budget je Gruppe wie ein Modell mit ~5.500 Dreiecken)
+    const tris = Object.values(pool.src).reduce((a, p) => a + (p.geometry.index ? p.geometry.index.count : p.geometry.attributes.position.count) / 3, 0);
+    pool.cap = Math.min(CAP, cnt, Math.max(12, Math.floor(CAP * Math.min(1, 5500 / tris))));
     pool.meshes = []; pool.byKey = {}; pool.used = new Uint8Array(Math.max(1, pool.cap));
     if (pool.cap > 0) for (const k of pool.keys) { const key = id + '_' + k; const m = makeMesh(key, pool.src[k].geometry, pool.cap, pool.src[k].material); m.count = 0; pool.meshes.push(m); pool.byKey[key] = m; }
   }

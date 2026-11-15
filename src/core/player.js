@@ -78,9 +78,9 @@ export function createFigure(world, { color = 0xf3f1ea, skin = 0xc68642, ring = 
       if (k === 'skin' || k === 'head' || k === 'arms' || k === 'hands' || k === 'feet') mat.color = skinM.color; // Hautfarbe der Figur
       else if (k === 'dress' || k === 'hijab' || k === 'top' || k === 'bottom') mat.color = cloth.color; // Kleidungsfarbe
       else if (k === 'trim') mat.color = new THREE.Color(0x2a2420);
-      else if (k === 'cloth') mat.color = new THREE.Color(0xf6f4ee);
+      else if (k === 'cloth' || k === 'cover') mat.color = new THREE.Color(0xf6f4ee); // Schultertuch gleich weiß wie das Ihram
       else if (k === 'shoes') mat.color = new THREE.Color(0x1e1c1b);
-      else if (k !== 'cover') mat.color = new THREE.Color(0xffffff);
+      else mat.color = new THREE.Color(0xffffff);
       // Gehen, Armhaltung, Knien und Verbeugen (weich gebeugt an der Hüfte) im Shader
       const wp = WALK[PREFIX[id] + k] || { hip: 0 };
       const wu = walkMaterial(mat, wp, { instanced: false, groupHip: HIP, body: true, faceKey: PREFIX[id] + k, group: PREFIX[id][0] });
