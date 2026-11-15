@@ -37,6 +37,9 @@ export const WALK = {
   // zweite Pilgerin (Kleid und langer Khimar, eigenes Modell des Nutzers): Kleid schwingt leicht, Arme bleiben am Körper
   v_cloth: { hip: 0.86, legAmp: 0.16, armX: 0.15, armAmp: 0.12, shy: 1.36, armMinY: 0.75, fold: false },
   v_skin: { hip: 0.86, legAmp: 0.3, lift: 0.04, armX: 0.12, armAmp: 0.12, shy: 1.36, armMinY: 0.45 },
+  // dritte Pilgerin („islamic women“, SyahmiZubir, CC BY 4.0): Kleid schwingt leicht, Hände schwingen kaum
+  x_cloth: { hip: 0.86, legAmp: 0.16, armX: 0.15, armAmp: 0.1, shy: 1.36, armMinY: 0.75, fold: false },
+  x_skin: { hip: 0.86, legAmp: 0.3, lift: 0.04, armX: 0.12, armAmp: 0.1, shy: 1.36, armMinY: 0.45 },
   // Pilger im Shalwar Kameez
   k_top: { hip: 0.92, legAmp: 0.3, armX: 0.175, armAmp: 0.4, shy: 1.38, fold: false },
   k_bottom: { hip: 0.92, legAmp: 0.44, lift: 0.05, armX: 9 },
@@ -47,10 +50,10 @@ export const WALK = {
 };
 // Gesichtsformen: Kopfmitte und Halsansatz je Gruppe (Meter). Teile mit face: true werden pro Person verformt:
 // Breite, Länge und Kinnpartie (aFace / uFace) – Kopf, Augen und Kopftuch gemeinsam, damit alles zusammenpasst.
-export const HEAD_OF = { '': [1.6, 1.49], w: [1.58, 1.47], m: [1.625, 1.51], n: [1.63, 1.5], o: [1.63, 1.5], b: [0.82, 0.7], v: [1.55, 1.42], k: [1.585, 1.45] };
+export const HEAD_OF = { '': [1.6, 1.49], w: [1.58, 1.47], m: [1.625, 1.51], n: [1.63, 1.5], o: [1.63, 1.5], b: [0.82, 0.7], v: [1.55, 1.42], x: [1.53, 1.4], k: [1.585, 1.45] };
 const FACE_KEYS = ['head', 'face', 'hair', 'beard', 'khimar', 'khimarLong', 'kufi', 'ghutra', 'w_head', 'w_eyes', 'w_hijab', 'w_hijabLong', 'm_skin', 'n_skin', 'o_skin', 'b_skin', 'k_head', 'k_eyes'];
 // Hüfthöhe je Modell-Gruppe (für das Absenken beim Knien in der Menge)
-export const HIP_OF = { '': 0.95, w: 0.88, m: 0.92, n: 0.92, o: 0.92, b: 0.45, v: 0.86, k: 0.92 };
+export const HIP_OF = { '': 0.95, w: 0.88, m: 0.92, n: 0.92, o: 0.92, b: 0.45, v: 0.86, x: 0.86, k: 0.92 };
 
 const f = (x) => { const s = String(+x.toFixed(4)); return s.includes('.') || s.includes('e') ? s : s + '.0'; };
 export function walkMaterial(mat, p, { instanced = true, yOff = 0, groupHip = 0.95, body = false, faceKey = '', group = '' } = {}) {

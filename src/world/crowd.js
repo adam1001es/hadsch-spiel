@@ -18,7 +18,7 @@ function pickRegion() {
 // 3D-Modell „Middle Eastern Hajj“ (trisutrisno, CC BY 4.0): Pilger im Ihram, Arme gesenkt, Haut/Stoff getrennt färbbar,
 // „cover“ = Tuchstück über der rechten Schulter (außerhalb des Umrah-Tawaf ist die Schulter bedeckt).
 // 3D-Modell „Shalwar Kameez Man“ (Abdullah5007, CC BY 4.0): Männer ohne Ihram (top, bottom, trim, shoes, head, hands, eyes).
-let MUSLIMA = null, MAN = null, KAM = null, MAN2 = null, MAN3 = null, BOY = null, WOMAN2 = null;
+let MUSLIMA = null, MAN = null, KAM = null, MAN2 = null, MAN3 = null, BOY = null, WOMAN2 = null, WOMAN3 = null;
 const loadParts = (url) => new GLTFLoader().loadAsync(url).then((g) => { const parts = {}; g.scene.traverse((c) => { if (!c.isMesh) return; const ge = c.geometry; if (ge.attributes.__arm) { ge.setAttribute('armW', ge.attributes.__arm); ge.deleteAttribute('__arm'); } parts[c.name] = { geometry: ge, material: c.material }; }); return parts; });
 // Für die Spielfigur: die geladenen Modelle (oder null)
 export const peopleModels = () => ({ woman: MUSLIMA, man: MAN, kameez: KAM });
@@ -38,6 +38,7 @@ export function preloadPeople() {
     loadParts('./assets/models/man3.glb').then((p) => { if (p.cloth && p.skin) MAN3 = p; }).catch((e) => console.error('man3.glb', e)),
     loadParts('./assets/models/boy.glb').then((p) => { if (p.cloth && p.skin) BOY = p; }).catch((e) => console.error('boy.glb', e)),
     loadParts('./assets/models/woman2.glb').then((p) => { if (p.cloth && p.skin) WOMAN2 = p; }).catch((e) => console.error('woman2.glb', e)),
+    loadParts('./assets/models/woman3.glb').then((p) => { if (p.cloth && p.skin) WOMAN3 = p; }).catch((e) => console.error('woman3.glb', e)),
     loadParts('./assets/models/kameez.glb').then((p) => { if (p.top && p.head) { KAM = p; peopleStatus.kameez = 'geladen ✓'; } else peopleStatus.kameez = 'Teile fehlen'; })
       .catch((e) => { peopleStatus.kameez = 'Fehler: ' + why(e); console.error('kameez.glb', e); }),
   ]);
@@ -87,6 +88,7 @@ export function createCrowd(world, n, { men = 0.6, ihram = true, idtiba = false 
     o: MAN3 && ihram && idtiba ? { src: MAN3, keys: Object.keys(MAN3) } : null, // rechte Schulter frei → nur im Umrah-Tawaf
     b: BOY && ihram && idtiba ? { src: BOY, keys: Object.keys(BOY) } : null,
     v: WOMAN2 ? { src: WOMAN2, keys: Object.keys(WOMAN2) } : null, // zweite Pilgerin (überall)
+    x: WOMAN3 ? { src: WOMAN3, keys: Object.keys(WOMAN3) } : null, // dritte Pilgerin (überall)
   };
 
   // 1. Personen erzeugen: einfache Figur (für die Ferne) + Modellteile (für die Nähe), gleiche Farben
@@ -149,7 +151,9 @@ export function createCrowd(world, n, { men = 0.6, ihram = true, idtiba = false 
         const long = hasLong && Math.random() < (R.id === 'Südostasien' || R.id === 'Iran' ? 0.6 : 0.3);
         model[i] = { s: 'w', skip: long ? 'w_hijab' : 'w_hijabLong', parts: POOLS.w.keys.map((k) => ['w_' + k, colOf[k] || new THREE.Color(0xffffff)]) };
         // zweite Pilgerin: Kleid und Khimar in einer Farbe (Textur ist weiß → wird eingefärbt)
-        if (POOLS.v && Math.random() < 0.4) { const dc = tint(Math.random() < 0.5 ? hijab : col.dress, 0.03); model[i] = { s: 'v', parts: POOLS.v.keys.map((k) => ['v_' + k, k === 'skin' ? tint(skin, 0.04) : dc]) }; }
+        const rw = Math.random();
+        if (POOLS.x && rw < 0.3) { const dc = tint(Math.random() < 0.5 ? hijab : col.dress, 0.03); model[i] = { s: 'x', parts: POOLS.x.keys.map((k) => ['x_' + k, k === 'skin' ? tint(skin, 0.04) : dc]) }; }
+        else if (POOLS.v && rw < 0.6) { const dc = tint(Math.random() < 0.5 ? hijab : col.dress, 0.03); model[i] = { s: 'v', parts: POOLS.v.keys.map((k) => ['v_' + k, k === 'skin' ? tint(skin, 0.04) : dc]) }; }
       }
     }
     people[i] = list;
@@ -161,7 +165,7 @@ export function createCrowd(world, n, { men = 0.6, ihram = true, idtiba = false 
     const side = DOUBLE.has(k) ? THREE.DoubleSide : THREE.FrontSide;
     const mat = srcMat ? Object.assign(srcMat.clone(), { side }) : new THREE.MeshStandardMaterial({ roughness: k === 'face' || k === 'head' || k === 'torso' ? 0.65 : 0.92, side });
     if (srcMat) mat.color.setHex(0xffffff); // auch das Schultertuch (m_cover) in Ihram-Weiß
-    if (k === 'n_cloth' || k === 'o_cloth' || k === 'b_cloth' || k === 'v_cloth') mat.color.setRGB(1.2, 1.19, 1.16); // Tuch-Textur ist etwas grau → aufhellen wie die anderen Ihram-Tücher
+    if (k === 'n_cloth' || k === 'o_cloth' || k === 'b_cloth' || k === 'v_cloth' || k === 'x_cloth') mat.color.setRGB(1.2, 1.19, 1.16); // Tuch-Textur ist etwas grau → aufhellen wie die anderen Ihram-Tücher
     // Gehbewegung (Beine/Arme) im Shader; Takt je Instanz im Attribut aWalk
     if (WALK[k]) {
       const grp = k.includes('_') ? k[0] : '';

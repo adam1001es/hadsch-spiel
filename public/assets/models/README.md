@@ -16,5 +16,6 @@
 | `woman2.glb` | Pilgerin in Kleid und langem Khimar, vom Projekt-Inhaber mit **Tripo AI** erstellt | wie `man2.glb` bearbeitet, 1,64 m (~10.500 Dreiecke), Stoff pro Person einfärbbar |
 | `maqam.glb` | Maqam Ibrahim, vom Projekt-Inhaber mit **Tripo AI** erstellt | 3 m hoch, Fuß bei y = 0, von 1,8 Mio. auf ~61.000 Dreiecke vereinfacht (Gitter und Textur-Nähte bleiben erhalten), Textur 1024 px |
 | `balloon.glb` | Heißluftballon (zweite Version), vom Projekt-Inhaber mit **Tripo AI** erstellt | 27 m hoch, Korbboden bei y = 0, von 2 Mio. auf 14.000 Dreiecke vereinfacht, Textur 1024 px; Ballonflug nach dem Hadsch |
+| `woman3.glb` | „islamic women“ von **SyahmiZubir**, https://skfb.ly/pNzIQ, Lizenz **CC BY 4.0** | auf 1,62 m skaliert, Haut und Stoff getrennt (Hautfarbe und Kleid pro Person einfärbbar), von 84.000 auf ~6.400 Dreiecke vereinfacht, Textur 1024 px |
 
 Das Umwandlungs-Werkzeug liegt nicht im Repository (lokal unter `tools/`).
