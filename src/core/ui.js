@@ -45,8 +45,16 @@ export function createUI() {
   // Infokarte antippen: auf-/zuklappen (nicht beim Tippen auf Knöpfe)
   el.panel.addEventListener('click', (e) => {
     if (e.target.closest('#actions button')) return;
-    el.panel.classList.toggle('collapsed'); el.panel.classList.remove('unread'); layout();
+    el.panel.classList.toggle('collapsed'); el.panel.classList.remove('unread'); layout(); manualOpen = !el.panel.classList.contains('collapsed') ? performance.now() : 0;
   });
+  // Automatisch zuklappen, sobald man sich bewegt (Joystick, Tasten, Halten) – die Karte soll die Figur nicht verdecken.
+  // Wer die Karte selbst aufklappt, hat 6 s Ruhe, dann klappt sie beim Gehen wieder zu.
+  let manualOpen = 0, moveT = 0;
+  const autoCollapse = (input, dt) => {
+    const moving = Math.hypot(input.move.x, input.move.y) > 0.2 || input.holding;
+    const now = performance.now(); if (!moving) moveT = 0; else if (!moveT) moveT = now; // Echtzeit (auch bei wenigen Bildern pro Sekunde)
+    if (moveT && now - moveT > 1200 && !el.panel.classList.contains('collapsed') && performance.now() - manualOpen > 6000) { el.panel.classList.add('collapsed'); layout(); }
+  };
   new ResizeObserver(layout).observe(hud);
   window.addEventListener('resize', layout);
 
@@ -297,5 +305,6 @@ export function createUI() {
       el.hint.hidden = true; el.choice.hidden = true; el.stick.classList.remove('off');
     },
   };
+  ui.autoCollapse = autoCollapse;
   return ui;
 }

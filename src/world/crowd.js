@@ -225,7 +225,7 @@ export function createCrowd(world, n, { men = 0.6, ihram = true, idtiba = false 
 
   // Weiche Kontaktschatten unter jeder Person (verankert die Figuren am Boden, sehr günstig: ein InstancedMesh)
   const shadowM = new THREE.InstancedMesh(new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ map: blobTexture(), color: 0x000000, transparent: true, opacity: 0.42, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -2 }), n);
-  shadowM.frustumCulled = false; shadowM.renderOrder = 1; shadowM.count = n; world.add(shadowM);
+  shadowM.frustumCulled = false; shadowM.renderOrder = 1; shadowM.count = n; shadowM.visible = false; // Kontaktschatten aus (wirkten wie dunkle Punkte am Boden)
   const sd = new THREE.Object3D();
   const api = {
     // Geste für Person i (wirkt beim nächsten set): 0 = keine, −1…0 = Wurf (rechter Arm), −3…−2 = Dua (beide Hände)

@@ -36,6 +36,7 @@ engine.renderer.setAnimationLoop(() => {
   sky.update(dt);
   if (current) current.update(dt); else stations.update(dt);
   multi.update(dt);
+  if (!current) ui.autoCollapse?.(input, dt);
   engine.renderer.render(engine.scene, engine.camera);
 });
 

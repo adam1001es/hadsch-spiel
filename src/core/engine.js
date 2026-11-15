@@ -24,6 +24,10 @@ export function createEngine(canvas) {
     const w = window.innerWidth, h = window.innerHeight;
     renderer.setSize(w, h, false);
     camera.aspect = w / h;
+    // Bildmitte etwas nach unten verschieben: die Spielfigur steht tiefer im Bild, oben ist Platz für Titel und Infokarte
+    // (im Hochformat mehr, weil dort die Karte einen größeren Teil des Bildes bedeckt)
+    const shift = h > w ? 0.14 : 0.08;
+    camera.setViewOffset(w, h, 0, -h * shift, w, h);
     camera.updateProjectionMatrix();
   }
   window.addEventListener('resize', resize);

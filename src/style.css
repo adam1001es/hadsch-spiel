@@ -163,7 +163,8 @@ body.has-hold #autoBtn { bottom: calc(var(--sb) + 104px); }
 #panel.collapsed:not(.no-mission) #info, #panel.collapsed .task-list { display: none; }
 #panel.collapsed #mission { margin: 0; }
 #panel.collapsed #mission > span:nth-child(2) { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
-#panel.collapsed.no-mission #info { max-height: 2.9em; overflow: hidden; }
+#panel.collapsed.no-mission #info { display: none; }
+#panel.collapsed.no-mission .panel-body::before { content: 'ℹ︎  ▾'; display: block; font-size: 15px; color: var(--muted); }
 #panel:not(.collapsed) #mission .more { display: inline-block; transform: rotate(180deg); }
 #mission .more { font-style: normal; }
 #panel.unread #mission .n::before { content: ''; display: inline-block; width: 8px; height: 8px; margin-right: 5px; border-radius: 50%; background: #c0392b; vertical-align: 1px; }
