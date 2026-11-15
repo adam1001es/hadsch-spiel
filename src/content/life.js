@@ -5,7 +5,8 @@ export const BUILDYARD = {
   day: 'In der Wüste',
   sign: ['ورشة البناء', 'Sandstein-Bauhof →'],
   go: '🧱 Zum Sandstein-Bauhof fahren',
-  back: '🚌 Mit dem Bus zurück nach Mekka',
+  back: (medina) => `🚌 Mit dem Bus zurück nach ${medina ? 'Medina' : 'Mekka'}`,
+  backShort: (medina) => `Zurück nach ${medina ? 'Medina' : 'Mekka'}`,
   intro: 'Willkommen im Sandstein-Bauhof! Hier baust du frei: Häuser, Mauern, Brunnen, Türme. '
     + '<b>Tippe</b> auf den Boden oder auf einen Stein, um daneben einen neuen Stein zu setzen (am Laptop: klicken). '
     + 'Mit dem Knopf <b>⛏ Abbauen</b> nimmst du Steine wieder weg. Neues Material holst du dir an den leuchtenden Stapeln am Rand '

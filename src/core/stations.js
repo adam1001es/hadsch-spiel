@@ -99,7 +99,6 @@ export function createStations(ctx) {
   const BONUS = [
     { title: 'In der Kaaba', day: 'Belohnung', go: () => { index = STATIONS.length; ctx.reward(); } },
     { title: 'Die Straßen von Mekka und Medina', day: 'Erleben', go: () => { index = STATIONS.length; ctx.city(); } },
-    { title: 'Sandstein-Bauhof (frei bauen)', day: 'Erleben', go: () => { index = STATIONS.length; ctx.bauhof(); } },
   ];
   ctx.bonus = BONUS;
 
@@ -143,7 +142,8 @@ export function createStations(ctx) {
   ctx.leaveKaaba = () => scene((c) => kaabaDoor.create(c, { dir: 'out', then: () => ctx.city() }));
   ctx.balloon = (where = 'mecca') => { ctx.stationIndex = 'balloon'; return scene((c) => balloon.create(c, { where })); };
   ctx.city = (from, where = 'mecca') => { ctx.stationIndex = 'city-' + where; return scene((c) => meccaCity.create(c, { from, where })); };
-  ctx.bauhof = (from = 'city') => { ctx.stationIndex = 'bauhof'; return scene((c) => buildyard.create(c, { from })); };
+  // Neue Bereiche des Lebensspiels erscheinen NICHT im Startmenü, sondern nur in der Welt (Wegweiser in Mekka/Medina)
+  ctx.bauhof = (from = 'mecca') => { ctx.stationIndex = 'bauhof'; return scene((c) => buildyard.create(c, { from })); };
   ctx.drive = (from, to) => { ctx.stationIndex = 'drive'; return scene((c) => drive.create(c, { from, to })); };
   ctx.backToEnding = () => { ctx.stationIndex = STATIONS.length; return scene(info.ending); };
 

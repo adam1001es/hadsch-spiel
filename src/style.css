@@ -310,9 +310,10 @@ body.fast #focusBlur { opacity: 1; }
 .cg-frame button { display: block; width: 100%; margin-top: 8px; }
 
 /* Knopf und Hinweise oben (unter Titel/Zielpfeil), damit sie die Figur unten in der Mitte nicht verdecken */
-#prompt { bottom: auto; top: calc(var(--stackH, 110px) + 62px); }
-#toast { bottom: auto; top: calc(var(--stackH, 110px) + 118px); }
-#hint { top: calc(var(--stackH, 110px) + 170px); transform: translateX(-50%); }
+/* --panelB = Unterkante der Infokarte: Knopf und Hinweise rutschen darunter, nie mitten in den Text */
+#prompt { bottom: auto; top: max(calc(var(--stackH, 110px) + 62px), calc(var(--panelB, 0px) + 10px)); }
+#toast { bottom: auto; top: max(calc(var(--stackH, 110px) + 118px), calc(var(--panelB, 0px) + 66px)); }
+#hint { top: max(calc(var(--stackH, 110px) + 170px), calc(var(--panelB, 0px) + 118px)); transform: translateX(-50%); }
 /* Handy: Aufgaben-/Infokarte zugeklappt nur als kleiner runder „i“-Knopf links (Aktionsknöpfe daneben) */
 @media (max-width: 700px) {
   #panel.collapsed { right: auto; display: flex; align-items: center; gap: 8px; padding: 0; background: transparent; border: 0; box-shadow: none; max-width: calc(100vw - var(--sl) - var(--sr) - 60px); }
@@ -324,8 +325,8 @@ body.fast #focusBlur { opacity: 1; }
   #panel.collapsed #actions button { padding: 7px 11px; font-size: 13px; background: var(--panel); white-space: nowrap; }
   #panel.collapsed #actions button.primary { background: var(--green); }
   #panel.collapsed .panel-body:not(:has(#actions button)) { display: none; }
-  #prompt, #toast { top: calc(var(--stackH, 110px) + 56px); }
-  #toast { top: calc(var(--stackH, 110px) + 112px); }
+  #prompt, #toast { top: max(calc(var(--stackH, 110px) + 56px), calc(var(--panelB, 0px) + 10px)); }
+  #toast { top: max(calc(var(--stackH, 110px) + 112px), calc(var(--panelB, 0px) + 66px)); }
 }
 
 #coach.prompt { bottom: auto; top: calc(var(--stackH, 110px) + 120px); }

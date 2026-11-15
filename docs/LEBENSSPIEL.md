@@ -87,10 +87,13 @@ jeden Ort zu Fuß, mit Bus, Taxi, eigenem Auto oder Ballon; Schilder an der Stra
 | **Ausflugsziele** | Jabal an-Nur, Quba, Uhud | hinfahren/hinwandern, Lerntext lesen | Lernen |
 | **Himmel** | überall | Ballonflug zwischen den Städten | Reisen |
 
+**Menü-Regel (Nutzer):** Im Startmenü steht nur „Die Straßen von Mekka und Medina“. Alle neuen Bereiche erscheinen **in der Welt**
+(leuchtende Wegweiser in Mekka und Medina, später an der Autobahn) – nie als eigener Menüpunkt.
+
 Ein gemeinsames Fundament für alle Zonen: `interact.js` (Randleuchten), Geld/Hasanat (`hp-life`), Multiplayer (`multi.js`),
 dieselbe Spielfigur und Steuerung. Neue Zonen hängen sich als Ort in der Hejaz-Welt an, nicht als eigenes Spiel.
 
-**Sandstein-Bauhof (gebaut):** `src/stations/buildyard.js`, Texte in `src/content/life.js`. Raster 48×48 Zellen à 0,5 m, 24 Lagen;
+**Sandstein-Bauhof (gebaut):** `src/stations/buildyard.js`, Texte in `src/content/life.js`. Raster 240×240 Zellen à 0,5 m (120 × 120 m), 48 Lagen (24 m), Speicherstand v2 (v1 wird in die Mitte übernommen);
 6 Baustoffe mit eigenen Canvas-Texturen (Sandstein, Lehmziegel, Korallenstein, Marmor, Palmholz, Fliese), ein InstancedMesh je Baustoff.
 Tippen/Klicken = Stein setzen bzw. abbauen (Voxel-Strahl, Reichweite 12 m), Stapel am Rand leuchten (Material nehmen), Figur steigt eine
 Stufe hoch, Mauern halten auf. Speichern: `hp-bauhof` bzw. `hp-bauhof-raum-<Code>`. Zusammen bauen nur im privaten Raum:

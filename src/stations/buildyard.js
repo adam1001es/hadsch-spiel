@@ -13,8 +13,9 @@ import * as sfx from '../core/sfx.js';
 // Stapeln holen oder unten rechts wählen. Man kann auf Steine steigen (eine Stufe = ein Stein), höhere Mauern halten auf.
 // Speichern: localStorage „hp-bauhof“ (eigener Bau) bzw. „hp-bauhof-raum-<Code>“ (gemeinsamer Bau im privaten Raum).
 // Zusammen spielen: Im privaten Raum bauen alle am selben Bau (Ereignisse über multi.send), öffentlich baut jeder für sich.
-const S = 0.5, N = 48, H = 24, HALF = (N * S) / 2; // Steingröße, Raster N×N, max. H Lagen (12 m)
-const CAP = 2400, MAX = 8000; // Instanzen je Material, Steine insgesamt
+const S = 0.5, N = 240, H = 48, HALF = (N * S) / 2; // Steingröße, Raster N×N (120 × 120 m), max. H Lagen (24 m)
+const CAP = 6000, MAX = 24000; // Instanzen je Material, Steine insgesamt
+const N1 = 48, H1 = 24; // Raster der ersten Version (Speicherstand v1 wird in die Mitte übernommen)
 const key = (ix, iy, iz) => ix + iz * N + iy * N * N;
 const unkey = (k) => [k % N, Math.floor(k / (N * N)), Math.floor(k / N) % N];
 const cell = (v) => Math.floor((v + HALF) / S);
@@ -66,7 +67,7 @@ export function create(ctx, { from } = {}) {
   sky.setHour(16.2); sky.state.shadowSize = 50;
   ui.el.day.textContent = T.day; ui.el.title.textContent = T.title;
 
-  const h = heightFn({ r0: 70, r1: 420, amp: 140 });
+  const h = heightFn({ r0: HALF + 50, r1: HALF + 480, amp: 150 });
   buildTerrain(world, h);
   // Bauplatz: festgestampfter Boden mit feinem Raster (zeigt, wo Steine hinkommen)
   { const c = document.createElement('canvas'); c.width = c.height = 128; const g = c.getContext('2d');
@@ -107,14 +108,20 @@ export function create(ctx, { from } = {}) {
   const store = () => (ctx.multi?.room ? 'hp-bauhof-raum-' + ctx.multi.room : 'hp-bauhof');
   let storeKey = store(), saveT = 0;
   const encode = () => [...blocks].map(([k, m]) => k.toString(36) + '.' + m).join(',');
-  function load(str) {
+  function load(str, v = 2) {
     blocks.clear(); mats.forEach((_, i) => dirty.add(i));
-    for (const p of (str || '').split(',')) { if (!p) continue; const [k, m] = p.split('.'); const kk = parseInt(k, 36), mm = +m; if (kk >= 0 && kk < N * N * H && mats[mm]) blocks.set(kk, mm); }
+    const off = (N - N1) / 2;
+    for (const p of (str || '').split(',')) {
+      if (!p) continue; const [k, m] = p.split('.'); let kk = parseInt(k, 36); const mm = +m;
+      if (v === 1) { if (!(kk >= 0 && kk < N1 * N1 * H1)) continue; kk = key((kk % N1) + off, Math.floor(kk / (N1 * N1)), (Math.floor(kk / N1) % N1) + off); } // alter, kleiner Bauhof → in die Mitte
+      if (kk >= 0 && kk < N * N * H && mats[mm]) blocks.set(kk, mm);
+    }
     rebuild();
   }
-  const readSave = (k) => { try { const o = JSON.parse(localStorage.getItem(k) || 'null'); return o && o.v === 1 ? o.b : ''; } catch { return ''; } };
-  const save = () => { try { localStorage.setItem(storeKey, JSON.stringify({ v: 1, b: encode() })); } catch { /* voll/privat */ } };
-  load(readSave(storeKey));
+  const readSave = (k) => { try { const o = JSON.parse(localStorage.getItem(k) || 'null'); return o && (o.v === 1 || o.v === 2) ? o : { v: 2, b: '' }; } catch { return { v: 2, b: '' }; } };
+  const loadSave = (k) => { const o = readSave(k); load(o.b, o.v); };
+  const save = () => { try { localStorage.setItem(storeKey, JSON.stringify({ v: 2, b: encode() })); } catch { /* voll/privat */ } };
+  loadSave(storeKey);
 
   function setBlock(k, m, { send = true } = {}) {
     const old = blocks.get(k);
@@ -126,21 +133,23 @@ export function create(ctx, { from } = {}) {
   }
 
   // ---------- Umgebung ----------
-  palms(world, [[-20, 0, -14, 1, 0.9], [-21, 0, 12, 2, 0.8], [19, 0, 16, 3, 0.85], [21, 0, -18, 1, 0.8], [3, 0, -22, 2, 0.75]]);
-  const coach = bus(world, -18, 2, 0);
-  sign(world, -15, -6, Math.PI / 2, T.sign, { w: 3.2, h: 1.1, y: 2.6 });
-  // Werkzeughütte mit Infotafel
-  const hut = new THREE.Group(); hut.position.set(16, 0, -8); world.add(hut);
+  // Eingang im Westen: Bushaltestelle, Wegweiser, Werkzeughütte mit Infotafel, Materialstapel; Palmen rund um den großen Platz
+  const W = -HALF; // Westrand
+  const pl = []; for (let i = 0; i < 28; i++) { const a = (i / 28) * Math.PI * 2, rr = HALF * 1.18 + (i % 3) * 3; if (Math.cos(a) < -0.8) continue; pl.push([Math.cos(a) * rr, 0, Math.sin(a) * rr, 1 + (i % 3), 0.75 + (i % 4) * 0.05]); }
+  palms(world, pl);
+  const coach = bus(world, W - 12, 2, 0);
+  sign(world, W - 5, -7, Math.PI / 2, T.sign, { w: 3.2, h: 1.1, y: 2.6 });
+  const hut = new THREE.Group(); hut.position.set(W - 6, 0, -16); world.add(hut);
   { const b = new THREE.Mesh(new THREE.BoxGeometry(3, 2.6, 3), mats[1].mat); b.position.y = 1.3; b.castShadow = b.receiveShadow = true; hut.add(b);
     const roof = new THREE.Mesh(new THREE.BoxGeometry(3.6, 0.2, 3.6), mats[4].mat); roof.position.y = 2.7; roof.castShadow = true; hut.add(roof);
-    const door = new THREE.Mesh(new THREE.PlaneGeometry(1, 1.9), mats[4].mat); door.position.set(-1.51, 0.95, 0); door.rotation.y = -Math.PI / 2; hut.add(door); }
-  const board = new THREE.Group(); board.position.set(14.2, 0, -5.4); board.rotation.y = -Math.PI / 2; world.add(board);
+    const door = new THREE.Mesh(new THREE.PlaneGeometry(1, 1.9), mats[4].mat); door.position.set(1.51, 0.95, 0); door.rotation.y = Math.PI / 2; hut.add(door); }
+  const board = new THREE.Group(); board.position.set(W - 3.6, 0, -13.2); board.rotation.y = Math.PI / 2; world.add(board);
   { const post = new THREE.Mesh(new THREE.BoxGeometry(0.12, 1.4, 0.12), mats[4].mat); post.position.y = 0.7; board.add(post);
     const pl = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.9, 0.08), new THREE.MeshStandardMaterial({ color: 0x2c3034, roughness: 0.8 })); pl.position.y = 1.6; board.add(pl); }
 
   // Materialstapel am Rand (2×2×2 Steine), leuchten in der Nähe → Material nehmen
   const piles = mats.map((m, i) => {
-    const g = new THREE.InstancedMesh(geo, m.mat, 8); const x = -6.25 + i * 2.5, z = HALF + 1.6;
+    const g = new THREE.InstancedMesh(geo, m.mat, 8); const x = W - 2.2, z = 4 + i * 2.5;
     for (let j = 0; j < 8; j++) { dm.position.set(x + ((j & 1) - 0.5) * S, ((j >> 2) + 0.5) * S, z + (((j >> 1) & 1) - 0.5) * S); dm.updateMatrix(); g.setMatrixAt(j, dm.matrix); }
     g.castShadow = true; world.add(g); return { g, x, z };
   });
@@ -167,13 +176,13 @@ export function create(ctx, { from } = {}) {
     }
   } };
   const colliders = [
-    { type: 'rect', x0: -32, x1: 32, z0: -32, z1: 32 },
-    coach.collider, { type: 'box', x: 16, z: -8, hw: 1.5, hd: 1.5 },
+    { type: 'rect', x0: -HALF - 22, x1: HALF + 12, z0: -HALF - 12, z1: HALF + 12 },
+    coach.collider, { type: 'box', x: W - 6, z: -16, hw: 1.5, hd: 1.5 },
     ...piles.map((p) => ({ type: 'box', x: p.x, z: p.z, hw: 0.55, hd: 0.55 })),
     wall,
   ];
-  const start = from === 'city' || !from ? { x: -13.5, z: 0, h: Math.PI / 2 } : { x: 0, z: HALF + 4, h: Math.PI };
-  const player = createPlayer(ctx, { x: start.x, z: start.z, heading: start.h, color: ctx.profile?.gender === 'f' ? 0x2c3a4a : 0xf6f4ee, speed: 2.2, fastSpeed: 3.6, colliders, ground, surface: 'sand' });
+  const start = { x: W - 6, z: 0, h: Math.PI / 2 };
+  const player = createPlayer(ctx, { x: start.x, z: start.z, heading: start.h, color: ctx.profile?.gender === 'f' ? 0x2c3a4a : 0xf6f4ee, speed: 3, fastSpeed: 6, colliders, ground, surface: 'sand' }); // großer Platz: zügiger gehen
   me = player;
   const life = createLife(ctx, { kind: 'desert' });
 
@@ -224,7 +233,7 @@ export function create(ctx, { from } = {}) {
     const step = dd.map((v) => (v > 0 ? 1 : -1)), tD = dd.map((v) => Math.abs(1 / (v || 1e-9)));
     const tM = dd.map((v, a) => (v > 0 ? (c[a] + 1 - p[a]) : (p[a] - c[a])) * tD[a]);
     let prev = null, t = t0;
-    for (let i = 0; i < 160; i++) {
+    for (let i = 0; i < 500; i++) {
       if (blocks.has(key(c[0], c[1], c[2]))) return { hit: key(c[0], c[1], c[2]), place: prev };
       prev = key(c[0], c[1], c[2]);
       const a = tM[0] < tM[1] ? (tM[0] < tM[2] ? 0 : 2) : (tM[1] < tM[2] ? 1 : 2);
@@ -261,8 +270,8 @@ export function create(ctx, { from } = {}) {
 
   // ---------- Leuchtende Dinge (Randleuchten) ----------
   const interact = createInteract(ctx, player);
-  piles.forEach((p, i) => interact.add({ obj: p.g, color: 'gold', x: p.x, z: p.z - 1.1, radius: 5, near: 1.6, label: '🧱 ' + T.take(mats[i].name), key: 'pile' + i, run() { pick(i); } }));
-  interact.add({ obj: coach.group, color: 'blue', radius: 10, near: 2.8, push: 0.04, x: -14.3, z: 0, label: T.back, key: 'bus', run() { sfx.bus?.(); ctx.city?.('bauhof'); } });
+  piles.forEach((p, i) => interact.add({ obj: p.g, color: 'gold', x: p.x + 1.1, z: p.z, radius: 5, near: 1.6, label: '🧱 ' + T.take(mats[i].name), key: 'pile' + i, run() { pick(i); } }));
+  interact.add({ obj: coach.group, color: 'blue', radius: 10, near: 2.8, push: 0.04, x: W - 8.3, z: 0, label: T.back(from === 'medina'), key: 'bus', run() { sfx.bus?.(); ctx.city?.('bauhof', from === 'medina' ? 'medina' : 'mecca'); } });
   interact.add({ obj: board, color: 'gold', radius: 5, near: 2, label: '📜 Tafel lesen', key: 'board', run() { ui.info(`<p>${T.fact}</p>`); ui.el.panel.classList.remove('collapsed'); } });
   ctx.interact = interact;
   ctx.debug = { aim, blocks, target, reach, setBlock, key }; // für automatische Tests
@@ -282,7 +291,7 @@ export function create(ctx, { from } = {}) {
 
   ui.el.panel.classList.remove('collapsed');
   ui.info(`<p>${T.intro}</p><p class="tr">${mobile ? '' : T.keys}</p>`);
-  ui.actions([{ label: 'Zurück nach Mekka', onClick: () => ctx.city?.('bauhof') }]);
+  ui.actions([{ label: T.backShort(from === 'medina'), onClick: () => ctx.city?.('bauhof', from === 'medina' ? 'medina' : 'mecca') }]);
 
   return {
     update(dt) {
@@ -293,7 +302,7 @@ export function create(ctx, { from } = {}) {
       if (saveT > 0) { saveT -= dt; if (saveT <= 0) save(); }
       // privater Raum gewechselt → anderen Speicherstand laden, neu abgleichen
       const r = multi?.room || '';
-      if (r !== room) { save(); room = r; storeKey = store(); load(readSave(storeKey)); synced = false; askT = 0; }
+      if (r !== room) { save(); room = r; storeKey = store(); loadSave(storeKey); synced = false; askT = 0; }
       if (room && !synced) {
         askT -= dt;
         const others = multi.status().others.filter((o) => o.s === 'bauhof');

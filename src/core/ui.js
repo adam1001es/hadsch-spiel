@@ -41,6 +41,9 @@ export function createUI() {
     el.panelToggle.hidden = collapsed;
     el.panelToggle.textContent = 'zuklappen ▴';
     void body;
+    // Unterkante der Infokarte → Aktionsknopf/Hinweise darunter (nicht mitten im Text)
+    const pb = el.panel.hidden || el.panel.classList.contains('empty') ? 0 : el.panel.getBoundingClientRect().bottom;
+    root.setProperty('--panelB', Math.round(pb) + 'px');
   };
   // Infokarte antippen: auf-/zuklappen (nicht beim Tippen auf Knöpfe)
   el.panel.addEventListener('click', (e) => {
@@ -55,7 +58,7 @@ export function createUI() {
     const now = performance.now(); if (!moving) moveT = 0; else if (!moveT) moveT = now; // Echtzeit (auch bei wenigen Bildern pro Sekunde)
     if (moveT && now - moveT > 1200 && !el.panel.classList.contains('collapsed') && performance.now() - manualOpen > 6000) { el.panel.classList.add('collapsed'); layout(); }
   };
-  new ResizeObserver(layout).observe(hud);
+  const ro = new ResizeObserver(layout); ro.observe(hud); ro.observe(el.panel);
   window.addEventListener('resize', layout);
 
   el.prompt.addEventListener('click', () => { if (!seen.prompt) { markSeen('prompt'); ui.coach(null); } const f = promptFn; if (f) f(); });
