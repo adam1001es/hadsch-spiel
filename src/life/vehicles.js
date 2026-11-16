@@ -95,6 +95,13 @@ export function makeVehicle(world, kind, { shadows = true, driver = false } = {}
         if (!obj) return null;
         obj.updateMatrixWorld(true); obj.geometry?.computeBoundingBox();
         const bb = obj.isMesh ? obj.geometry.boundingBox.clone().applyMatrix4(obj.matrixWorld) : new THREE.Box3().setFromObject(obj), c = bb.getCenter(new THREE.Vector3());
+        if (obj.isMesh) { // Nabe = Mitte des kleinsten Kreises um alle Punkte (Blattspitzen liegen gleich weit von der Nabe)
+          const pa = obj.geometry.attributes.position, pts = [], q = new THREE.Vector3();
+          for (let i = 0; i < pa.count; i += Math.max(1, (pa.count / 600) | 0)) { q.fromBufferAttribute(pa, i).applyMatrix4(obj.matrixWorld); pts.push([q.x, q.z]); }
+          let cx = c.x, cz = c.z;
+          for (let it = 1; it < 400; it++) { let far = pts[0], fd = -1; for (const p of pts) { const d = (p[0] - cx) ** 2 + (p[1] - cz) ** 2; if (d > fd) { fd = d; far = p; } } cx += (far[0] - cx) / (it + 1); cz += (far[1] - cz) / (it + 1); }
+          c.x = cx; c.z = cz;
+        }
         const parent = obj.parent, piv = new THREE.Group(); parent.add(piv); piv.position.copy(parent.worldToLocal(c.clone())); piv.updateMatrixWorld(true); piv.attach(obj);
         return { piv, c: c.applyMatrix4(inv) };
       };

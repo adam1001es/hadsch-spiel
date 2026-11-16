@@ -37,14 +37,14 @@ const LAYOUT = {
     bx: -55, plaza: { x0: -150, x1: 230, z0: 205, z1: 263 }, roadZ: 470, endZ: 600, square: { x0: -150, x1: 40 },
     hotelH: [90, 170], style: 'mecca', alt: 'glass',
     dates: [-66, 330], zamzam: [20, 232], pigeons: [-100, 234], balloon: [-100, 565], bus: [0, 495], bauhof: [22, 494], haramInfo: [-20, 212],
-    gate: [-35, 209], mats: [10, 236], bounds: { x0: -420, x1: 420, z0: -240, z1: 680 },
+    gate: [-35, 209], mats: [10, 236], bounds: { x0: -420, x1: 1250, z0: -240, z1: 680 },
     mosques: [{ x: -128, z: 578, ry: Math.PI / 2, spot: [-114, 578] }, { x: 85, z: 448, ry: 0, spot: [85, 460], court: { x0: 74, x1: 96, z0: 456, z1: 466 } }],
   },
   medina: {
     bx: 0, plaza: { x0: -225, x1: 225, z0: 113, z1: 190 }, roadZ: 430, endZ: 560, square: { x0: -120, x1: 120 },
     hotelH: [45, 90], style: 'medina', alt: 'medina',
     dates: [-11, 300], zamzam: [40, 160], pigeons: [-70, 160], balloon: [-70, 525], bus: [40, 455], bauhof: [62, 454], haramInfo: [24, 118],
-    gate: [40, 115], mats: [-30, 128], bounds: { x0: -320, x1: 320, z0: -260, z1: 600 },
+    gate: [40, 115], mats: [-30, 128], bounds: { x0: -320, x1: 1250, z0: -260, z1: 600 },
     mosques: [{ x: 100, z: 530, ry: -Math.PI / 2, spot: [86, 530] }, { x: 100, z: 408, ry: 0, spot: [100, 420], court: { x0: 89, x1: 111, z0: 416, z1: 426 } }],
   },
 };

@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { ROADTRIP as T } from '../content/life.js';
 import { buildHejaz, roadX, mountainX, desertX, VILLAGES, D, REST_X, REST_Z } from '../world/hejaz.js';
-import { sign, palms, mosque } from '../world/props.js';
+import { sign, palms, mosque, lamps } from '../world/props.js';
 import { createTowers, cityNight } from '../world/cityscape.js';
 import { createLife } from '../world/life.js';
 import { createPlayer } from '../core/player.js';
@@ -21,7 +21,12 @@ const tangent = (path, z) => { const dx = path(z - 2) - path(z + 2); const l = M
 
 function stripes(kind) {
   const c = document.createElement('canvas'); c.width = 64; c.height = 256; const g = c.getContext('2d');
-  if (kind === 'asphalt') {
+  if (kind === 'highway') { // 4 Spuren: weiße Ränder, gestrichelte Spurlinien, gelbe Doppellinie in der Mitte (feine Linien, 256 px breit)
+    c.width = 256; g.fillStyle = '#4f5054'; g.fillRect(0, 0, 256, 256);
+    for (let i = 0; i < 1500; i++) { g.fillStyle = `rgba(${Math.random() < 0.5 ? '255,255,255' : '0,0,0'},.05)`; g.fillRect(Math.random() * 256, Math.random() * 256, 2, 2); }
+    g.fillStyle = '#eeeeea'; g.fillRect(4, 0, 2.5, 256); g.fillRect(249.5, 0, 2.5, 256); g.fillRect(63, 0, 2, 110); g.fillRect(191, 0, 2, 110);
+    g.fillStyle = '#e9c046'; g.fillRect(124.5, 0, 2, 256); g.fillRect(129.5, 0, 2, 256);
+  } else if (kind === 'asphalt') {
     g.fillStyle = '#5a5b5f'; g.fillRect(0, 0, 64, 256);
     for (let i = 0; i < 500; i++) { g.fillStyle = `rgba(${Math.random() < 0.5 ? '255,255,255' : '0,0,0'},.06)`; g.fillRect(Math.random() * 64, Math.random() * 256, 2, 2); }
     g.fillStyle = '#eeeeea'; g.fillRect(2, 0, 2, 256); g.fillRect(60, 0, 2, 256); g.fillStyle = '#e9c046'; g.fillRect(31, 0, 2, 150);
@@ -51,10 +56,20 @@ export function create(ctx, { from = 'mecca', to = 'medina', vehicle = 'sedan', 
   ui.el.day.textContent = T.day; ui.el.title.textContent = T.title(to);
   sky.state.shadowSize = 90;
   const land = buildHejaz(world, engine, { pilgrims: false });
+  let hwLamps = [];
 
   // ---------- Strecken ----------
   const asphalt = new THREE.MeshStandardMaterial({ map: stripes('asphalt'), roughness: 0.9, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
   const piste = new THREE.MeshStandardMaterial({ map: stripes('piste'), roughness: 1, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
+  const hwMat = new THREE.MeshStandardMaterial({ map: stripes('highway'), roughness: 0.9, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -3 });
+  ribbon(world, roadX, -420, -D + 640, 22, hwMat, land.ground, 8); // Autobahn wie in der Stadt: breit, Spuren, Markierungen
+  // Leitplanken und Laternen entlang der Autobahn
+  { const rail = []; const LL = []; const glowL = [];
+    for (let z = -470; z > -D + 690; z -= 12) { const t = tangent(roadX, z); for (const s2 of [-1, 1]) { const x = roadX(z) + t.z * s2 * 11.6, zz = z - t.x * s2 * 11.6; rail.push([x, land.ground(x, zz), zz, Math.atan2(t.x, t.z)]); } }
+    for (let z = -480; z > -D + 700; z -= 55) { const t = tangent(roadX, z), s2 = ((z / 55) | 0) % 2 ? 1 : -1, x = roadX(z) + t.z * s2 * 12.4, zz = z - t.x * s2 * 12.4; LL.push([x, land.ground(x, zz), zz, Math.atan2(t.x, t.z) + (s2 > 0 ? -Math.PI / 2 : Math.PI / 2)]); }
+    const rg = new THREE.InstancedMesh(new THREE.BoxGeometry(0.12, 0.35, 12.2).translate(0, 0.6, 0), new THREE.MeshStandardMaterial({ color: 0xc9ccd0, metalness: 0.7, roughness: 0.35 }), rail.length);
+    rail.forEach(([x, y, z, h], i) => { dm.position.set(x, y, z); dm.rotation.set(0, h, 0); dm.scale.setScalar(1); dm.updateMatrix(); rg.setMatrixAt(i, dm.matrix); }); world.add(rg);
+    lamps(world, LL, glowL); hwLamps = glowL; }
   ribbon(world, mountainX, -720, -D + 920, 9, asphalt, land.ground);
   ribbon(world, desertX, -720, -D + 920, 10, piste, land.ground);
 
@@ -161,7 +176,7 @@ export function create(ctx, { from = 'mecca', to = 'medina', vehicle = 'sedan', 
   const noLand = (x, z) => (Math.hypot(x, z) < 240 ? 'Hier nicht landen – über der Kaaba und der Haram wird aus Respekt nicht gelandet.' : Math.abs(x) < 165 && Math.abs(z + D) < 125 ? 'Hier nicht landen – auf der Prophetenmoschee wird aus Respekt nicht gelandet.' : null);
   // Karte: Strecken als kurze Abschnitte
   const roadRects = [];
-  for (const path of [roadX, mountainX, desertX]) for (let z = 200; z > -D - 300; z -= 40) { const x = path(z); roadRects.push({ x0: x - 5, x1: x + 5, z0: z - 22, z1: z + 22 }); }
+  for (const path of [roadX, mountainX, desertX]) for (let z = 200; z > -D - 300; z -= 12) { const x = path(z), w = path === roadX ? 11 : 6; roadRects.push({ x0: x - w, x1: x + w, z0: z - 8, z1: z + 8 }); }
   const map = showMinimap(ctx, {
     title: 'Karte · Mekka ↔ Medina', city: 'mecca', bounds: { x0: -1100, x1: 1100, z0: -D - 400, z1: 500 },
     roads: roadRects, blocks: colliders.filter((c) => c.type === 'box').map((c) => ({ x: c.x, z: c.z, w: c.hw * 2, d: c.hd * 2 })),
@@ -182,7 +197,7 @@ export function create(ctx, { from = 'mecca', to = 'medina', vehicle = 'sedan', 
       prayer.update(dt);
       player.update(dt);
       borrow.update(dt);
-      cityNight.value = clock.night; for (const m of glowWin) m.emissiveIntensity = clock.night * 1.6;
+      cityNight.value = clock.night; for (const m of glowWin) m.emissiveIntensity = clock.night * 1.6; for (const m of hwLamps) m.emissiveIntensity = 0.3 + clock.night * 2.2;
       land.update(dt); life.update(dt); interact.update(dt); map.update();
       const D2 = borrow.drive, px = player.pos.x, pz = player.pos.z;
       // Parkours: durch den nächsten Ring fahren
