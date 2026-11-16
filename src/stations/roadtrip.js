@@ -3,6 +3,7 @@ import { ROADTRIP as T } from '../content/life.js';
 import { buildHejaz, roadX, mountainX, desertX, VILLAGES, D, REST_X, REST_Z } from '../world/hejaz.js';
 import { sign, palms, mosque, lamps } from '../world/props.js';
 import { createTowers, cityNight } from '../world/cityscape.js';
+import { tunnelPortal } from '../world/tunnel.js';
 import { createLife } from '../world/life.js';
 import { createPlayer } from '../core/player.js';
 import { createInteract } from '../life/interact.js';
@@ -80,9 +81,9 @@ export function create(ctx, { from = 'mecca', to = 'medina', vehicle = 'sedan', 
     const hd = Math.atan2(t.x * dir, t.z * dir); // Fahrtrichtung, in die die Schanze ansteigt
     ramps.push({ x, z: zz, h: hd, L, H: Hh, W, y0: land.ground(x, zz) });
   };
-  for (let z = -1000; z > -2600; z -= 160) addRamp(desertX, z, 0, ((z / 160) | 0) % 2 ? 1 : -1, 12, 2.6 + ((-z / 160) % 3) * 0.6);
-  for (const z of [-900, -1350, -1900, -2350]) addRamp(roadX, z, 14, z % 2 ? 1 : -1, 14, 3.5, 7);
-  for (const z of [-1250, -2200]) addRamp(mountainX, z, 0, 1, 10, 1.8);
+  for (let z = -1000; z > -D + 900; z -= 170) addRamp(desertX, z, 0, ((z / 160) | 0) % 2 ? 1 : -1, 12, 2.6 + ((-z / 160) % 3) * 0.6);
+  for (const z of [0.18, 0.33, 0.5, 0.66, 0.8].map((f) => -D * f)) addRamp(roadX, z, 15.5, z % 2 ? 1 : -1, 14, 3.5, 7);
+  for (const z of [-D * 0.3, -D * 0.62]) addRamp(mountainX, z, 0, 1, 10, 1.8);
   const rampH = (x, z) => {
     let best = -1e9;
     for (const r of ramps) {
@@ -91,7 +92,9 @@ export function create(ctx, { from = 'mecca', to = 'medina', vehicle = 'sedan', 
     }
     return best;
   };
-  const ground = (x, z) => Math.max(land.ground(x, z), rampH(x, z));
+  // Fahrbahnen liegen 0,3 m über dem Gelände: auf der Straße fährt man auf der Straße (nicht darin eingesunken)
+  const onRoad = (x, z) => Math.abs(x - roadX(z)) < 11.5 || Math.abs(x - mountainX(z)) < 4.9 || Math.abs(x - desertX(z)) < 5.4;
+  const ground = (x, z) => Math.max(land.ground(x, z) + (onRoad(x, z) ? 0.3 : 0), rampH(x, z));
   { // Schanzen sichtbar: Keil mit gelb-schwarzer Kante
     const c = document.createElement('canvas'); c.width = 128; c.height = 32; const g = c.getContext('2d');
     for (let i = 0; i < 8; i++) { g.fillStyle = i % 2 ? '#1b1b1b' : '#f2c230'; g.beginPath(); g.moveTo(i * 16, 32); g.lineTo(i * 16 + 16, 32); g.lineTo(i * 16 + 32, 0); g.lineTo(i * 16 + 16, 0); g.fill(); }
@@ -134,6 +137,9 @@ export function create(ctx, { from = 'mecca', to = 'medina', vehicle = 'sedan', 
     const sg = sign(world, v.path(v.z) + Math.sign(v.side) * 7, v.z + 8, Math.sign(v.side) > 0 ? -Math.PI / 2 : Math.PI / 2, ['قرية', v.name], { w: 3.4, h: 1, y: 2.6 });
     sg.position.y = land.ground(sg.position.x, sg.position.z);
   }
+  // Tunnel an beiden Enden: hinein = in die Stadt
+  tunnelPortal(world, { x: roadX(MEC_END), y: land.ground(roadX(MEC_END), MEC_END), z: MEC_END, ry: Math.PI, width: 24, lines: ['مكة المكرمة', 'Tunnel · Mekka'] });
+  tunnelPortal(world, { x: roadX(MED_END), y: land.ground(roadX(MED_END), MED_END), z: MED_END, ry: 0, width: 24, lines: ['المدينة المنورة', 'Tunnel · Medina'] });
   // Wegweiser an den Abzweigungen
   for (const [z, lines, ry] of [[-735, T.fork, Math.PI], [-D + 905, T.forkBack, 0]]) { const x = roadX(z) + 11; const sg = sign(world, x, z, ry, lines, { w: 7.5, h: 1.8, y: 3.4 }); sg.position.y = land.ground(x, z); }
 
@@ -150,7 +156,7 @@ export function create(ctx, { from = 'mecca', to = 'medina', vehicle = 'sedan', 
   const hud = document.createElement('div'); hud.id = 'tripHud'; document.body.appendChild(hud);
 
   // ---------- Spielfigur und Fahrzeug ----------
-  const start = at === 'rest' ? { x: roadX(REST_Z) + (to === 'medina' ? -3.5 : 3.5), z: REST_Z } : to === 'medina' ? { x: roadX(-630) - 3.5, z: -630 } : { x: roadX(MED_END + 70) + 3.5, z: MED_END + 70 } // Fehler behoben: Start lag in Medina → sofort wieder angekommen;
+  const start = at === 'rest' ? { x: roadX(REST_Z) + (to === 'medina' ? -3.5 : 3.5), z: REST_Z } : to === 'medina' ? { x: roadX(-540) - 3.5, z: -540 } : { x: roadX(MED_END + 70) + 3.5, z: MED_END + 70 } // Fehler behoben: Start lag in Medina → sofort wieder angekommen;
   const hd = to === 'medina' ? Math.PI : 0;
   const player = createPlayer(ctx, { x: start.x + 4, z: start.z, heading: hd, color: ctx.profile?.gender === 'f' ? 0x2c3a4a : 0x34506a, speed: 2.4, fastSpeed: 4.2, colliders, ground, surface: 'sand' });
   const life = createLife(ctx, { kind: 'desert' });

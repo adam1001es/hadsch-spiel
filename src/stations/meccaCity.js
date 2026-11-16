@@ -19,6 +19,7 @@ import { clock } from '../life/clock.js';
 import { createPrayer } from '../life/prayer.js';
 import { showMinimap } from '../life/minimap.js';
 import { createInteract } from '../life/interact.js';
+import { tunnelPortal } from '../world/tunnel.js';
 import { createBorrow } from '../life/borrow.js';
 import { BORROW } from '../content/life.js';
 import * as sfx from '../core/sfx.js';
@@ -83,7 +84,10 @@ export function create(ctx, { from, where = 'mecca' } = {}) {
   let s = medina ? 7 : 3; const rnd = () => (s = (s * 16807) % 2147483647) / 2147483647; // feste Zufallsfolge → Stadt sieht immer gleich aus
 
   // ---------- Gelände, Böden ----------
-  const h = heightFn({ r0: 900, r1: 1500, amp: 260 });
+  const hBase = heightFn({ r0: 900, r1: 1500, amp: 260 });
+  // Querstraße bis zu den Tunneln eben halten (Berge beginnen erst hinter den Tunnelportalen)
+  const sm = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+  const h = (x, z) => { const inX = sm(-505, -445, x) * (1 - sm(1225, 1285, x)), w = (1 - sm(14, 70, Math.abs(z - RZ - 10))) * inX; return hBase(x, z) * (1 - w); };
   { const tg = new THREE.Group(); tg.position.y = -0.08; world.add(tg); buildTerrain(tg, h, 3400); }
   const floorMat = (w, d, col = 0xf2eee6) => new THREE.MeshStandardMaterial({ ...pbr('marble_floor', [w / 1.5, d / 1.5]), color: col, roughness: 0.7 });
   const pave = (x0, x1, z0, z1, col, y = 0.03) => { const w = x1 - x0, d = z1 - z0, f = new THREE.Mesh(new THREE.PlaneGeometry(w, d).rotateX(-Math.PI / 2), floorMat(w, d, col)); f.position.set((x0 + x1) / 2, y, (z0 + z1) / 2); f.receiveShadow = true; world.add(f); };
@@ -144,7 +148,7 @@ export function create(ctx, { from, where = 'mecca' } = {}) {
   towers.build();
   // Häuser auf den Hügeln (Wohnviertel)
   city(world, { h, rIn: 300, rOut: 1300, n: mobile ? 350 : 650, seed: medina ? 5 : 2,
-    avoid: (x, z) => Math.hypot(x, z) < (medina ? 300 : 260) || (x > -420 && x < 420 && z > 100 && z < EZ + 80) });
+    avoid: (x, z) => (Math.abs(z - RZ - 10) < 45 && x > -500 && x < 1300) || Math.hypot(x, z) < (medina ? 300 : 260) || (x > -420 && x < 420 && z > 100 && z < EZ + 80) });
 
   // ---------- Straße mit Verkehr ----------
   let agents = null;
@@ -304,7 +308,7 @@ export function create(ctx, { from, where = 'mecca' } = {}) {
     pois: [...SPOTS.filter((sp) => poiIcon[sp.key]).map((sp) => ({ x: sp.x, z: sp.z, icon: poiIcon[sp.key], label: poiName[sp.key] })),
       ...L.mosques.map((m) => ({ x: m.spot[0], z: m.spot[1], icon: '🕌', label: m.name })), { x: L.mats[0], z: L.mats[1], icon: '🧎', label: 'Gebetsplatz' },
       { x: (medina ? 75 : 30) + 3, z: (medina ? 461 : 501) - 3, icon: '🚕', label: 'Taxi & Verleih' },
-      { x: 520, z: RZ + 10, icon: '🛣️', label: medina ? 'Autobahn nach Mekka' : 'Autobahn nach Medina' }],
+      { x: 1190, z: RZ + 10, icon: '🛣️', label: medina ? 'Tunnel → Mekka' : 'Tunnel → Medina' }],
   });
 
   // ---------- Fahrzeuge ausleihen (Amanah): im Verkehr anhalten oder am Taxistand den Fahrer fragen ----------
@@ -361,9 +365,13 @@ export function create(ctx, { from, where = 'mecca' } = {}) {
     };
     gantry(HW0 + 25, medina ? ['مكة المكرمة', 'Mekka · Autobahn →'] : ['المدينة المنورة', 'Medina · Autobahn →']);
     gantry(HW0 - 330, medina ? ['طريق مكة', '→ Autobahn nach Mekka'] : ['طريق المدينة', '→ Autobahn nach Medina']); }
+  // Tunnel an beiden Enden der Querstraße: hineinfahren = auf die Autobahn in die andere Stadt
+  const TUN = medina ? ['مكة المكرمة', 'Tunnel → Mekka'] : ['المدينة المنورة', 'Tunnel → Medina'];
+  tunnelPortal(world, { x: HW1, z: HWZ, ry: -Math.PI / 2, width: 24, lines: TUN });
+  tunnelPortal(world, { x: -420, z: HWZ, ry: Math.PI / 2, width: 24, lines: TUN });
   // mit dem eigenen Fahrzeug über die Autobahn angekommen: auf derselben Straße am Stadtrand, Richtung Stadt (Westen)
   let hwBusy = from === 'car';
-  if (from === 'car' && ctx.borrowed) borrow.arriveWith(ctx.borrowed.kind, HW1 - 90, HWZ + 4, -Math.PI / 2);
+  if (from === 'car' && ctx.borrowed) borrow.arriveWith(ctx.borrowed.kind, HW1 - 14, HWZ + 4, -Math.PI / 2); // kommt aus dem Tunnel
 
   ui.el.panel.classList.remove('collapsed');
   ui.info(`<p>${medina ? T.introMedina : T.intro}</p><p class="small">🗺️ Karte oben rechts antippen. ${U.note}</p>`);
@@ -385,8 +393,8 @@ export function create(ctx, { from, where = 'mecca' } = {}) {
       interact.update(dt); // Randleuchten + Aktionsknopf in der Nähe
       borrow.update(dt);
       // mit dem eigenen Fahrzeug über die Autobahn hinausgefahren → Fahrt in die andere Stadt
-      { const D = borrow.drive; if (D && hwBusy && D.x < HW1 - 200) hwBusy = false; // erst wieder auslösen, nachdem man in die Stadt hineingefahren ist
-        if (D && !hwBusy && !D.spec.air && D.x > HW1 - 40 && Math.abs(D.z - HWZ) < 60) { hwBusy = true; ui.toast(medina ? 'Auf der Autobahn nach Mekka …' : 'Auf der Autobahn nach Medina …', 2500); borrow.intercity(other); } }
+      { const D = borrow.drive; if (D && hwBusy && D.x < HW1 - 60) hwBusy = false; // erst wieder auslösen, nachdem man in die Stadt hineingefahren ist
+        if (D && !hwBusy && !D.spec.air && (D.x > HW1 - 8 || D.x < -414) && Math.abs(D.z - HWZ) < 14) { hwBusy = true; ui.toast(medina ? 'Durch den Tunnel auf die Autobahn nach Mekka …' : 'Durch den Tunnel auf die Autobahn nach Medina …', 2500); borrow.intercity(other); } }
       map.update();
       // Tauben: picken, weichen dem Spieler aus, kommen beim Füttern zusammen
       feed = Math.max(0, feed - dt);
