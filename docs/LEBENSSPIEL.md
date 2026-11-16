@@ -166,6 +166,19 @@ Fahrzeuge sind **leicht zu finden** und werden **ausgeliehen**, nicht gestohlen 
   in `rigged.js`/`player.js`. Multiplayer: `myState().v` = Fahrzeug, Mitspieler sitzen sichtbar im Fahrzeug.
   Taxistand: Mekka am Südplatz (30 | 501), Medina (75 | 461). Helikopter noch nicht eingebaut. Gute Taten: `hp-life.amanah`.
 
+### Wünsche des Nutzers zu Fahrzeugen und Freiheit (verbindlich)
+- **Einfache Steuerung**: beim Fahren vier große Knöpfe **Vor ▲, Zurück ▼, Links ◀, Rechts ▶** (Touch, gedrückt halten);
+  am Laptop W/A/S/D bzw. Pfeiltasten. Beim Helikopter/Ballon zusätzlich **Hoch** und **Runter**. Kein komplizierter Joystick nötig.
+- **Keine Sperren**: Die Figur darf zu Fuß und mit jedem Fahrzeug **überall** hin – keine unsichtbaren Wände, keine gesperrten
+  Straßen oder Bereiche, auch in die Wüste und auf die Berge (Motorrad/Geländewagen!). Nur echte Hindernisse (Gebäude) blockieren.
+- **Helikopter darf überall landen**, nur **nicht direkt auf der Kaaba und nicht auf der Prophetenmoschee** (dort sanft abweisen
+  mit kurzem Hinweis). Auch keine Landung mitten auf dem Mataf/in Moscheen (Respekt).
+- **Fahrzeuge immer in der Nähe**: Egal wo die Figur ist (Stadt, Autobahn, Wüste) – in wenigen Metern steht immer ein
+  E-Scooter, Fahrrad, Motorrad oder Auto bereit (nachrücken/erscheinen außerhalb des Blickfelds, wenn man sich entfernt).
+- **Fahrende Autos und Busse anhalten**: Knopf „✋ Anhalten & fragen“ → Fahrer hält, sagt kurz Ja (Amanah), man fährt selbst
+  weiter – siehe Abschnitt „Amanah-Ausleihe“. Immer schnell (1–2 s), keine langen Dialoge.
+- Immer wählbar: **selbst fahren** oder **automatisch fahren** (Ziel wählen).
+
 ### Hauptfigur (Stand)
 Junge/Mann: geriggte Tripo-Figur (`src/core/rigged.js`, Modelle `player_m*.glb`) in drei Kleidungen (Alltag, Ihram bedeckt, Ihram
 Schulter frei), Gehen aus der Datei, Stehen/Gebet/Sitzen/Dua/Werfen als eigene Haltungen. Für Fahrzeuge: Haltung `sit` verwenden bzw.
