@@ -305,7 +305,7 @@ export function create(ctx, { from, where = 'mecca' } = {}) {
   // ---------- Fahrzeuge ausleihen (Amanah): im Verkehr anhalten oder am Taxistand den Fahrer fragen ----------
   const ST = medina ? [75, 461] : [30, 501];
   sign(world, ST[0] + 10, ST[1] - 3.5, 0, BORROW.stand, { w: 3, h: 1, y: 2.6 });
-  const stands = [{ kind: medina ? 'suv' : 'sedan', x: ST[0], z: ST[1], ry: Math.PI }, { kind: medina ? 'minivan' : 'compact', x: ST[0] + 3.4, z: ST[1], ry: Math.PI }, { kind: 'motorbike', x: ST[0] + 6.4, z: ST[1], ry: Math.PI }];
+  const stands = [{ kind: medina ? 'suv' : 'sedan', x: ST[0], z: ST[1], ry: Math.PI }, { kind: medina ? 'minivan' : 'compact', x: ST[0] + 4.2, z: ST[1], ry: Math.PI }, { kind: 'motorbike', x: ST[0] + 8, z: ST[1], ry: Math.PI }];
   for (const s of stands) player.colliders.push({ type: 'box', x: s.x, z: s.z, hw: s.kind === 'motorbike' ? 0.5 : 1, hd: s.kind === 'motorbike' ? 1.1 : 2.3 });
   const roadRect = { x0: -420, x1: 420, z0: RZ, z1: RZ + 20 };
   const sideWay = (p) => p.z < RZ && p.z > RZ - 14 && Math.abs(p.x - bx) > BW; // Moschee-Vorplatz am Gehweg der Straße

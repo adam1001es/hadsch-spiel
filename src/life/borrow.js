@@ -54,7 +54,8 @@ export function createBorrow(ctx, opts) {
     const owner = mkDriver(s.x + ox, s.z + oz, s.ry + Math.PI / 2);
     const P = { veh, x: s.x, z: s.z, h: s.ry, owner, home: { x: s.x, z: s.z, h: s.ry }, src: 'stand' };
     parked.push(P);
-    interact.add({ obj: veh.root, color: 'blue', radius: 9, near: 3.6, x: s.x + ox * 1.6, z: s.z + oz * 1.6, key: 'stand-' + parked.length, label: () => (P.mine ? T.enter(veh.name) : T.ask), when: () => !drive && P.parked !== false, run: () => (P.mine ? enter(P) : ask(P)) });
+    const back = specOf(s.kind).len / 2 + 1.2; // Fragepunkt hinter dem Fahrzeug (eindeutig, auch wenn mehrere nebeneinander stehen)
+    interact.add({ obj: veh.root, color: 'blue', radius: 9, near: 2.4, x: s.x - Math.sin(s.ry) * back, z: s.z - Math.cos(s.ry) * back, key: 'stand-' + parked.length, label: () => (P.mine ? T.enter(veh.name) : T.ask), when: () => !drive && P.parked !== false, run: () => (P.mine ? enter(P) : ask(P)) });
   }
   // ---------- Verkehr: fahrende Fahrzeuge anhalten ----------
   if (traffic) for (const vh of traffic.vehicles) {
