@@ -126,6 +126,24 @@ WebSocket, HiveMQ; funktioniert im Mobilfunk und in Schul-WLANs; keine Namen, ke
 - Kein Wettbewerb gegeneinander mit Schaden, kein Stehlen – nur Kooperation und freundlicher Vergleich (z. B. Hasanat-Tafel).
 - Datenschutz: öffentlicher Server → nur Spieldaten, nie Namen; ein eigener Server für Schulen ist später möglich.
 
+### Fahrzeuge: selbst fahren oder automatisch (Wunsch des Nutzers)
+Der Nutzer liefert eigene 3D-Modelle (Tripo): **Autos, Helikopter, Fahrrad, E-Scooter** (dazu Bus und Ballon, schon vorhanden).
+Für **jedes** Fahrzeug gibt es immer zwei Möglichkeiten:
+- **Selbst steuern**: Joystick/WASD lenken, Gas/Bremse (Auto, Bus, Fahrrad, E-Scooter); Helikopter zusätzlich steigen/sinken
+  (Halten-Knopf wie beim Ballon). Fußgänger werden nie angefahren (automatisch bremsen/ausweichen).
+- **Automatisch fahren lassen**: Ziel wählen (z. B. „Nach Medina“, „Zur Masjid an-Nabawi“, „Zum Bauhof“), das Fahrzeug fährt
+  allein die Straße/Autobahn entlang (Helikopter/Ballon fliegen direkt), man kann sich umschauen; jederzeit übernehmen = selbst steuern.
+- Umschalten per Knopf „Selbst fahren / Automatisch“ (wie Autopilot im Hadsch-Teil, `createAutopilot` in `src/core/kit.js`).
+- Strecke Mekka ↔ Medina: Autobahn aus `src/world/hejaz.js` (`roadX(z)`) bzw. das Straßennetz der Städte (`createTraffic`).
+- Einsteigen über Randleuchten (Blau = fahren). Die Hauptfigur sitzt sichtbar im/auf dem Fahrzeug (Pose `sit`, Skelett in `src/core/rigged.js`).
+- Modelle verkleinern wie gehabt (`tools/convert_bus2.html`: Ausrichtung Front +z, Länge in Metern, ~10–15 Tsd. Flächen).
+- Multiplayer: Fahrzeug-Typ und Position mitsenden, andere sieht man im Fahrzeug.
+
+### Hauptfigur (Stand)
+Junge/Mann: geriggte Tripo-Figur (`src/core/rigged.js`, Modelle `player_m*.glb`) in drei Kleidungen (Alltag, Ihram bedeckt, Ihram
+Schulter frei), Gehen aus der Datei, Stehen/Gebet/Sitzen/Dua/Werfen als eigene Haltungen. Für Fahrzeuge: Haltung `sit` verwenden bzw.
+eine eigene Haltung „fahren“ (Hände am Lenker) in `DEF` ergänzen. Mädchen/Frau: noch die alte Figur (geriggte Version folgt vom Nutzer).
+
 ### Speichern
 Spielstand (Geld, Hasanat, Besitz, Position) in `localStorage` (`hp-life`), mit Versionsnummer.
 
