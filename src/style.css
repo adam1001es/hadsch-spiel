@@ -432,6 +432,26 @@ body:has(#start:not([hidden])) #panel, body:has(#start:not([hidden])) #goal { di
 #driveCtl .dc-speed span { font: 600 11px Figtree, system-ui, sans-serif; opacity: .8; }
 #driveCtl .dc-speed em { grid-column: 1 / -1; font: 700 10px Figtree, system-ui, sans-serif; letter-spacing: .08em; color: var(--gold); font-style: normal; min-height: 11px; }
 #driveCtl.boost .dc-speed { border-color: #ffc83c; box-shadow: 0 0 14px rgba(255,190,40,.55); }
+/* Lenken mit dem rechten Daumen (eigene Einstellung): Seiten tauschen */
+#driveCtl.swap .dc-l { left: auto; right: var(--sr); align-items: flex-end; }
+#driveCtl.swap .dc-r { right: auto; left: var(--sl); align-items: flex-start; }
+#driveCtl.swap .dc-pedals { flex-direction: row-reverse; }
+/* versteckter Zugang: Tacho antippen (kleines Zahnrad) */
+#driveCtl .dc-speed { pointer-events: auto; cursor: pointer; position: relative; -webkit-tap-highlight-color: transparent; }
+#driveCtl .dc-gear { position: absolute; right: 5px; top: 3px; font-size: 10px; font-style: normal; opacity: .35; }
+#driveSetup { position: fixed; inset: 0; z-index: 31; display: grid; place-items: center; padding: 16px var(--sr) 16px var(--sl); background: rgba(8,16,26,.55); }
+#driveSetup[hidden] { display: none; }
+#driveSetup .ds-card { width: 100%; max-width: 380px; background: var(--ivory); border: 1px solid var(--gold); border-radius: 16px; padding: 14px 16px; box-shadow: 0 10px 40px rgba(0,0,0,.45); }
+#driveSetup .ds-head { display: flex; align-items: center; justify-content: space-between; font: 18px var(--f-display); margin-bottom: 6px; }
+#driveSetup .ds-x { width: 34px; height: 34px; border-radius: 50%; padding: 0; }
+#driveSetup .ds-row { display: flex; flex-direction: column; gap: 6px; margin: 12px 0; font-size: 14px; }
+#driveSetup .ds-row em { font-style: normal; color: #1d5642; font-weight: 600; }
+#driveSetup .ds-seg { display: flex; gap: 6px; }
+#driveSetup .ds-seg button { flex: 1; padding: 9px 6px; font-size: 13px; border-radius: 10px; }
+#driveSetup .ds-seg button.on { background: var(--green); color: var(--ivory); border-color: var(--green); }
+#driveSetup input[type=range] { width: 100%; accent-color: #2f6b55; }
+#driveSetup .ds-reset { margin-top: 4px; padding: 8px 12px; font-size: 13px; }
+#driveSetup .ds-note { font-size: 12px; color: #6a6a5c; margin: 8px 0 0; }
 @media (min-width: 1000px) { #driveCtl .dc-wheel { height: 80px; width: 210px; } #driveCtl .brake, #driveCtl .gas { height: 96px; } }
 @media (max-height: 520px) { #driveCtl .dc-wheel { height: 74px; } #driveCtl .brake, #driveCtl .gas { height: 84px; } #driveCtl .nitro { width: 54px; height: 54px; } #driveCtl .dc-speed { display: none; } }
 @media (max-width: 360px) { #driveCtl .pedal { width: 80px; } #driveCtl .gas { width: 62px; } }

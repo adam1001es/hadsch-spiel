@@ -183,6 +183,8 @@ Fahrzeuge sind **leicht zu finden** und werden **ausgeliehen**, nicht gestohlen 
   rechter Daumen = **BREMSE** (bei Tempo + Lenken = **Drift** wie Handbremse, im Stand halten = rückwärts); **NITRO** einmal antippen = 3 s
   Turbo (6 s Abklingzeit, Ring zeigt Ladung). Helikopter: GAS/BREMSE = vor/zurück, HOCH/RUNTER. Laptop: W/S, A/D, Umschalt = Nitro,
   Leertaste = Bremse/Drift (Helikopter hoch), C = runter.
+- ✅ **Versteckte Fahr-Einstellung (Wunsch: nicht offensichtlich):** Tacho antippen (nur ein blasses ⚙) → Lenken mit linkem/rechtem Daumen
+  (Seiten tauschen, Klasse `swap`), Lenk-Stärke 40–200 %, Drift-Stärke 30–180 %, Auto-Gas. Gespeichert in `localStorage` `hp-drive`.
 - ✅ **Gebaut:** Fahrknöpfe `#driveCtl` (▲▼◀▶, Helikopter Hoch/Runter; Laptop WASD/Pfeile, Leertaste/C) in `borrow.js`; Mekka/Medina ohne
   unsichtbare Wände (nur Gebäude-Kollision aus `towers.footprints` mit Höhe `h`, Haram/Nabawi als Block, Boden folgt dem Gelände);
   Verleih-Fahrzeuge erscheinen hinter der Figur, wenn keins in 22 m steht (`keepNearby`); Helikopter-Landeplatz auf dem Südplatz,

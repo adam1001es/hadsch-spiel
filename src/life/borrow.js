@@ -53,8 +53,12 @@ export function createBorrow(ctx, opts) {
   // sonst bremsen, im Stand halten = rückwärts); NITRO einmal antippen = 3 s Turbo. Helikopter: Hoch/Runter statt Nitro.
   const ctl = { g: 0, b: 0, u: 0, d: 0, steer: 0 }; let nitroT = 0, nitroCool = 0, started = false;
   let autoGas = (() => { try { return localStorage.getItem('hp-autogas') !== '0'; } catch { return true; } })();
+  // eigene Fahr-Einstellung je Gerät (versteckt: Tacho antippen): Lenkseite, Lenk-Stärke, Drift-Stärke
+  const DS_KEY = 'hp-drive';
+  const ds = (() => { try { return { steerRight: false, steer: 1, drift: 1, ...JSON.parse(localStorage.getItem(DS_KEY) || '{}') }; } catch { return { steerRight: false, steer: 1, drift: 1 }; } })();
+  const saveDS = () => { try { localStorage.setItem(DS_KEY, JSON.stringify(ds)); } catch { /* egal */ } };
   const pad = document.createElement('div'); pad.id = 'driveCtl'; pad.hidden = true;
-  pad.innerHTML = '<div class="dc-l"><div class="dc-speed"><b>0</b><span>km/h</span><em></em></div>'
+  pad.innerHTML = '<div class="dc-l"><div class="dc-speed" role="button" aria-label="Tacho"><b>0</b><span>km/h</span><em></em><i class="dc-gear">⚙</i></div>'
     + '<div class="dc-wheel" aria-label="Lenken: Daumen nach links oder rechts schieben"><i class="a l">‹</i><i class="knob"></i><i class="a r">›</i></div></div>'
     + '<div class="dc-r"><div class="dc-top"><button data-k="ag" class="ag" aria-label="Auto-Gas an oder aus"></button><button data-k="n" class="nitro" aria-label="Nitro"><span>⚡</span><small>NITRO</small></button>'
     + '<button data-k="u" class="air" aria-label="Hoch">▲ HOCH</button><button data-k="d" class="air" aria-label="Runter">▼ RUNTER</button></div>'
@@ -65,16 +69,43 @@ export function createBorrow(ctx, opts) {
   const wheel = pad.querySelector('.dc-wheel'), knob = wheel.querySelector('.knob'), agBtn = pad.querySelector('.ag'), nitroBtn = pad.querySelector('.nitro');
   const showAG = () => { agBtn.innerHTML = `<small>AUTO-GAS</small><span>${autoGas ? 'AN' : 'AUS'}</span>`; pad.classList.toggle('autogas', autoGas); };
   showAG();
+  // ---------- versteckte Einstellung (Tacho antippen) ----------
+  const setup = document.createElement('div'); setup.id = 'driveSetup'; setup.hidden = true;
+  setup.innerHTML = `<div class="ds-card"><div class="ds-head"><b>Fahr-Einstellung</b><button type="button" class="ds-x" aria-label="Schließen">✕</button></div>
+    <p class="ds-row"><span>Lenken mit</span><span class="ds-seg"><button type="button" data-side="0">linkem Daumen</button><button type="button" data-side="1">rechtem Daumen</button></span></p>
+    <label class="ds-row"><span>Lenk-Stärke <em class="ds-v1"></em></span><input type="range" min="0.4" max="2" step="0.05" class="ds-steer"></label>
+    <label class="ds-row"><span>Drift-Stärke <em class="ds-v2"></em></span><input type="range" min="0.3" max="1.8" step="0.05" class="ds-drift"></label>
+    <p class="ds-row"><span>Auto-Gas</span><span class="ds-seg"><button type="button" data-ag="1">an</button><button type="button" data-ag="0">aus</button></span></p>
+    <button type="button" class="ds-reset">Zurücksetzen</button><p class="ds-note">Wird auf diesem Gerät gespeichert.</p></div>`;
+  document.body.appendChild(setup);
+  const sSteer = setup.querySelector('.ds-steer'), sDrift = setup.querySelector('.ds-drift');
+  const pct = (v) => Math.round(v * 100) + ' %';
+  function applyDS() {
+    pad.classList.toggle('swap', !!ds.steerRight);
+    sSteer.value = ds.steer; sDrift.value = ds.drift; setup.querySelector('.ds-v1').textContent = pct(ds.steer); setup.querySelector('.ds-v2').textContent = pct(ds.drift);
+    setup.querySelectorAll('[data-side]').forEach((b) => b.classList.toggle('on', +b.dataset.side === (ds.steerRight ? 1 : 0)));
+    setup.querySelectorAll('[data-ag]').forEach((b) => b.classList.toggle('on', +b.dataset.ag === (autoGas ? 1 : 0)));
+  }
+  applyDS();
+  pad.querySelector('.dc-speed').addEventListener('click', () => { setup.hidden = false; applyDS(); });
+  setup.addEventListener('click', (e) => {
+    if (e.target === setup || e.target.closest('.ds-x')) { setup.hidden = true; return; }
+    const side = e.target.closest('[data-side]'); if (side) { ds.steerRight = side.dataset.side === '1'; saveDS(); applyDS(); }
+    const ag = e.target.closest('[data-ag]'); if (ag) { autoGas = ag.dataset.ag === '1'; try { localStorage.setItem('hp-autogas', autoGas ? '1' : '0'); } catch { /* egal */ } showAG(); applyDS(); }
+    if (e.target.closest('.ds-reset')) { Object.assign(ds, { steerRight: false, steer: 1, drift: 1 }); saveDS(); applyDS(); }
+  });
+  sSteer.addEventListener('input', () => { ds.steer = +sSteer.value; saveDS(); applyDS(); });
+  sDrift.addEventListener('input', () => { ds.drift = +sDrift.value; saveDS(); applyDS(); });
   // Lenkfläche: analog, Daumen darf rutschen
   let wheelId = null;
-  const steerAt = (e) => { const r = wheel.getBoundingClientRect(), k = ((e.clientX - r.left) / r.width - 0.5) * 2; ctl.steer = -Math.max(-1, Math.min(1, k * 1.25)); knob.style.transform = `translateX(${(-ctl.steer) * r.width * 0.36}px)`; wheel.classList.toggle('on', true); started = true; };
+  const steerAt = (e) => { const r = wheel.getBoundingClientRect(), k = ((e.clientX - r.left) / r.width - 0.5) * 2; ctl.steer = -Math.max(-1, Math.min(1, k * 1.25 * Math.sqrt(ds.steer))); knob.style.transform = `translateX(${(-ctl.steer) * r.width * 0.36}px)`; wheel.classList.toggle('on', true); started = true; };
   const steerOff = () => { wheelId = null; ctl.steer = 0; knob.style.transform = ''; wheel.classList.remove('on'); };
   wheel.addEventListener('pointerdown', (e) => { e.preventDefault(); wheelId = e.pointerId; try { wheel.setPointerCapture(e.pointerId); } catch { /* egal */ } steerAt(e); });
   wheel.addEventListener('pointermove', (e) => { if (e.pointerId === wheelId) steerAt(e); });
   for (const ev of ['pointerup', 'pointercancel', 'lostpointercapture']) wheel.addEventListener(ev, (e) => { if (e.pointerId === wheelId) steerOff(); });
   const press = (e, on) => {
     const b = e.target.closest('button[data-k]'); if (!b) return; e.preventDefault(); const k = b.dataset.k;
-    if (k === 'ag') { if (on) { autoGas = !autoGas; try { localStorage.setItem('hp-autogas', autoGas ? '1' : '0'); } catch { /* egal */ } showAG(); } return; }
+    if (k === 'ag') { if (on) { autoGas = !autoGas; try { localStorage.setItem('hp-autogas', autoGas ? '1' : '0'); } catch { /* egal */ } showAG(); applyDS(); } return; }
     if (k === 'n') { if (on) fireNitro(); return; }
     ctl[k] = on ? 1 : 0; b.classList.toggle('on', on); if (on) { started = true; try { b.setPointerCapture(e.pointerId); } catch { /* egal */ } }
   };
@@ -167,6 +198,7 @@ export function createBorrow(ctx, opts) {
     const D = drive, P = D.P;
     if (D.spec.air && D.y > ground(D.x, D.z) + 0.6) { ui.toast(T.landFirst, 2200); return; } // erst landen
     drive = null; player.ride = null; player.freeze(false); player.fig.pose('stand'); ctx.vehicle = null;
+    setup.hidden = true;
     pad.hidden = true; for (const k of Object.keys(ctl)) ctl[k] = 0; steerOff(); nitroT = 0; pad.querySelectorAll('button.on').forEach((b) => b.classList.remove('on')); cam.fov = 62; cam.updateProjectionMatrix(); document.body.classList.remove('driving'); ui.el.stick.classList.remove('off'); D.veh.rotor = 0;
     // neben dem Fahrzeug aussteigen (links)
     const side = D.spec.wid / 2 + 0.8; player.teleport(D.x + Math.cos(D.h) * side, D.z - Math.sin(D.h) * side, D.h);
@@ -265,12 +297,12 @@ export function createBorrow(ctx, opts) {
       if (D.v > vmax) D.v -= Math.min(D.v - vmax, 6 * dt);
       if (D.v > limit) D.v = Math.max(limit, D.v - 22 * dt); // Fußgänger
       const sp = Math.abs(D.v), low = Math.min(1, sp / 3.5), high = 1 - 0.45 * Math.min(1, sp / S.vmax);
-      const maxYaw = (S.len > 8 ? 0.8 : S.len < 2.5 ? 2.6 : 2.1) * (drift ? 1.35 : 1);
+      const maxYaw = (S.len > 8 ? 0.8 : S.len < 2.5 ? 2.6 : 2.1) * (drift ? 1 + 0.35 * ds.drift : 1) * (0.55 + 0.45 * ds.steer);
       const yawRate = D.steer * maxYaw * low * high * Math.sign(D.v || 1);
       D.h += yawRate * dt;
       // Driften: das Heck bricht aus (Bewegungsrichtung hinkt der Fahrzeugrichtung hinterher)
       D.slip = D.slip || 0;
-      if (drift && sp > 5) { D.slip -= yawRate * dt * 0.8; D.v *= Math.exp(-0.18 * dt); }
+      if (drift && sp > 5) { D.slip -= yawRate * dt * 0.8 * ds.drift; D.v *= Math.exp(-0.18 * dt); }
       D.slip *= Math.exp(-(drift && sp > 5 ? 1.1 : 7) * dt); D.slip = Math.max(-0.9, Math.min(0.9, D.slip));
     }
     if (limit < 0.5 && throttle > 0.2 && Math.abs(D.v) < 0.6 && (D.brakeT = (D.brakeT || 0) + dt) > 1.2) { ui.toast(T.braking, 1500); D.brakeT = -3; }
@@ -346,6 +378,6 @@ export function createBorrow(ctx, opts) {
       for (const P of parked) P.owner?.update?.(dt, 0);
       talk.update();
     },
-    dispose() { talk.clear(); pad.remove(); document.body.classList.remove('driving'); window.removeEventListener('keydown', kd); window.removeEventListener('keyup', ku); if (drive) { player.ride = null; ctx.vehicle = null; } },
+    dispose() { talk.clear(); pad.remove(); setup.remove(); document.body.classList.remove('driving'); window.removeEventListener('keydown', kd); window.removeEventListener('keyup', ku); if (drive) { player.ride = null; ctx.vehicle = null; } },
   };
 }
