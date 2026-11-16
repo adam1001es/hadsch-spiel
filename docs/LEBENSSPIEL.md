@@ -22,6 +22,8 @@ Bereits gebaut und wiederverwendbar:
 | Datei | Inhalt |
 |---|---|
 | `src/stations/meccaCity.js` | Mekka/Medina nach echtem Stadtplan (Koordinaten wie Hadsch-Stationen, Moschee bei 0,0, Süden +z): Mekka = Haram-Modell, Marmorplatz, Abraj al-Bait, Ibrahim-al-Khalil-Boulevard mit Läden, Querstraße mit Verkehr, Südplatz (Bus, Ballon, Bauhof-Wegweiser). Medina = Nabawi, Vorplatz mit Schirmen, Hotels, König-Faisal-Boulevard, Straße, Platz. `LAYOUT` je Stadt. Erlebnis-Orte leuchten (interact.js), Infotafeln an Wahrzeichen. |
+| `src/life/clock.js`, `prayer.js`, `minimap.js` | **Spieluhr** (1 Spielstunde = 90 s, `hp-life-clock`, Tag/Nacht), **Gebete** (Zeiten in `content/life.js` PRAYERS, Adhan-Text mit Quelle, Aufnahme `public/assets/audio/adhan.mp3` falls vorhanden, sonst Hinweiston; `prayer.spot()` für Orte zum Beten, Halte-Handlung zur Qibla, Gemeinschaftsgebet `gathering`), **Karte** (Kreis oben rechts, große Karte mit Zoom/Verschieben, Orte → Hinführen per `player.guideTo`). Jede Lebensspiel-Station ruft `showMinimap(ctx, info)` und `createPrayer(...)` auf. |
+| `src/stations/haramVisit.js`, `nabawiVisit.js` | Frei in der Haram (Kaaba, Tawaf-Rundenzähler, Gebetskreise) und in der Prophetenmoschee (Säulenhalle, Rawda mit Hadith-Quelle, Minbar, Reihen zur Qibla). Erreichbar über die Eingangsschilder auf den Plätzen. |
 | `src/world/cityscape.js` | **Stadtbausteine (Lebensspiel):** Hochhäuser per InstancedMesh mit Fassaden in Metern (Stile mecca/glass/medina, Ladensockel, Rücksprünge), `abrajAlBait()` (601 m, Uhr zeigt Spielzeit), `createTraffic()` (Autos/Taxis/Busse, Ampel, Zebrastreifen, bremsen für Menschen), `umbrellas()` (Nabawi-Schirme), `walkable()` (Vereinigung von Rechtecken). |
 | `src/world/hejaz.js` | **Eine Landschaft** mit Mekka (0,0), Medina (0,−3400) und kurviger Autobahn (`roadX(z)`, Höhe `H(x,z)`), fahrende Busse. Maßstab stark verkleinert (Anzeige rechnet ×100 → echte km). |
 | `src/stations/balloon.js` | Ballonflug in der Hejaz-Welt (Brenner halten = steigen, Reise-Autopilot zur anderen Stadt). Exportiert `city()` (Häuserblöcke), `clockTower()`, `nabawi()`. |
@@ -158,4 +160,4 @@ Spielstand (Geld, Hasanat, Besitz, Position) in `localStorage` (`hp-life`), mit 
 6. Laden eröffnen + Einkommen, Zakat-Mechanik.
 7. Taxi-Job, Ausflugsziele (Jabal an-Nur, Quba, Uhud) mit Lerntexten.
    Danach (siehe Spiel-Übersicht): Geschäftsviertel mit Büro-Job, Sandstein-Bauhof in der Wüste, Oase/Dattelplantage, Wohnung.
-8. Gebetszeiten/Adhan im Tagesablauf.
+8. ✅ Gebetszeiten/Adhan im Tagesablauf, Moscheen zum Beten, Haram/Nabawi von innen, Karte (siehe oben). Offen: echte Adhan-Aufnahme (frei lizenziert) in `public/assets/audio/adhan.mp3` legen.

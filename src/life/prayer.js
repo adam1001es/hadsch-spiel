@@ -40,6 +40,8 @@ export function createPrayer(ctx, { city = 'mecca', player, qibla, lights = true
   const api = {
     get due() { return due(); },
     get jamaah() { return clock.jamaah(city); },
+    // Sammeln zum Gemeinschaftsgebet: ab 8 Spielminuten vor der Iqama bis zum Ende; liefert Restzeit in Sekunden
+    get gathering() { const p = clock.current(city); if (!p) return 0; const d = ((clock.dayMin - p.t) % 1440 + 1440) % 1440; return d >= p.iqama - 8 && d < p.iqama + 15 ? (p.iqama + 15 - d) * 1.5 : 0; },
     get busy() { return !!act; },
     set interact(i) { interact = i; },
     start, adhanHtml,

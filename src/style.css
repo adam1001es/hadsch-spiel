@@ -371,3 +371,9 @@ body:has(#start:not([hidden])) #panel, body:has(#start:not([hidden])) #goal { di
 #mapPop .mp-canvas { touch-action: none; cursor: grab; }
 #mapPop .mp-zoom { position: absolute; right: 8px; top: 8px; display: flex; flex-direction: column; gap: 6px; }
 #mapPop .mp-zoom button { width: 40px; height: 40px; padding: 0; border-radius: 50%; font-size: 20px; background: rgba(250,246,236,.95); box-shadow: 0 2px 8px rgba(0,0,0,.25); }
+
+@media (max-width: 700px) { /* Platz für den Kartenkreis: Knopfzeile schrumpft und lässt sich seitlich wischen */
+  body.has-minimap #panel.collapsed { max-width: calc(100vw - var(--sl) - var(--sr) - 104px); }
+  body.has-minimap #panel.collapsed .panel-body { min-width: 0; overflow: hidden; }
+  body.has-minimap #panel.collapsed #actions { min-width: 0; max-width: 100%; }
+}

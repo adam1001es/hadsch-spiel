@@ -274,12 +274,13 @@ export function create(ctx, { from, where = 'mecca' } = {}) {
   if (!medina) { for (let r = 212; r < 258 && slots.length < N; r += 1.4) for (let a = -Math.PI / 2 - 0.5; a < -Math.PI / 2 + 0.5; a += 0.9 / r) { const sx = Math.cos(a) * r, sz = -Math.sin(a) * r; if (sx > PZ.x0 + 3 && sx < PZ.x1 - 3 && sz > PZ.z0 + 4 && sz < PZ.z1 - 3) slots.push({ x: sx, z: sz }); } }
   let wasJamaah = false; // auch wer mitten in die Gebetszeit kommt, sieht die Reihen
   function gather() {
-    const left = 23; // Sekunden (≈ 15 Spielminuten)
+    const left = prayer.gathering + 2; // Sekunden bis zum Ende des Gemeinschaftsgebets
     const list = agents.list.map((a, i) => ({ a, i })).filter(({ a }) => (medina ? a.z < RZ : a.z < RZ)).slice(0, Math.floor(N * 0.75));
     list.forEach(({ a }, k) => {
       let p;
       if (!medina && slots[k]) { const sl = slots[k]; p = { x: sl.x, z: sl.z, wait: left, act: 'pray', face: Math.atan2(-sl.x, -sl.z) }; }
       else p = { x: L.gate[0] + rr(-25, 25), z: L.gate[1] + rr(2, 8), wait: left, act: 'stand', face: Math.PI };
+      if (Math.hypot(a.x - p.x, a.z - p.z) > 30) { a.x = p.x; a.z = p.z; } // weit weg (außer Sicht): gleich in der Reihe
       const from = { x: a.x, z: a.z };
       a.pts = [...via(from, p), p, ...via(p, inZone(zones[1])), inZone(zones[1])]; a.k = 0; a.wait = 0; a.act = null;
     });
@@ -309,7 +310,7 @@ export function create(ctx, { from, where = 'mecca' } = {}) {
       const night = clock.night; cityNight.value = night;
       for (const m of glowLamps) m.emissiveIntensity = 0.4 + night * 2.2;
       for (const m of glowMosque) m.emissiveIntensity = night * 1.6;
-      const jm = !!prayer.jamaah; if (jm && !wasJamaah) gather(); wasJamaah = jm;
+      const jm = prayer.gathering > 0; if (jm && !wasJamaah) gather(); wasJamaah = jm;
       for (const m of glow) m.emissiveIntensity = sky.art * 0.55;
       agents.update(dt, viewLine(ctx));
       traffic.update(dt);

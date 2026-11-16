@@ -22,7 +22,7 @@ function dom() {
 
 export function showMinimap(ctx, info) {
   const E = dom(), player = ctx.player;
-  E.mini.hidden = false;
+  E.mini.hidden = false; document.body.classList.add('has-minimap');
   let target = null, frame = 0, open = false, zoom = 1, pan = null; // pan = Kartenmitte (Welt), null = Mitte der Grenzen
   const C = { sand: '#e8dbbd', walk: '#f8f5ee', block: '#cbbd9f', blockLine: '#a8987a', road: '#6d6e72', water: '#9fc6d8' };
 
@@ -138,7 +138,7 @@ export function showMinimap(ctx, info) {
       if (open && frame % 15 === 0) { drawBig(); E.pop.querySelector('.mp-now').textContent = info.city ? clock.hhmm() : ''; }
     },
     dispose() {
-      close(); E.mini.hidden = true;
+      close(); E.mini.hidden = true; document.body.classList.remove('has-minimap');
       E.mini.removeEventListener('click', onMini); E.pop.querySelector('.mp-close').removeEventListener('click', onClose); E.pop.removeEventListener('click', onPop); E.pc.removeEventListener('click', onCanvas); E.pc.removeEventListener('pointerdown', onDown); E.pc.removeEventListener('pointermove', onMove); E.pop.querySelector('.mp-zoom').removeEventListener('click', onZoom);
     },
   };

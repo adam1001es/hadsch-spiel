@@ -65,7 +65,7 @@ export function create(ctx) {
   for (let x = -HX + 9.5; x < HX - 6 && n < 40; x += 14) for (let z = -HZ + 9.5; z < HZ - 6 && n < 40; z += 14) { dm.position.set(x, CH - 1.6, z); dm.updateMatrix(); lamps.setMatrixAt(n++, dm.matrix); }
   lamps.count = n; world.add(lamps);
   const light = new THREE.PointLight(0xffe2b0, 30, 80, 1.2); light.position.set(0, CH - 1, 0); world.add(light);
-  sign(world, (RW.x0 + RW.x1) / 2, RW.z0 - 1.2, Math.PI, ['الروضة الشريفة', 'Die Rawda'], { w: 3, h: 1, y: 2.4 });
+  const rawdaSign = sign(world, (RW.x0 + RW.x1) / 2, RW.z0 - 1.2, Math.PI, ['الروضة الشريفة', 'Die Rawda'], { w: 3, h: 1, y: 2.4 });
 
   // Menschen: verteilt sitzend/stehend; zum Gemeinschaftsgebet Reihen zur Qibla (Süden)
   const N = mobile ? 90 : 160, crowd = createCrowd(world, N, { ihram: false, men: 0.7 });
@@ -80,7 +80,7 @@ export function create(ctx) {
   const qibla = (x, z) => ({ x: x - 170, z: z + 1000 });
   const prayer = createPrayer(ctx, { city: 'medina', player, qibla });
   const interact = createInteract(ctx, player);
-  interact.add({ obj: rawda, color: 'gold', radius: 10, near: 4, x: (RW.x0 + RW.x1) / 2, z: RW.z0 - 2.5, key: 'rawda', label: U.rawdaDo, run() { ui.info(`<p>${U.rawda}</p>`); ui.el.panel.classList.remove('collapsed'); } });
+  interact.add({ obj: rawdaSign, color: 'gold', radius: 10, near: 4, x: (RW.x0 + RW.x1) / 2, z: RW.z0 - 2.5, key: 'rawda', label: U.rawdaDo, run() { ui.info(`<p>${U.rawda}</p>`); ui.el.panel.classList.remove('collapsed'); } });
   prayer.interact = interact;
   let lastKey = '';
   const actions = () => {
