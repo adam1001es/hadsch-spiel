@@ -191,7 +191,7 @@ export function createBorrow(ctx, opts) {
     drive = { P, veh: P.veh, spec: P.veh.spec, x: P.veh.root.position.x, z: P.veh.root.position.z, h: P.veh.root.rotation.y, v: 0, steer: 0, y: P.veh.root.position.y, vy: 0 };
     // Fahrer in die Mitte des freien Bereichs: unten liegen die Fahrknöpfe (~170 px), oben Titel/Knöpfe (~150 px)
     engine.setViewShift?.((w, h) => Math.max(-0.12, Math.min(0.05, (150 - 170) / h / 2 - (h > w ? 0.06 : 0.02))));
-    pad.hidden = false; pad.classList.toggle('air', !!drive.spec.air); started = false; nitroT = 0; document.body.classList.add('driving'); ui.el.stick.classList.add('off');
+    pad.hidden = false; pad.classList.toggle('air', !!drive.spec.air); started = false; nitroT = 0; document.body.classList.add('driving'); ui.el.stick.classList.toggle('off', !drive.spec.air); // Helikopter: Joystick links
     player.ride = ride; player.freeze(true); player.fig.pose(drive.spec.pose); first = true; yaw0 = input.yaw;
     mode = 'self'; autoPts = null; lastKey = '';
     ctx.vehicle = drive.veh.kind; // für Mitspieler (multi.js)
@@ -257,6 +257,7 @@ export function createBorrow(ctx, opts) {
     const gas = ctl.g > 0 || input.move.y < -0.3 || (autoGas && started && !S.air);
     let manual = braking ? (drift ? 0.35 : -1) : gas ? 1 : 0;
     let throttle = 0, steer = 0, lift = 0, turbo = nitroT > 0;
+    if (S.air) manual = Math.max(-1, Math.min(1, -input.move.y * 1.2 + ctl.g - ctl.b)); // Joystick: vor/zurück
     if (mode === 'self') {
       throttle = manual; steer = Math.max(-1, Math.min(1, turn)); lift = up;
     } else {

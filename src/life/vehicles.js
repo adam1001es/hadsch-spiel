@@ -86,12 +86,23 @@ export function makeVehicle(world, kind, { shadows = true, driver = false } = {}
     if (kind === 'motorbike') v.wheels = findWheels(m);
     else if (kind.startsWith('dirtbike')) { for (const n of ['wheel_f', 'wheel_r']) { const w = m.getObjectByName(n); if (w) v.wheels.push({ obj: w, steer: n === 'wheel_f' }); } }
     else if (kind === 'helicopter') {
-      v.rotorMain = m.getObjectByName('rotor_main'); v.rotorTail = m.getObjectByName('rotor_tail');
-      // Sitz aus der Form: Kabine = Rumpf ohne Rotoren; Pilot vorne rechts in der Kabine, unter der Rotornabe nach vorn
+      // Rotoren neu aufhängen: Drehpunkt = Mitte der Rotorblätter (der Drehpunkt in der Datei liegt daneben)
+      // in Ruhelage messen (Lage/Drehung des Fahrzeugs kurz zurücksetzen, sonst werden die Messkästen schief)
+      const sp = root.position.clone(), sq = root.quaternion.clone(); root.position.set(0, 0, 0); root.quaternion.identity();
       root.updateMatrixWorld(true); const inv = root.matrixWorld.clone().invert(), hub = new THREE.Vector3();
-      v.rotorMain?.getWorldPosition(hub); hub.applyMatrix4(inv);
-      const body = new THREE.Box3(); m.traverse((o) => { if (o.isMesh && !(v.rotorMain && isIn(o, v.rotorMain)) && !(v.rotorTail && isIn(o, v.rotorTail))) { const b = new THREE.Box3().setFromObject(o).applyMatrix4(inv); if (b.max.z > hub.z - 1) body.union(b); } });
-      if (!body.isEmpty()) v.seatPos = new THREE.Vector3(hub.x + 0.35, body.min.y + 0.55, Math.min(body.max.z - 1.4, hub.z + 1.2));
+      const repivot = (name) => {
+        const node = m.getObjectByName(name); if (!node) return null;
+        const bb = new THREE.Box3().setFromObject(node), c = bb.getCenter(new THREE.Vector3());
+        const parent = node.parent, piv = new THREE.Group(); parent.add(piv); piv.position.copy(parent.worldToLocal(c.clone())); piv.updateMatrixWorld(true); piv.attach(node);
+        return { piv, c: c.applyMatrix4(inv) };
+      };
+      const rm = repivot('rotor_main'), rt = repivot('rotor_tail');
+      v.rotorMain = rm?.piv || null; v.rotorTail = rt?.piv || null;
+      if (rm) hub.copy(rm.c);
+      const body = new THREE.Box3(); m.traverse((o) => { if (o.isMesh && !(v.rotorMain && isIn(o, v.rotorMain)) && !(v.rotorTail && isIn(o, v.rotorTail))) { const b = new THREE.Box3().setFromObject(o).applyMatrix4(inv); body.union(b); } });
+      // Pilot vorne in der Kabine (Bug = +z): ein Stück hinter der Nase, rechts der Mitte
+      if (!body.isEmpty()) v.seatPos = new THREE.Vector3((body.min.x + body.max.x) / 2 + 0.35, body.min.y + 0.6, body.max.z - 2.7);
+      root.position.copy(sp); root.quaternion.copy(sq); root.updateMatrixWorld(true);
     }
     else for (const n of ['wheel_fl', 'wheel_fr', 'wheel_rl', 'wheel_rr']) { const w = m.getObjectByName(n); if (w) { w.rotation.order = 'YXZ'; v.wheels.push({ obj: w, steer: n.includes('f') && n[6] === 'f' }); } }
     v.ready = true;
