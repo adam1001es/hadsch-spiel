@@ -189,6 +189,8 @@ export function createBorrow(ctx, opts) {
     if (drive) return;
     P.parked = false; P.mine = true;
     drive = { P, veh: P.veh, spec: P.veh.spec, x: P.veh.root.position.x, z: P.veh.root.position.z, h: P.veh.root.rotation.y, v: 0, steer: 0, y: P.veh.root.position.y, vy: 0 };
+    // Fahrer in die Mitte des freien Bereichs: unten liegen die Fahrknöpfe (~170 px), oben Titel/Knöpfe (~150 px)
+    engine.setViewShift?.((w, h) => Math.max(-0.12, Math.min(0.05, (150 - 170) / h / 2 - (h > w ? 0.06 : 0.02))));
     pad.hidden = false; pad.classList.toggle('air', !!drive.spec.air); started = false; nitroT = 0; document.body.classList.add('driving'); ui.el.stick.classList.add('off');
     player.ride = ride; player.freeze(true); player.fig.pose(drive.spec.pose); first = true; yaw0 = input.yaw;
     mode = 'self'; autoPts = null; lastKey = '';
@@ -202,7 +204,7 @@ export function createBorrow(ctx, opts) {
     const D = drive, P = D.P;
     if (D.spec.air && D.y > ground(D.x, D.z) + 0.6) { ui.toast(T.landFirst, 2200); return; } // erst landen
     drive = null; player.ride = null; player.freeze(false); player.fig.pose('stand'); ctx.vehicle = null;
-    setup.hidden = true;
+    setup.hidden = true; engine.setViewShift?.(null);
     pad.hidden = true; for (const k of Object.keys(ctl)) ctl[k] = 0; steerOff(); nitroT = 0; pad.querySelectorAll('button.on').forEach((b) => b.classList.remove('on')); cam.fov = 62; cam.updateProjectionMatrix(); document.body.classList.remove('driving'); ui.el.stick.classList.remove('off'); D.veh.rotor = 0;
     // neben dem Fahrzeug aussteigen (links)
     const side = D.spec.wid / 2 + 0.8; player.teleport(D.x + Math.cos(D.h) * side, D.z - Math.sin(D.h) * side, D.h);
@@ -331,12 +333,12 @@ export function createBorrow(ctx, opts) {
     // Kamera hinter dem Fahrzeug (wischen = umschauen, kehrt langsam zurück)
     const look = input.yaw - yaw0; yaw0 += look * Math.min(1, dt * 0.8);
     D.camH = D.camH == null ? D.h : D.camH + Math.atan2(Math.sin(D.h - D.camH), Math.cos(D.h - D.camH)) * Math.min(1, dt * 4.5); // Kamera schwenkt weich nach
-    const ang = D.camH + Math.PI + look, d0 = S.cam[0] * ds.view, hh = S.cam[1] * (0.6 + 0.4 * ds.view), dist = d0 * (1 + Math.min(0.6, Math.abs(D.v) / 110));
+    const ang = D.camH + Math.PI + look, d0 = S.cam[0] * ds.view, hh = S.cam[1] * (0.7 + 0.4 * ds.view) + 0.3, dist = d0 * (1 + Math.min(0.6, Math.abs(D.v) / 110));
     const wp = tmp.set(D.x + Math.sin(ang) * dist, D.y + hh + input.pitch * 4, D.z + Math.cos(ang) * dist);
     const fovWant = 62 + Math.min(16, Math.abs(D.v) / 6) + (turbo && Math.abs(D.v) > 5 ? 4 : 0); // Tempogefühl if (Math.abs(cam.fov - fovWant) > 0.05) { cam.fov += (fovWant - cam.fov) * Math.min(1, dt * 3); cam.updateProjectionMatrix(); }
     wp.y = Math.max(wp.y, ground(wp.x, wp.z) + 1);
     const k = first ? 1 : 1 - Math.exp(-dt * 6); first = false;
-    camPos.lerp(wp, k); camLook.lerp(new THREE.Vector3(D.x + fx * 9 * ds.view, D.y + 1.0, D.z + fz * 9 * ds.view), k); // weit nach vorn schauen: Straße und Stadt sichtbar
+    camPos.lerp(wp, k); camLook.lerp(new THREE.Vector3(D.x + fx * 1.5, D.y + 1.1, D.z + fz * 1.5), k); // Fahrer immer in der Bildmitte; die Kamera steht hoch genug, um die Straße davor zu sehen
     cam.position.copy(camPos); cam.lookAt(camLook);
     speedEl.textContent = Math.round(Math.abs(D.v) * 3.6); unitEl.textContent = D.v < -0.3 ? 'km/h · R' : 'km/h';
     infoEl.textContent = S.air ? Math.round(D.y - gy) + ' m Höhe' : mode === 'auto' && autoPts ? '→ ' + autoName : turbo ? 'TURBO' : drift && Math.abs(D.slip) > 0.08 ? 'DRIFT' : '';
@@ -384,6 +386,6 @@ export function createBorrow(ctx, opts) {
       for (const P of parked) P.owner?.update?.(dt, 0);
       talk.update();
     },
-    dispose() { talk.clear(); pad.remove(); setup.remove(); document.body.classList.remove('driving'); window.removeEventListener('keydown', kd); window.removeEventListener('keyup', ku); if (drive) { player.ride = null; ctx.vehicle = null; } },
+    dispose() { engine.setViewShift?.(null); talk.clear(); pad.remove(); setup.remove(); document.body.classList.remove('driving'); window.removeEventListener('keydown', kd); window.removeEventListener('keyup', ku); if (drive) { player.ride = null; ctx.vehicle = null; } },
   };
 }

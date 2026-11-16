@@ -20,13 +20,14 @@ export function createEngine(canvas) {
   let world = new THREE.Group();
   scene.add(world);
 
+  let shiftOverride = null; // beim Fahren: Fahrer in die Mitte des freien Bereichs über den Fahrknöpfen
   function resize() {
     const w = window.innerWidth, h = window.innerHeight;
     renderer.setSize(w, h, false);
     camera.aspect = w / h;
     // Bildmitte etwas nach unten verschieben: die Spielfigur steht tiefer im Bild, oben ist Platz für Titel und Infokarte
     // (im Hochformat mehr, weil dort die Karte einen größeren Teil des Bildes bedeckt)
-    const shift = h > w ? 0.14 : 0.08;
+    const shift = shiftOverride != null ? shiftOverride(w, h) : h > w ? 0.14 : 0.08;
     camera.setViewOffset(w, h, 0, -h * shift, w, h);
     camera.updateProjectionMatrix();
   }
@@ -62,6 +63,7 @@ export function createEngine(canvas) {
   }
 
   return {
+    setViewShift(fn) { shiftOverride = fn; resize(); }, // fn(w, h) → Anteil (positiv = Bild nach unten), null = Standard
     THREE, adapt, renderer, scene, camera,
     get world() { return world; },
     clearWorld,

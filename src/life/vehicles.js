@@ -17,7 +17,7 @@ const CAR = { seat: [0.37, -0.14, -0.25], pose: 'drive', len: 4.4, wid: 1.9, whe
 const TALL = { ...CAR, seat: [0.4, 0.12, -0.25], cam: [10.5, 4], vmax: 50, acc: 7 };
 // Höchstgeschwindigkeit in m/s (×3,6 = km/h); Nitro bis höchstens 94,4 m/s = 340 km/h
 CAR.vmax = 55; CAR.acc = 8.5;
-const FAST = { sport: { ...CAR, vmax: 78, acc: 12 }, coupe: { ...CAR, vmax: 70, acc: 11 } };
+const FAST = { sport: { ...CAR, seat: [0.36, -0.36, -0.35], vmax: 78, acc: 12 }, coupe: { ...CAR, seat: [0.37, -0.26, -0.3], vmax: 70, acc: 11 } }; // flache Autos: tiefer sitzen
 export const SPEC = {
   motorbike: { seat: [0, 0.04, -0.28], pose: 'ride', len: 2.1, wid: 0.8, wheelR: 0.33, vmax: 72, acc: 13, cam: [7, 2.8] },
   ...FAST,
