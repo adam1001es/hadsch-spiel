@@ -30,8 +30,19 @@ export function create(ctx, { dir = 'in', then } = {}) {
     const g = new THREE.BoxGeometry(1.2, 4, 0.18); g.translate(-s * 0.6, 0, 0);
     const m = new THREE.Mesh(g, mats); piv.add(m); return { piv, s };
   });
-  const inside = new THREE.Mesh(new THREE.PlaneGeometry(2.4, 4), new THREE.MeshBasicMaterial({ color: 0xffe2a8 }));
-  inside.position.set(DX, DY, DZ - 0.1); world.add(inside);
+  // Blick in den beleuchteten Innenraum (grüner Vorhang oben, Marmor unten, Holzsäule) – liegt VOR der Kiswa-Fläche,
+  // damit die Öffnung nicht schwarz bleibt; wird beim Öffnen eingeblendet
+  const inTex = (() => {
+    const c = document.createElement('canvas'); c.width = 256; c.height = 426; const g = c.getContext('2d');
+    const gr = g.createLinearGradient(0, 0, 0, 426); gr.addColorStop(0, '#3f6e4c'); gr.addColorStop(0.42, '#6f8f66'); gr.addColorStop(0.46, '#c9a24e'); gr.addColorStop(0.5, '#efe6d2'); gr.addColorStop(1, '#fbf4e4');
+    g.fillStyle = gr; g.fillRect(0, 0, 256, 426);
+    g.fillStyle = 'rgba(255,214,150,0.55)'; for (const x of [70, 190]) { g.beginPath(); g.arc(x, 150, 9, 0, 7); g.fill(); g.fillRect(x - 0.5, 0, 1, 141); } // Lampen
+    g.fillStyle = '#4a2216'; g.fillRect(118, 0, 20, 426); g.fillStyle = '#d6b25e'; g.fillRect(116, 230, 24, 6); g.fillRect(116, 300, 24, 6); // Holzsäule mit Goldringen
+    const v = g.createRadialGradient(128, 260, 30, 128, 213, 260); v.addColorStop(0, 'rgba(255,240,210,0)'); v.addColorStop(1, 'rgba(40,25,10,0.55)'); g.fillStyle = v; g.fillRect(0, 0, 256, 426);
+    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
+  })();
+  const inside = new THREE.Mesh(new THREE.PlaneGeometry(2.4, 4), new THREE.MeshBasicMaterial({ map: inTex, transparent: true, opacity: 0, toneMapped: false }));
+  inside.position.set(DX, DY, DZ - 0.06); inside.renderOrder = 1; world.add(inside);
   const lamp = new THREE.PointLight(0xffd59a, 0, 14, 1.6); lamp.position.set(DX, DY, DZ + 1.5); world.add(lamp);
   // fahrbare Treppe (weiß mit Goldkante), wie sie zur Öffnung an die Tür gestellt wird
   const stairM = new THREE.MeshStandardMaterial({ color: 0xf2efe8, roughness: 0.5 }), goldM = new THREE.MeshStandardMaterial({ color: 0xd8b25a, metalness: 1, roughness: 0.3 });
@@ -63,7 +74,7 @@ export function create(ctx, { dir = 'in', then } = {}) {
       const sm = (a, b) => { const k = Math.min(1, Math.max(0, (t - a) / (b - a))); return k * k * (3 - 2 * k); };
       const open = dir === 'in' ? sm(1.5, 3.5) : sm(0, 2) * (1 - sm(6, 8));
       for (const L of leaves) L.piv.rotation.y = L.s * open * 1.9;
-      lamp.intensity = open * 25;
+      lamp.intensity = open * 25; inside.material.opacity = Math.min(1, open * 1.6);
       const walk = dir === 'in' ? sm(3.5, 7.5) : sm(2, 6);
       const z = path[0] + (path[1] - path[0]) * walk;
       fig.root.position.set(DX, yAt(z), z); fig.root.rotation.y = dir === 'in' ? Math.PI : 0;
