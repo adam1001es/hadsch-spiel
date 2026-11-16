@@ -361,8 +361,9 @@ export function create(ctx, { from, where = 'mecca' } = {}) {
     };
     gantry(HW0 + 25, medina ? ['مكة المكرمة', 'Mekka · Autobahn →'] : ['المدينة المنورة', 'Medina · Autobahn →']);
     gantry(HW0 - 330, medina ? ['طريق مكة', '→ Autobahn nach Mekka'] : ['طريق المدينة', '→ Autobahn nach Medina']); }
-  let hwBusy = false;
-  if (from === 'car' && ctx.borrowed) borrow.arriveWith(ctx.borrowed.kind, BUx - 18, RZ + 26, Math.PI / 2); // mit dem ausgeliehenen Fahrzeug angekommen
+  // mit dem eigenen Fahrzeug über die Autobahn angekommen: auf derselben Straße am Stadtrand, Richtung Stadt (Westen)
+  let hwBusy = from === 'car';
+  if (from === 'car' && ctx.borrowed) borrow.arriveWith(ctx.borrowed.kind, HW1 - 90, HWZ + 4, -Math.PI / 2);
 
   ui.el.panel.classList.remove('collapsed');
   ui.info(`<p>${medina ? T.introMedina : T.intro}</p><p class="small">🗺️ Karte oben rechts antippen. ${U.note}</p>`);
@@ -384,7 +385,8 @@ export function create(ctx, { from, where = 'mecca' } = {}) {
       interact.update(dt); // Randleuchten + Aktionsknopf in der Nähe
       borrow.update(dt);
       // mit dem eigenen Fahrzeug über die Autobahn hinausgefahren → Fahrt in die andere Stadt
-      { const D = borrow.drive; if (D && !hwBusy && !D.spec.air && D.x > HW1 - 40 && Math.abs(D.z - HWZ) < 60) { hwBusy = true; ui.toast(medina ? 'Auf der Autobahn nach Mekka …' : 'Auf der Autobahn nach Medina …', 2500); borrow.intercity(other); } }
+      { const D = borrow.drive; if (D && hwBusy && D.x < HW1 - 200) hwBusy = false; // erst wieder auslösen, nachdem man in die Stadt hineingefahren ist
+        if (D && !hwBusy && !D.spec.air && D.x > HW1 - 40 && Math.abs(D.z - HWZ) < 60) { hwBusy = true; ui.toast(medina ? 'Auf der Autobahn nach Mekka …' : 'Auf der Autobahn nach Medina …', 2500); borrow.intercity(other); } }
       map.update();
       // Tauben: picken, weichen dem Spieler aus, kommen beim Füttern zusammen
       feed = Math.max(0, feed - dt);

@@ -150,7 +150,7 @@ export function create(ctx, { from = 'mecca', to = 'medina', vehicle = 'sedan', 
   const hud = document.createElement('div'); hud.id = 'tripHud'; document.body.appendChild(hud);
 
   // ---------- Spielfigur und Fahrzeug ----------
-  const start = at === 'rest' ? { x: roadX(REST_Z) + (to === 'medina' ? -3.5 : 3.5), z: REST_Z } : to === 'medina' ? { x: roadX(-630) - 3.5, z: -630 } : { x: roadX(MED_END - 120) + 3.5, z: MED_END - 120 };
+  const start = at === 'rest' ? { x: roadX(REST_Z) + (to === 'medina' ? -3.5 : 3.5), z: REST_Z } : to === 'medina' ? { x: roadX(-630) - 3.5, z: -630 } : { x: roadX(MED_END + 70) + 3.5, z: MED_END + 70 } // Fehler behoben: Start lag in Medina → sofort wieder angekommen;
   const hd = to === 'medina' ? Math.PI : 0;
   const player = createPlayer(ctx, { x: start.x + 4, z: start.z, heading: hd, color: ctx.profile?.gender === 'f' ? 0x2c3a4a : 0x34506a, speed: 2.4, fastSpeed: 4.2, colliders, ground, surface: 'sand' });
   const life = createLife(ctx, { kind: 'desert' });
