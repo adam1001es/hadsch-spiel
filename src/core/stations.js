@@ -17,7 +17,7 @@ import * as haramVisit from '../stations/haramVisit.js';
 import * as nabawiVisit from '../stations/nabawiVisit.js';
 import * as restStop from '../stations/restStop.js';
 import * as roadtrip from '../stations/roadtrip.js';
-import { progressStore } from './progress.js';
+import { progressStore, unlockStore } from './progress.js';
 import { createLife } from '../world/life.js';
 
 // Neue Stationen hier eintragen, sobald die Datei in src/stations/ existiert.
@@ -101,7 +101,6 @@ export function createStations(ctx) {
 
   // Erlebnis-Bereiche nach dem Hadsch: jederzeit über die Stationsauswahl erreichbar
   const BONUS = [
-    { title: 'In der Kaaba', day: 'Belohnung', go: () => { index = STATIONS.length; ctx.reward(); } },
     { title: 'Die Straßen von Mekka und Medina', day: 'Erleben', go: () => { index = STATIONS.length; ctx.city(); } },
   ];
   ctx.bonus = BONUS;
@@ -142,7 +141,8 @@ export function createStations(ctx) {
     ctx.ui.fade(false);
   }
   // Kaaba: von außen (Tür öffnet sich) hinein, und wieder hinaus in die Straßen von Mekka
-  ctx.reward = () => { ctx.stationIndex = 'kaaba'; return scene((c) => kaabaDoor.create(c, { dir: 'in', then: () => scene(kaabaInside.create) })); };
+  // Überraschung „In der Kaaba“: nur einmal, nach dem ersten erfolgreichen Hadsch
+  ctx.reward = () => { if (!unlockStore.kaabaPending()) { ctx.ui.toast('Die Überraschung „In der Kaaba“ gibt es einmal – nach einem erfolgreich abgeschlossenen Hadsch.', 3600); return; } unlockStore.useKaaba(); ctx.stationIndex = 'kaaba'; return scene((c) => kaabaDoor.create(c, { dir: 'in', then: () => scene(kaabaInside.create) })); };
   ctx.leaveKaaba = () => scene((c) => kaabaDoor.create(c, { dir: 'out', then: () => ctx.city() }));
   ctx.balloon = (where = 'mecca') => { ctx.stationIndex = 'balloon'; return scene((c) => balloon.create(c, { where })); };
   ctx.city = (from, where = 'mecca') => { ctx.stationIndex = 'city-' + where; return scene((c) => meccaCity.create(c, { from, where })); };
@@ -154,6 +154,18 @@ export function createStations(ctx) {
   ctx.roadtrip = (from, to, opts = {}) => { ctx.stationIndex = 'road'; return scene((c) => roadtrip.create(c, { from, to, ...opts })); }; // selbst fahren Mekka ↔ Medina
   ctx.restStop = (from, to) => { ctx.stationIndex = 'rest'; return scene((c) => restStop.create(c, { from, to })); }; // Rastplatz mit Oasen-Moschee
   ctx.backToEnding = () => { ctx.stationIndex = STATIONS.length; return scene(info.ending); };
+
+  // Lebensspiel (Straßen von Mekka und Medina, Ballon, Bauhof): 15 Minuten Probezeit, danach erst nach dem Hadsch
+  const gateBox = document.getElementById('gate');
+  ctx.showGate = () => {
+    if (!gateBox || !gateBox.hidden) return;
+    ctx.input.holding = false;
+    gateBox.hidden = false;
+    document.getElementById('gateHajj').onclick = () => { location.hash = ''; location.reload(); };
+  };
+  const gated = (fn) => (...a) => { if (!unlockStore.cityAllowed()) { ctx.showGate(); return; } return fn(...a); };
+  for (const k of ['city', 'balloon', 'bauhof', 'roadtrip']) ctx[k] = gated(ctx[k]);
+  let trialSave = 0, trialWarned = 0, trialT = 0;
 
   ctx.next = async () => {
     if (busy) return;
@@ -167,6 +179,8 @@ export function createStations(ctx) {
       ctx.progress.quizN++; if (first) ctx.progress.quizOk++;
       progressStore.finish(index);
       lastPlayed = index;
+      // letzte Station geschafft und alle 12 erledigt: Hadsch erfolgreich → Code für die Urkunde, Freischaltung
+      if (index === STATIONS.length - 1 && progressStore.get().done.length >= STATIONS.length) ctx.newCode = unlockStore.complete();
     }
     await go(index + 1);
     busy = false;
@@ -175,6 +189,16 @@ export function createStations(ctx) {
     go,
     update(dt) {
       if (paused) return;
+      // Probezeit im Lebensspiel mitzählen (gespeichert, gilt über Sitzungen hinweg)
+      if (typeof ctx.stationIndex === 'string' && ctx.stationIndex !== 'kaaba' && !unlockStore.unlocked()) {
+        const now = performance.now(); trialSave += Math.min(1, (now - (trialT || now)) / 1000); trialT = now; // echte Zeit, auch bei wenig FPS
+        if (trialSave >= 2) {
+          const left = unlockStore.addTrial(trialSave); trialSave = 0;
+          if (left <= 0) { paused = true; ctx.showGate(); return; }
+          const min = Math.ceil(left / 60);
+          if ((min === 5 || min === 1) && trialWarned !== min) { trialWarned = min; ctx.ui.toast(`Probezeit: noch ${min} Minute${min > 1 ? 'n' : ''}. Schließe den Hadsch einmal ab, dann kannst du immer spielen.`, 4200); }
+        }
+      } else trialT = 0;
       current?.update?.(dt);
       life?.update(dt);
       if (tutorial && tutorial.update(dt)) tutorial = null;

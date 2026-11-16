@@ -235,3 +235,13 @@ Spielstand (Geld, Hasanat, Besitz, Position) in `localStorage` (`hp-life`), mit 
 7. Taxi-Job, Ausflugsziele (Jabal an-Nur, Quba, Uhud) mit Lerntexten.
    Danach (siehe Spiel-Übersicht): Geschäftsviertel mit Büro-Job, Sandstein-Bauhof in der Wüste, Oase/Dattelplantage, Wohnung.
 8. ✅ Gebetszeiten/Adhan im Tagesablauf, Moscheen zum Beten, Haram/Nabawi von innen, Karte (siehe oben). Offen: echte Adhan-Aufnahme (frei lizenziert) in `public/assets/audio/adhan.mp3` legen.
+
+## Freischaltung (Wunsch des Nutzers, umgesetzt in `progress.js`/`stations.js`)
+- Das Lebensspiel (Straßen von Mekka und Medina, Ballon, Bauhof und alles, was von dort aus erreicht wird) ist **15 Minuten Probezeit**
+  ohne abgeschlossenen Hadsch. Die Zeit zählt `stations.js` (`update`), sobald `ctx.stationIndex` ein Text ist (außer `'kaaba'`),
+  gespeichert in `localStorage['hp-unlock'].trial`. Danach Fenster `#gate`: „Schließe mindestens einmal den Hadsch erfolgreich ab“.
+- Nach dem erfolgreichen Hadsch (alle 12 Stationen, letzte über `ctx.next`) ist es **immer** frei; die Urkunde zeigt einen Code
+  (`unlockStore.complete()`), der auf dem Startbildschirm eingegeben werden kann (`unlockStore.redeem`).
+- `ctx.city`, `ctx.balloon`, `ctx.bauhof`, `ctx.roadtrip` sind gekapselt (prüfen `unlockStore.cityAllowed()`). Neue Einstiege bitte über diese Funktionen.
+- Überraschung **„In der Kaaba“** (`ctx.reward`) gibt es nur **einmal**, nach dem ersten erfolgreichen Hadsch (nicht mehr im Startmenü, kein `#kaaba`-Link).
+  Zum Testen: `localStorage.setItem('hp-unlock', JSON.stringify({hajj:true, kaabaPending:true}))`.

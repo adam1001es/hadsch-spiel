@@ -6,7 +6,7 @@ import { createUI } from './core/ui.js';
 import { createStations } from './core/stations.js';
 import { preview } from './stations/tawaf.js';
 import * as content from './content/hajj.js';
-import { progressStore } from './core/progress.js';
+import { progressStore, unlockStore } from './core/progress.js';
 import { createMulti } from './core/multi.js';
 import { rigReady } from './core/rigged.js';
 import { preloadPeople, setCrowdCamera, peopleStatus } from './world/crowd.js';
@@ -88,13 +88,24 @@ content.STATIONS.forEach((st, i) => {
   jump.appendChild(b);
 });
 // Erlebnis-Bereiche (Kaaba, Straßen von Mekka, Ballon) direkt wählbar
+const trialNote = () => unlockStore.unlocked() ? '' : unlockStore.trialLeft() > 0 ? ` (Probe: noch ${Math.ceil(unlockStore.trialLeft() / 60)} Min.)` : ' 🔒 nach dem Hadsch';
+const bonusBtns = [];
 for (const bx of ctx.bonus || []) {
-  const b = document.createElement('button'); b.type = 'button'; b.className = 'bonus'; b.textContent = '★ ' + bx.title;
+  const b = document.createElement('button'); b.type = 'button'; b.className = 'bonus'; b.textContent = '★ ' + bx.title + trialNote(); bonusBtns.push([b, bx]);
   b.addEventListener('click', () => { readProfile(); startScreen.hidden = true; ui.el.stick.classList.remove('off'); current = null; bx.go(); });
   jump.appendChild(b);
 }
 // direkt per Link: …#kaaba, …#mekka, …#ballon
-{ const bm = { '#kaaba': 0, '#mekka': 1 }[location.hash]; if (location.hash === '#ballon' || location.hash === '#medina' || location.hash === '#bauhof' || location.hash === '#strecke') setTimeout(() => { readProfile(); startScreen.hidden = true; current = null; location.hash === '#ballon' ? ctx.balloon('mecca') : location.hash === '#bauhof' ? ctx.bauhof() : location.hash === '#strecke' ? ctx.roadtrip('mecca', 'medina', { vehicle: 'sport' }) : ctx.city(null, 'medina'); }, 0); if (bm != null) setTimeout(() => { readProfile(); startScreen.hidden = true; current = null; ctx.bonus[bm].go(); }, 0); }
+// Code von der Urkunde eingeben → Straßen von Mekka und Medina dauerhaft frei
+{
+  const inp = document.getElementById('codeIn'), btn = document.getElementById('codeBtn'), box = document.getElementById('codeBox');
+  if (unlockStore.unlocked()) box.hidden = true;
+  btn.addEventListener('click', () => {
+    if (unlockStore.redeem(inp.value)) { ui.toast('Freigeschaltet! Die Straßen von Mekka und Medina kannst du jetzt immer spielen.', 3600); box.hidden = true; for (const [b, bx] of bonusBtns) b.textContent = '★ ' + bx.title; }
+    else ui.toast('Dieser Code stimmt nicht. Bitte genau so eingeben, wie er auf der Urkunde steht.', 3200);
+  });
+}
+{ const bm = { '#mekka': 0 }[location.hash]; if (location.hash === '#ballon' || location.hash === '#medina' || location.hash === '#bauhof' || location.hash === '#strecke') setTimeout(() => { readProfile(); startScreen.hidden = true; current = null; location.hash === '#ballon' ? ctx.balloon('mecca') : location.hash === '#bauhof' ? ctx.bauhof() : location.hash === '#strecke' ? ctx.roadtrip('mecca', 'medina', { vehicle: 'sport' }) : ctx.city(null, 'medina'); }, 0); if (bm != null) setTimeout(() => { readProfile(); startScreen.hidden = true; current = null; ctx.bonus[bm].go(); }, 0); }
 // Weiterspielen, wenn es einen gespeicherten Stand gibt
 const resume = document.getElementById('resumeBtn');
 if (prog.next > 0 && prog.next < content.STATIONS.length) {

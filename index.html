@@ -88,6 +88,18 @@
   <!-- Zeigehinweis fürs Steuerungs-Training -->
   <div id="coach" hidden><span id="coachHand">👆</span><span id="coachText"></span></div>
 
+  <section id="gate" hidden>
+    <div class="cg-card">
+      <div class="cg-frame">
+        <div class="cg-star" aria-hidden="true"></div>
+        <h2>Die Probezeit ist vorbei</h2>
+        <p class="cg-de">Du hast die Straßen von Mekka und Medina 15 Minuten lang ausprobiert.</p>
+        <p class="cg-wish">Schließe mindestens einmal den Hadsch erfolgreich ab – dann kannst du die Straßen von Mekka und Medina immer spielen.</p>
+        <p class="cg-src">Auf deiner Urkunde steht danach ein Code. Mit ihm kannst du die Straßen auch auf einem anderen Gerät freischalten.</p>
+        <button id="gateHajj" class="primary" type="button">Zum Hadsch</button>
+      </div>
+    </div>
+  </section>
   <section id="congrats" hidden>
     <div class="cg-card">
       <div class="cg-frame">
@@ -193,6 +205,10 @@
         <summary>Station gezielt wählen</summary>
         <p class="small">Empfohlen: der Reihe nach – jede Station baut auf der vorherigen auf. Nach einer gewählten Station geht es mit der nächsten weiter.</p>
         <div id="jump"></div>
+        <div id="codeBox" class="code-box">
+          <label for="codeIn" class="small">Code von der Urkunde (schaltet die Straßen von Mekka und Medina frei)</label>
+          <div class="code-row"><input id="codeIn" type="text" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="12" placeholder="z. B. ABCD-EFGH"><button id="codeBtn" type="button">Freischalten</button></div>
+        </div>
       </details>
     </div>
   </section>

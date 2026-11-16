@@ -292,6 +292,15 @@ body.fast #focusBlur { opacity: 1; }
 /* Glückwunsch nach dem Hadsch: Karte mit Sternmuster-Rahmen, Gold, Kalligrafie (Amiri) */
 #congrats { position: fixed; inset: 0; z-index: 45; display: grid; place-items: center; padding: 16px var(--sr) 16px var(--sl); background: radial-gradient(circle at 50% 40%, rgba(20,60,45,.75), rgba(6,12,20,.88)); animation: cgIn .6s ease-out; }
 #congrats[hidden] { display: none; }
+#gate { position: fixed; inset: 0; z-index: 46; display: grid; place-items: center; padding: 16px var(--sr) 16px var(--sl); background: rgba(6,12,20,.88); animation: cgIn .4s ease-out; }
+#gate[hidden] { display: none; }
+#gate .cg-frame button { display: block; width: 100%; margin-top: 8px; }
+.code-box { margin-top: 12px; text-align: left; }
+.code-row { display: flex; gap: 8px; margin-top: 4px; }
+.code-row input { flex: 1; min-width: 0; font: inherit; font-size: 16px; letter-spacing: .08em; text-transform: uppercase; padding: 10px 12px; border-radius: 12px; border: 1.5px solid rgba(255,255,255,.35); background: rgba(255,255,255,.1); color: inherit; }
+.code-row button { flex: none; }
+.cert .code { display: block; margin-top: 8px; font-size: 13px; }
+.cert .code b { font-size: 20px; letter-spacing: .12em; font-family: ui-monospace, Menlo, monospace; }
 @keyframes cgIn { from { opacity: 0; transform: scale(.96); } to { opacity: 1; transform: none; } }
 .cg-card { width: min(460px, 100%); max-height: 92vh; overflow: auto; padding: 14px; border-radius: 22px;
   background: url('./assets/textures/patterns/pattern_2.png') center / 120px repeat, linear-gradient(135deg, #1d5642, #0f3326);
