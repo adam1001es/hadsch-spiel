@@ -141,6 +141,7 @@ Für **jedes** Fahrzeug gibt es immer zwei Möglichkeiten:
 
 - **Autos fertig vorbereitet:** `public/assets/models/cars/*.glb` (10 Stück, siehe README dort, CC BY 4.0 Comrade1280): Front +z,
   Räder `wheel_fl/fr/rl/rr` einzeln drehbar. Sportwagen = `sport.glb` (kein Markenauto verwenden).
+- **Motorrad fertig vorbereitet:** `public/assets/models/vehicles/motorbike.glb` (CC BY 4.0 Yakpower, Markenschriftzug entfernt, Front +z, 2 m) – im Spiel „Motorrad“ nennen.
 - **Lizenzen:** nur CC BY oder CC0 (kein NC = nicht-kommerziell, kein SA nötig), keine echten Marken (Porsche, Hubschrauber-Hersteller …).
 
 ### Hauptfigur (Stand)
