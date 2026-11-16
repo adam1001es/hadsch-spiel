@@ -14,16 +14,20 @@ export const CAR_KINDS = ['sedan', 'compact', 'suv', 'minivan', 'hatchback', 'wa
 export const VEHICLE_NAME = { sedan: 'Limousine', compact: 'Kleinwagen', suv: 'SUV', minivan: 'Minivan', hatchback: 'Schrägheck', wagon: 'Kombi', pickup: 'Pickup', offroad: 'Geländewagen', coupe: 'Coupé', sport: 'Sportwagen', motorbike: 'Motorrad', bus: 'Bus', escooter: 'E-Scooter', bicycle: 'Fahrrad', ebike: 'E-Bike', helicopter: 'Helikopter', ...Object.fromEntries(DIRT_COLORS.map((c) => ['dirtbike_' + c, 'Geländemotorrad'])) };
 const CAR = { seat: [0.37, -0.14, -0.25], pose: 'drive', len: 4.4, wid: 1.9, wheelR: 0.31, vmax: 15, acc: 5, cam: [9.5, 3.6] };
 // hohe Autos: Sitz höher (sonst ragen die Beine unten heraus)
-const TALL = { ...CAR, seat: [0.4, 0.12, -0.25], cam: [10.5, 4] };
+const TALL = { ...CAR, seat: [0.4, 0.12, -0.25], cam: [10.5, 4], vmax: 50, acc: 7 };
+// Höchstgeschwindigkeit in m/s (×3,6 = km/h); Nitro bis höchstens 94,4 m/s = 340 km/h
+CAR.vmax = 55; CAR.acc = 8.5;
+const FAST = { sport: { ...CAR, vmax: 78, acc: 12 }, coupe: { ...CAR, vmax: 70, acc: 11 } };
 export const SPEC = {
-  motorbike: { seat: [0, 0.04, -0.28], pose: 'ride', len: 2.1, wid: 0.8, wheelR: 0.33, vmax: 17, acc: 6, cam: [7, 2.8] },
+  motorbike: { seat: [0, 0.04, -0.28], pose: 'ride', len: 2.1, wid: 0.8, wheelR: 0.33, vmax: 72, acc: 13, cam: [7, 2.8] },
+  ...FAST,
   suv: TALL, offroad: TALL, pickup: TALL, minivan: TALL,
-  bus: { seat: [0.75, 1.05, 4.9], pose: 'drive', len: 12.4, wid: 3, wheelR: 0.5, vmax: 11, acc: 2.5, cam: [18, 6.5] },
+  bus: { seat: [0.75, 1.05, 4.9], pose: 'drive', len: 12.4, wid: 3, wheelR: 0.5, vmax: 30, acc: 3.5, cam: [18, 6.5] },
   escooter: { seat: [0, 0.12, -0.15], pose: 'stand', len: 1.1, wid: 0.6, wheelR: 0.1, vmax: 7, acc: 4, cam: [6, 2.6] },
   bicycle: { seat: [0, 0.14, -0.2], pose: 'ride', len: 1.8, wid: 0.6, wheelR: 0.34, vmax: 7, acc: 3, cam: [6, 2.6] },
-  ebike: { seat: [0, 0.16, -0.25], pose: 'ride', len: 1.9, wid: 0.6, wheelR: 0.34, vmax: 9, acc: 4, cam: [6, 2.6] },
-  dirt: { seat: [0, 0.16, -0.2], pose: 'ride', len: 2.1, wid: 0.8, wheelR: 0.35, vmax: 16, acc: 7, cam: [7, 2.8], offroad: true },
-  helicopter: { seat: [0.55, 0.45, 2.4], pose: 'drive', len: 11, wid: 3, wheelR: 1, vmax: 30, acc: 8, cam: [22, 8], air: true },
+  ebike: { seat: [0, 0.16, -0.25], pose: 'ride', len: 1.9, wid: 0.6, wheelR: 0.34, vmax: 12, acc: 4, cam: [6, 2.6] },
+  dirt: { seat: [0, 0.16, -0.2], pose: 'ride', len: 2.1, wid: 0.8, wheelR: 0.35, vmax: 45, acc: 11, cam: [7, 2.8], offroad: true },
+  helicopter: { seat: [0.55, 0.45, 2.4], pose: 'drive', len: 11, wid: 3, wheelR: 1, vmax: 70, acc: 10, cam: [22, 8], air: true },
 };
 export const specOf = (kind) => (kind?.startsWith('dirtbike') ? SPEC.dirt : SPEC[kind] || CAR);
 const FILE = (k) => (k === 'bus' ? 'bus.glb' : CAR_KINDS.includes(k) ? `cars/${k}.glb` : `vehicles/${k}.glb`);

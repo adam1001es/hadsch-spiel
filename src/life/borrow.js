@@ -112,7 +112,7 @@ export function createBorrow(ctx, opts) {
     if (k === 'n') { if (on) fireNitro(); return; }
     ctl[k] = on ? 1 : 0; b.classList.toggle('on', on); if (on) { started = true; try { b.setPointerCapture(e.pointerId); } catch { /* egal */ } }
   };
-  function fireNitro() { if (nitroCool > 0 || !drive || drive.spec.air) return; nitroT = 3; nitroCool = 6; started = true; }
+  function fireNitro() { if (nitroCool > 0 || !drive || drive.spec.air) return; nitroT = 4.5; nitroCool = 7; started = true; }
   pad.addEventListener('pointerdown', (e) => press(e, true));
   for (const ev of ['pointerup', 'pointercancel', 'lostpointercapture']) pad.addEventListener(ev, (e) => press(e, false));
   pad.addEventListener('contextmenu', (e) => e.preventDefault());
@@ -194,7 +194,8 @@ export function createBorrow(ctx, opts) {
     mode = 'self'; autoPts = null; lastKey = '';
     ctx.vehicle = drive.veh.kind; // für Mitspieler (multi.js)
     sfx.bus?.();
-    if (!seenInfo) { seenInfo = true; ui.el.panel.classList.add('collapsed'); ui.info(`<p>${T.info}</p>`); } // einmal erklären (Karte bleibt zu, „i“ zeigt einen Punkt)
+    ui.el.panel.classList.add('collapsed'); // beim Fahren nichts verdecken
+    if (!seenInfo) { seenInfo = true; ui.info(`<p>${T.info}</p>`); } // einmal erklären (Karte bleibt zu, „i“ zeigt einen Punkt)
   }
   function exit(giveBack = false) {
     if (!drive) return;
@@ -277,7 +278,7 @@ export function createBorrow(ctx, opts) {
       if (dirAhead > 0 && dirAhead < S.len / 2 + 2 + Math.abs(D.v) * 0.8 && side < S.wid / 2 + 0.9) limit = Math.min(limit, Math.max(0, dirAhead - S.len / 2 - 1.2));
     }
     D.steer += (steer - D.steer) * Math.min(1, dt * 9); // Lenkung spricht schnell an
-    const vmax = S.vmax * (turbo ? 1.6 : 1), acc = S.acc * (turbo ? 1.9 : 1) * (S.air ? 1 : 1.6);
+    const vmax = turbo ? Math.min(S.vmax * 1.45, Math.max(S.vmax * 1.2, 94.4)) : S.vmax, acc = S.acc * (turbo ? 2.4 : 1) * (S.air ? 1 : 1.25); // Nitro bis 340 km/h
     if (S.air) { // Helikopter: Rotor hochfahren, steigen/sinken, am Boden nicht vorwärts
       const onGround = D.y <= gy + 0.05;
       D.veh.rotor += ((lift > 0 || !onGround || Math.abs(throttle) > 0.1 ? 1 : 0.25) - D.veh.rotor) * Math.min(1, dt * 1.2);
@@ -294,12 +295,12 @@ export function createBorrow(ctx, opts) {
       D.v += ((throttle * vmax) - D.v) * Math.min(1, dt * 0.9);
       D.h += D.steer * dt * 1.3; D.slip = 0;
     } else { // Boden: Gas, Bremse, Rückwärts, Rollen, Lenken, Driften
-      if (throttle > 0.05) D.v += (D.v < 0 ? 14 : acc * throttle * Math.max(0.15, 1 - D.v / vmax)) * dt; // Gas (aus dem Rückwärtsgang erst bremsen)
+      if (throttle > 0.05) D.v += (D.v < 0 ? 14 : acc * throttle * Math.max(0.1, 1 - (D.v / vmax) ** 2)) * dt; // Gas (oben heraus langsamer, wie Luftwiderstand) (aus dem Rückwärtsgang erst bremsen)
       else if (throttle < -0.05) D.v -= (D.v > 0.4 ? 16 : acc * 0.7 * -throttle * Math.max(0, 1 + D.v / (S.vmax * 0.35))) * dt; // Bremse, dann rückwärts
       else D.v -= Math.sign(D.v) * Math.min(Math.abs(D.v), (0.9 + Math.abs(D.v) * 0.05) * dt); // ausrollen
-      if (D.v > vmax) D.v -= Math.min(D.v - vmax, 6 * dt);
+      if (D.v > vmax) D.v -= Math.min(D.v - vmax, 10 * dt);
       if (D.v > limit) D.v = Math.max(limit, D.v - 22 * dt); // Fußgänger
-      const sp = Math.abs(D.v), low = Math.min(1, sp / 3.5), high = 1 - 0.45 * Math.min(1, sp / S.vmax);
+      const sp = Math.abs(D.v), low = Math.min(1, sp / 3.5), high = 1 - 0.45 * Math.min(1, sp / 25) - 0.25 * Math.min(1, sp / 90); // bei Vollgas ruhiger lenken
       const maxYaw = (S.len > 8 ? 0.8 : S.len < 2.5 ? 2.6 : 2.1) * (drift ? 1 + 0.35 * ds.drift : 1) * (0.55 + 0.45 * ds.steer);
       const yawRate = D.steer * maxYaw * low * high * Math.sign(D.v || 1);
       D.h += yawRate * dt;
@@ -330,9 +331,9 @@ export function createBorrow(ctx, opts) {
     // Kamera hinter dem Fahrzeug (wischen = umschauen, kehrt langsam zurück)
     const look = input.yaw - yaw0; yaw0 += look * Math.min(1, dt * 0.8);
     D.camH = D.camH == null ? D.h : D.camH + Math.atan2(Math.sin(D.h - D.camH), Math.cos(D.h - D.camH)) * Math.min(1, dt * 4.5); // Kamera schwenkt weich nach
-    const ang = D.camH + Math.PI + look, d0 = S.cam[0] * ds.view, hh = S.cam[1] * (0.6 + 0.4 * ds.view), dist = d0 * (1 + Math.min(0.35, Math.abs(D.v) / 60));
+    const ang = D.camH + Math.PI + look, d0 = S.cam[0] * ds.view, hh = S.cam[1] * (0.6 + 0.4 * ds.view), dist = d0 * (1 + Math.min(0.6, Math.abs(D.v) / 110));
     const wp = tmp.set(D.x + Math.sin(ang) * dist, D.y + hh + input.pitch * 4, D.z + Math.cos(ang) * dist);
-    const fovWant = 62 + (turbo && Math.abs(D.v) > 5 ? 8 : 0); if (Math.abs(cam.fov - fovWant) > 0.05) { cam.fov += (fovWant - cam.fov) * Math.min(1, dt * 3); cam.updateProjectionMatrix(); }
+    const fovWant = 62 + Math.min(16, Math.abs(D.v) / 6) + (turbo && Math.abs(D.v) > 5 ? 4 : 0); // Tempogefühl if (Math.abs(cam.fov - fovWant) > 0.05) { cam.fov += (fovWant - cam.fov) * Math.min(1, dt * 3); cam.updateProjectionMatrix(); }
     wp.y = Math.max(wp.y, ground(wp.x, wp.z) + 1);
     const k = first ? 1 : 1 - Math.exp(-dt * 6); first = false;
     camPos.lerp(wp, k); camLook.lerp(new THREE.Vector3(D.x + fx * 9 * ds.view, D.y + 1.0, D.z + fz * 9 * ds.view), k); // weit nach vorn schauen: Straße und Stadt sichtbar
@@ -340,7 +341,7 @@ export function createBorrow(ctx, opts) {
     speedEl.textContent = Math.round(Math.abs(D.v) * 3.6); unitEl.textContent = D.v < -0.3 ? 'km/h · R' : 'km/h';
     infoEl.textContent = S.air ? Math.round(D.y - gy) + ' m Höhe' : mode === 'auto' && autoPts ? '→ ' + autoName : turbo ? 'TURBO' : drift && Math.abs(D.slip) > 0.08 ? 'DRIFT' : '';
     pad.classList.toggle('boost', turbo && Math.abs(D.v) > 3);
-    nitroBtn.classList.toggle('cool', nitroCool > 0 && nitroT <= 0); nitroBtn.style.setProperty('--cd', String(nitroT > 0 ? 1 : 1 - nitroCool / 6));
+    nitroBtn.classList.toggle('cool', nitroCool > 0 && nitroT <= 0); nitroBtn.style.setProperty('--cd', String(nitroT > 0 ? 1 : 1 - nitroCool / 7));
     if (!started && !S.air && autoGas) infoEl.textContent = 'Lenken oder Bremse = los';
     actions();
   }

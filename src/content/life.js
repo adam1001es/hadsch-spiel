@@ -159,5 +159,5 @@ export const BORROW = {
   choose: 'Wohin soll es gehen?',
   stand: ['موقف سيارات الأجرة', 'Taxi & Verleih'],
   info: '<b>Amanah</b> heißt: etwas, das dir anvertraut wurde. Wer sich ein Fahrzeug ausleiht, fährt vorsichtig, hält Fußgängern an und bringt es so zurück, wie er es bekommen hat. '
-    + 'Fahren: die großen Knöpfe ▲ ▼ ◀ ▶ gedrückt halten (Helikopter zusätzlich Hoch/Runter), am Laptop W/A/S/D oder Pfeiltasten (Leertaste = hoch, C = runter) – oder „Automatisch“ und ein Ziel wählen.',
+    + 'Fahren: linker Daumen auf die Lenkfläche (Gas kommt von selbst), rechter Daumen Bremse – in der Kurve bei Tempo = Drift, im Stand = rückwärts. ⚡ Nitro einmal antippen. Am Laptop W/A/S/D, Umschalt = Nitro, Leertaste = Bremse/Drift. Tacho antippen = eigene Einstellung.',
 };
