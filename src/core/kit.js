@@ -90,7 +90,8 @@ export function holdAction(ctx, player, { label, steps = [{ pose: 'dua', sec: 3 
 // Ein Gebet mit n Rak'at als Haltungsfolge (Stehen → Ruku' → Stehen → 2× Sujud), am Ende Sitzen.
 export function rakatSteps(n, perPose = 0.5) {
   const s = [];
-  for (let i = 0; i < n; i++) s.push({ pose: 'stand', sec: perPose * 1.4 }, { pose: 'ruku', sec: perPose }, { pose: 'stand', sec: perPose * 0.6 }, { pose: 'sujud', sec: perPose }, { pose: 'sit', sec: perPose * 0.5 }, { pose: 'sujud', sec: perPose });
+  // Stehen im Gebet: Hände auf der Brust (qiyam); nach dem Ruku' kurz aufrecht mit Armen an der Seite (i'tidal)
+  for (let i = 0; i < n; i++) s.push({ pose: 'qiyam', sec: perPose * 1.4 }, { pose: 'ruku', sec: perPose }, { pose: 'stand', sec: perPose * 0.6 }, { pose: 'sujud', sec: perPose }, { pose: 'sit', sec: perPose * 0.5 }, { pose: 'sujud', sec: perPose });
   s.push({ pose: 'sit', sec: perPose * 1.5 });
   return s;
 }

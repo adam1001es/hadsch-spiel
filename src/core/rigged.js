@@ -44,8 +44,8 @@ const DEF = {
     ['aim', 'L_Thigh', 'L_Calf', V(0.05, -0.12, 1)], ['aim', 'L_Calf', 'L_Foot', V(0, -0.1, -1)], ['aim', 'L_Foot', 'L_ToeBase', V(0, -0.85, -0.5)],
     ['aim', 'R_Thigh', 'R_Calf', V(-0.05, -0.12, 1)], ['aim', 'R_Calf', 'R_Foot', V(0, -0.1, -1)], ['aim', 'R_Foot', 'R_ToeBase', V(0, -0.85, -0.5)],
     ['rot', 'Waist', X, 6],
-    ['aim', 'L_Upperarm', 'L_Forearm', V(0.12, -1, 0.18)], ['aim', 'L_Forearm', 'L_Hand', V(0.03, -0.3, 1)],
-    ['aim', 'R_Upperarm', 'R_Forearm', V(-0.12, -1, 0.18)], ['aim', 'R_Forearm', 'R_Hand', V(-0.03, -0.3, 1)],
+    ['aim', 'L_Upperarm', 'L_Forearm', V(0.1, -1, 0.1)], ['aim', 'L_Forearm', 'L_Hand', V(0.04, -0.8, 0.6)],
+    ['aim', 'R_Upperarm', 'R_Forearm', V(-0.1, -1, 0.1)], ['aim', 'R_Forearm', 'R_Hand', V(-0.04, -0.8, 0.6)],
   ],
   dua: [ // Hände vor der Brust erhoben
     ['rot', 'Head', X, 8],
@@ -133,7 +133,7 @@ export function createRiggedFigure(parent, key = 'casual') {
   const mixer = new THREE.AnimationMixer(model);
   const clip = (n) => g.animations.find((a) => a.name.toLowerCase().startsWith(n));
   const walk = mixer.clipAction(clip('walk')), idleClip = clip('idle'), idle = idleClip ? mixer.clipAction(idleClip) : null;
-  walk.play(); walk.setEffectiveWeight(0); if (idle) { idle.play(); idle.setEffectiveWeight(1); }
+  walk.play(); walk.setEffectiveWeight(1);
   const bones = new Map(); model.traverse((o) => { if (o.isBone) bones.set(o.name, o); });
   const allPoseBones = new Set(); for (const p of Object.values(posed)) for (const bn of p.q.keys()) allPoseBones.add(bn);
   const cur = new Map([...allPoseBones].map((bn) => [bn, bones.get(bn).quaternion.clone()])); // aktuelle Haltung je Knochen
@@ -146,8 +146,10 @@ export function createRiggedFigure(parent, key = 'casual') {
       // Gehen ↔ Stehen überblenden, Schritttempo an die Geschwindigkeit anpassen
       const wk = target ? 0 : Math.min(1, walking * 1.6);
       wAmt += (wk - wAmt) * Math.min(1, dt * 8);
-      walk.setEffectiveWeight(Math.max(wAmt, idle ? 0 : 1e-3)); idle?.setEffectiveWeight(1 - wAmt);
-      walk.timeScale = 0.75 + Math.min(1.2, walking) * 0.55;
+      // Geh-Animation läuft immer mit vollem Gewicht (sonst mischt der Mixer die T-Haltung der Datei hinein → Arme gehen nach außen);
+      // im Stand wird sie angehalten und von der Stehhaltung überdeckt
+      walk.setEffectiveWeight(1); idle?.setEffectiveWeight(0);
+      walk.timeScale = wAmt > 0.02 ? (0.75 + Math.min(1.2, walking) * 0.55) * Math.min(1, wAmt * 2) : 0;
       mixer.update(dt);
       // Haltung darüberlegen
       // Ohne Handlung: eigene aufrechte Stehhaltung (statt der Tripo-Idle-Animation), beim Gehen die Geh-Animation
