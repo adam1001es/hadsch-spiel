@@ -81,6 +81,7 @@ export function createInteract(ctx, player, { radius: R0 = 7, near: N0 = 2.6 } =
     remove(e) { const i = items.indexOf(e); if (i < 0) return; items.splice(i, 1); for (const g of e.glows) g.removeFromParent(); e.mat.dispose(); if (active === e) { active = null; ui.prompt(null); } },
     // Aktionspunkt eines Eintrags (fest oder Objektmitte, z. B. für fahrende Busse)
     point(e) {
+      if (e.pos) return e.pos(v); // bewegter Punkt (z. B. fahrendes Auto), günstig ohne Umriss-Berechnung
       if (e.x != null) return v.set(e.x, 0, e.z);
       box.makeEmpty(); for (const o of e.objs) box.expandByObject(o);
       return box.isEmpty() ? v.set(1e9, 0, 1e9) : box.getCenter(v);

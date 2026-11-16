@@ -8,6 +8,8 @@ import * as THREE from 'three';
 import { createFigure } from './player.js';
 import { peopleModels } from '../world/crowd.js';
 import { settings, saveSettings } from './i18n.js';
+import { makeVehicle } from '../life/vehicles.js';
+const seatV = new THREE.Vector3();
 
 const RATE = 0.25, SHOW = 14; // Senden 4× pro Sekunde; höchstens 14 Mitspieler gleichzeitig zeigen (die nächsten)
 const COLORS = ['#e6c46e', '#5fb3e6', '#e67a5f', '#8fd16a', '#c78fe6', '#e6e05f', '#5fe6c4', '#e65fa8'];
@@ -34,7 +36,7 @@ export function createMulti(ctx) {
     if (ctx.stationIndex === 'balloon' || ctx.stationIndex === 'drive') return s; // nur „wo bin ich“
     const p = ctx.player; if (!p || ctx.stationIndex == null) return s;
     return { ...s, x: +p.pos.x.toFixed(2), y: +p.pos.y.toFixed(2), z: +p.pos.z.toFixed(2), h: +p.fig.root.rotation.y.toFixed(2), p: p.fig.poseName || 'stand',
-      c: p.fig.cloth.color.getHex(), k: p.fig.skinM.color.getHex(), f: ctx.profile?.gender === 'f' ? 1 : 0 };
+      c: p.fig.cloth.color.getHex(), k: p.fig.skinM.color.getHex(), f: ctx.profile?.gender === 'f' ? 1 : 0, ...(ctx.vehicle ? { v: ctx.vehicle } : {}) }; // v = Fahrzeug, in dem man sitzt
   }
   const status = () => ({ online: settings.online !== false, connected, code, me: initial(), others: Object.entries(states).map(([id, s]) => ({ id, col: colorOf(id), ...s })) });
   const changed = () => onChange(status());
@@ -110,7 +112,7 @@ export function createMulti(ctx) {
       const world = ctx.engine.world, me = ctx.player?.pos;
       const near = new Set(Object.entries(states).filter(([, s]) => s.s === ctx.stationIndex && s.x != null && me)
         .sort((a, b) => Math.hypot(a[1].x - me.x, a[1].z - me.z) - Math.hypot(b[1].x - me.x, b[1].z - me.z)).slice(0, SHOW).map(([id]) => id));
-      for (const [id, f] of figs) if (!near.has(id) || f.world !== world) { f.world.remove(f.fig.root); figs.delete(id); }
+      for (const [id, f] of figs) if (!near.has(id) || f.world !== world) { f.world.remove(f.fig.root); f.veh?.root.removeFromParent(); figs.delete(id); }
       for (const id of near) {
         const s = states[id];
         let f = figs.get(id);
@@ -124,6 +126,14 @@ export function createMulti(ctx) {
         f.x += (s.x - f.x) * k; f.z += (s.z - f.z) * k;
         f.h += Math.atan2(Math.sin(s.h - f.h), Math.cos(s.h - f.h)) * k;
         const v = Math.hypot(f.x - ox, f.z - oz) / Math.max(dt, 1e-3);
+        // Mitspieler im Fahrzeug: Fahrzeug an seiner Position, Figur sitzt im Sitz
+        if (s.v && (!f.veh || f.veh.kind !== s.v)) { f.veh?.root.removeFromParent(); f.veh = makeVehicle(world, s.v); }
+        if (!s.v && f.veh) { f.veh.root.removeFromParent(); f.veh = null; }
+        if (f.veh) {
+          const R = f.veh.root; R.position.set(f.x, 0, f.z); R.rotation.y = f.h; R.updateMatrixWorld(true); f.veh.roll(v, dt);
+          f.fig.pose(s.p || 'drive'); f.fig.root.position.copy(f.veh.seat(seatV)); f.fig.root.rotation.y = f.h; f.fig.update(dt, 0);
+          continue;
+        }
         f.fig.pose(v > 0.3 ? 'walk' : s.p === 'walk' ? 'stand' : s.p);
         f.fig.root.position.set(f.x, s.y ?? me.y, f.z); f.fig.root.rotation.y = f.h;
         f.fig.update(dt, v / 1.6);

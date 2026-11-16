@@ -26,6 +26,8 @@ const POSES = {
   throw: { hip: 0.12, drop: 0, arm: [2.7, 0.3], lie: 0, m: [2.6, 0.15], e: [0.3, 0] },
   sleep: { hip: 0, drop: 0, arm: [0.1, 0.1], lie: 1, m: [0, 0], e: [0, 0] },
   bend: { hip: 1.1, drop: 0.25, arm: [1.5, 1.5], lie: 0, m: [1.3, 1.3], e: [0.2, 0.2] },
+  drive: { hip: 0.05, drop: 0.45, arm: [1.25, 1.25], lie: 0, m: [1.2, 1.2], e: [0.35, 0.35], th: 1.5708 }, // sitzen am Lenkrad
+  ride: { hip: 0.3, drop: 0.35, arm: [1.35, 1.35], lie: 0, m: [1.3, 1.3], e: [0.25, 0.25], th: 1.3 }, // auf dem Motorrad
 };
 
 // covered: Kopf mit Tuch bedeckt (Frauen) – Kopf hat dann die Farbe der Kleidung und ist etwas größer (Tuch)
@@ -313,8 +315,10 @@ export function createPlayer(ctx, { x = 0, z = 0, heading = 0, color, speed = 1.
     distTo(tx, tz) { return Math.hypot(tx - pos.x, tz - pos.z); },
     // Leitpfeile zum Ziel zeigen (muss jeden Frame erneuert werden, sonst blenden sie aus)
     guideTo(tx, tz) { gTarget.set(tx, tz); gFresh = 0.25; },
+    ride: null, // Fahrmodus: Funktion (dt) übernimmt Bewegung, Figur und Kamera (Fahrzeug, src/life/borrow.js)
     update(dt) {
       input.update(dt);
+      if (p.ride) { p.ride(dt); ctx.sky.state.focus.copy(pos); return; }
       const mx = frozen ? 0 : input.move.x, my = frozen ? 0 : input.move.y;
       let amt = Math.min(1, Math.hypot(mx, my));
       // Autopilot: liefert eine Richtung in Weltkoordinaten. Eigene Eingabe hat immer Vorrang (und beendet ihn).

@@ -19,6 +19,8 @@ import { clock } from '../life/clock.js';
 import { createPrayer } from '../life/prayer.js';
 import { showMinimap } from '../life/minimap.js';
 import { createInteract } from '../life/interact.js';
+import { createBorrow } from '../life/borrow.js';
+import { BORROW } from '../content/life.js';
 import * as sfx from '../core/sfx.js';
 
 // Mekka und Medina nach dem Hadsch – angelehnt an den echten Stadtplan (vereinfachte Lerndarstellung).
@@ -296,8 +298,33 @@ export function create(ctx, { from, where = 'mecca' } = {}) {
     shapes: medina ? [{ t: 'rect', x0: -150, x1: 150, z0: -110, z1: 110, c: '#efe8da', label: 'Masjid an-Nabawi' }, { t: 'circle', x: -20, z: 80, r: 9, c: '#2f8a4e' }]
       : [{ t: 'circle', x: 0, z: 0, r: 200, c: '#ece8e0', label: 'Masjid al-Haram' }, { t: 'rect', x0: -6, x1: 6, z0: -5.25, z1: 5.25, c: '#111' }, { t: 'rect', x0: -40, x1: 170, z0: 263, z1: 413, c: '#d8ccb2', label: 'Abraj al-Bait' }],
     pois: [...SPOTS.filter((sp) => poiIcon[sp.key]).map((sp) => ({ x: sp.x, z: sp.z, icon: poiIcon[sp.key], label: poiName[sp.key] })),
-      ...L.mosques.map((m) => ({ x: m.spot[0], z: m.spot[1], icon: '🕌', label: m.name })), { x: L.mats[0], z: L.mats[1], icon: '🧎', label: 'Gebetsplatz' }],
+      ...L.mosques.map((m) => ({ x: m.spot[0], z: m.spot[1], icon: '🕌', label: m.name })), { x: L.mats[0], z: L.mats[1], icon: '🧎', label: 'Gebetsplatz' },
+      { x: (medina ? 75 : 30) + 3, z: (medina ? 461 : 501) - 3, icon: '🚕', label: 'Taxi & Verleih' }],
   });
+
+  // ---------- Fahrzeuge ausleihen (Amanah): im Verkehr anhalten oder am Taxistand den Fahrer fragen ----------
+  const ST = medina ? [75, 461] : [30, 501];
+  sign(world, ST[0] + 10, ST[1] - 3.5, 0, BORROW.stand, { w: 3, h: 1, y: 2.6 });
+  const stands = [{ kind: medina ? 'suv' : 'sedan', x: ST[0], z: ST[1], ry: Math.PI }, { kind: medina ? 'minivan' : 'compact', x: ST[0] + 3.4, z: ST[1], ry: Math.PI }, { kind: 'motorbike', x: ST[0] + 6.4, z: ST[1], ry: Math.PI }];
+  for (const s of stands) player.colliders.push({ type: 'box', x: s.x, z: s.z, hw: s.kind === 'motorbike' ? 0.5 : 1, hd: s.kind === 'motorbike' ? 1.1 : 2.3 });
+  const roadRect = { x0: -420, x1: 420, z0: RZ, z1: RZ + 20 };
+  const sideWay = (p) => p.z < RZ && p.z > RZ - 14 && Math.abs(p.x - bx) > BW; // Moschee-Vorplatz am Gehweg der Straße
+  const vroute = (a, b) => { // Wegpunkte für das automatische Fahren (über Einmündung, Straße, Gehweg)
+    const J = { x: bx, z: RZ - 2.5 }, A = sideWay(a) ? J : a, Bp = sideWay(b) ? J : b;
+    const pts = [...(sideWay(a) ? [{ x: a.x, z: RZ - 2.5 }, J] : []), ...via(A, Bp)];
+    if (sideWay(b)) pts.push(J, { x: b.x, z: RZ - 2.5 });
+    pts.push(b); return pts;
+  };
+  const destinations = [
+    { label: medina ? 'Prophetenmoschee' : 'Haram-Platz', x: L.gate[0], z: L.gate[1] + 14 },
+    { label: 'Südplatz', x: BUx - 15, z: BUz + 14 },
+    ...L.mosques.map((m) => ({ label: m.name, x: m.spot[0], z: m.spot[1] })),
+    { label: medina ? 'Nach Mekka (Autobahn)' : 'Nach Medina (Autobahn)', intercity: other },
+  ];
+  const baseActions = [{ label: T.cert, onClick: () => ctx.backToEnding?.() }];
+  const borrow = createBorrow(ctx, { player, interact, traffic, stands, area: [...rects, roadRect], destinations, route: vroute, map, where, baseActions,
+    people: () => { const out = agents ? agents.list.slice() : []; for (const o of ctx.multi?.status?.().others || []) if (o.x != null && o.s === ctx.stationIndex) out.push(o); return out; } });
+  if (from === 'car' && ctx.borrowed) borrow.arriveWith(ctx.borrowed.kind, BUx - 18, RZ + 26, Math.PI / 2); // mit dem ausgeliehenen Fahrzeug angekommen
 
   ui.el.panel.classList.remove('collapsed');
   ui.info(`<p>${medina ? T.introMedina : T.intro}</p><p class="small">🗺️ Karte oben rechts antippen. ${U.note}</p>`);
@@ -317,6 +344,7 @@ export function create(ctx, { from, where = 'mecca' } = {}) {
       abraj?.update(night);
       life.update(dt);
       interact.update(dt); // Randleuchten + Aktionsknopf in der Nähe
+      borrow.update(dt);
       map.update();
       // Tauben: picken, weichen dem Spieler aus, kommen beim Füttern zusammen
       feed = Math.max(0, feed - dt);
@@ -334,6 +362,6 @@ export function create(ctx, { from, where = 'mecca' } = {}) {
       }
       pigeons.instanceMatrix.needsUpdate = true;
     },
-    dispose() { prayer.dispose(); map.dispose(); interact.dispose(); cityNight.value = 0; ui.prompt(null); ui.goal(null); },
+    dispose() { borrow.dispose(); prayer.dispose(); map.dispose(); interact.dispose(); cityNight.value = 0; ui.prompt(null); ui.goal(null); },
   };
 }

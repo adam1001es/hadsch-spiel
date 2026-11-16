@@ -47,6 +47,20 @@ const DEF = {
     ['aim', 'L_Upperarm', 'L_Forearm', V(0.1, -1, 0.1)], ['aim', 'L_Forearm', 'L_Hand', V(0.04, -0.8, 0.6)],
     ['aim', 'R_Upperarm', 'R_Forearm', V(-0.1, -1, 0.1)], ['aim', 'R_Forearm', 'R_Hand', V(-0.04, -0.8, 0.6)],
   ],
+  drive: [ // auf einem Sitz (Auto/Bus): Oberschenkel waagerecht nach vorn, Unterschenkel nach unten, Hände am Lenkrad
+    ['rot', 'Waist', X, -6],
+    ['aim', 'L_Thigh', 'L_Calf', V(0.1, -0.12, 1)], ['aim', 'L_Calf', 'L_Foot', V(0, -1, 0.25)], ['aim', 'L_Foot', 'L_ToeBase', V(0, -0.3, 1)],
+    ['aim', 'R_Thigh', 'R_Calf', V(-0.1, -0.12, 1)], ['aim', 'R_Calf', 'R_Foot', V(0, -1, 0.25)], ['aim', 'R_Foot', 'R_ToeBase', V(0, -0.3, 1)],
+    ['aim', 'L_Upperarm', 'L_Forearm', V(0.18, -0.55, 0.8)], ['aim', 'L_Forearm', 'L_Hand', V(-0.25, 0.05, 1)],
+    ['aim', 'R_Upperarm', 'R_Forearm', V(-0.18, -0.55, 0.8)], ['aim', 'R_Forearm', 'R_Hand', V(0.25, 0.05, 1)],
+  ],
+  ride: [ // auf dem Motorrad: rittlings, Knie leicht gespreizt, Hände weit vorn am Lenker
+    ['rot', 'Hip', X, 18],
+    ['aim', 'L_Thigh', 'L_Calf', V(0.32, -0.35, 0.88)], ['aim', 'L_Calf', 'L_Foot', V(0.05, -1, 0.1)], ['aim', 'L_Foot', 'L_ToeBase', V(0, -0.3, 1)],
+    ['aim', 'R_Thigh', 'R_Calf', V(-0.32, -0.35, 0.88)], ['aim', 'R_Calf', 'R_Foot', V(-0.05, -1, 0.1)], ['aim', 'R_Foot', 'R_ToeBase', V(0, -0.3, 1)],
+    ['aim', 'L_Upperarm', 'L_Forearm', V(0.32, -0.45, 0.85)], ['aim', 'L_Forearm', 'L_Hand', V(0.1, -0.15, 1)],
+    ['aim', 'R_Upperarm', 'R_Forearm', V(-0.32, -0.45, 0.85)], ['aim', 'R_Forearm', 'R_Hand', V(-0.1, -0.15, 1)],
+  ],
   dua: [ // Hände vor der Brust erhoben
     ['rot', 'Head', X, 8],
     ['aim', 'L_Upperarm', 'L_Forearm', V(0.18, -0.95, 0.22)], ['aim', 'L_Forearm', 'L_Hand', V(0.05, 0.5, 0.86)],

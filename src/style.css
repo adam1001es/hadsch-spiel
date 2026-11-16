@@ -377,3 +377,9 @@ body:has(#start:not([hidden])) #panel, body:has(#start:not([hidden])) #goal { di
   body.has-minimap #panel.collapsed .panel-body { min-width: 0; overflow: hidden; }
   body.has-minimap #panel.collapsed #actions { min-width: 0; max-width: 100%; }
 }
+
+/* Sprechblasen (Amanah-Ausleihe): über dem Kopf, wandern mit der Kamera */
+.bubble { position: fixed; z-index: 9; transform: translate(-50%, -100%); max-width: min(78vw, 300px); padding: 8px 12px; border-radius: 14px; background: #fffaf0; color: #14251f; font: 500 14px/1.3 Figtree, system-ui, sans-serif; box-shadow: 0 4px 14px rgba(0,0,0,.3); border: 1.5px solid #e6c46e; pointer-events: none; text-align: center; }
+.bubble::after { content: ''; position: absolute; left: 50%; bottom: -8px; transform: translateX(-50%); border: 8px solid transparent; border-top-color: #fffaf0; border-bottom: 0; }
+.bubble.npc { background: #eaf4ee; border-color: #2f6b55; }
+.bubble.npc::after { border-top-color: #eaf4ee; }

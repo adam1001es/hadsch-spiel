@@ -132,3 +132,25 @@ export const REST = {
   info: 'Auf der langen Autobahn zwischen Mekka und Medina gibt es Rastplätze mit Tankstelle, Laden und Moschee. '
     + 'Wer reist, darf nach den Regeln für Reisende Gebete verkürzen (4 Rak\'at → 2) – die Einzelheiten unterscheiden sich je nach Rechtsschule. Diese Moschee ist eine erfundene Lerndarstellung.',
 };
+
+// Amanah-Ausleihe: Fahrzeuge werden höflich ausgeliehen und ehrlich zurückgegeben (kein Stehlen, keine Verfolgung)
+export const BORROW = {
+  hail: '✋ Anhalten & fragen',
+  ask: '✋ Fahrer fragen',
+  askLine: (name) => `As-salāmu ʿalaikum! Darf ich dein${name === 'Motorrad' ? ' Motorrad' : name === 'Bus' ? 'en Bus' : ' Auto'} ausleihen?`,
+  yesLine: 'Wa ʿalaikumu s-salām! Gern – es ist eine Amanah, bring es gut zurück!',
+  enter: (name) => `🔑 Einsteigen (${name})`,
+  self: '🕹️ Selbst fahren', auto: '🧭 Automatisch',
+  exit: '🚪 Aussteigen', give: '🤝 Zurückgeben',
+  thanks: 'Jazāk Allāhu khairan! Danke, dass du es gut zurückgebracht hast.',
+  hasanat: 'Ehrlich zurückgegeben – eine gute Tat (Amanah gehalten).',
+  far: (where) => `Bring es bitte zurück zu ${where} – die Karte zeigt dir den Weg.`,
+  ownerName: 'dem Fahrer', standName: 'dem Taxistand',
+  standReturn: 'Danke! Der Fahrer holt es hier am Taxistand ab.',
+  braking: 'Vorsicht – Fußgänger! Das Fahrzeug bremst.',
+  arrived: (n) => `Angekommen: ${n}`,
+  choose: 'Wohin soll es gehen?',
+  stand: ['موقف سيارات الأجرة', 'Taxi & Verleih'],
+  info: '<b>Amanah</b> heißt: etwas, das dir anvertraut wurde. Wer sich ein Fahrzeug ausleiht, fährt vorsichtig, hält Fußgängern an und bringt es so zurück, wie er es bekommen hat. '
+    + 'Fahren: Joystick bzw. W/S = Gas/Bremse, A/D = lenken – oder „Automatisch“ und ein Ziel wählen.',
+};

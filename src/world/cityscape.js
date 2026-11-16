@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
-import { bus } from './props.js';
+import { makeVehicle, specOf, CAR_KINDS } from '../life/vehicles.js';
 
 // Bausteine für die Städte Mekka und Medina im Lebensspiel (leicht für alte Handys):
 // - Hochhäuser/Hotels: ein InstancedMesh je Fassadenstil; die Fenster kommen aus einer kleinen Kachel-Textur, deren Größe
@@ -237,57 +237,47 @@ export function createTraffic(world, { z0, x0 = -420, x1 = 420, crossX, crossW =
     const ph = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.6, 0.26), poleM); ph.position.set(0, 2.2, 0); g.add(ph);
     ['r', 'g'].forEach((k, i) => { const l = new THREE.Mesh(new THREE.PlaneGeometry(0.2, 0.22), pedM[k]); l.position.set(0, 2.34 - i * 0.28, face * 0.135); l.rotation.y = face > 0 ? 0 : Math.PI; g.add(l); });
   }
-  // Fahrzeuge: Karosserie (Farbe je Auto), Scheiben, Räder; Busse als Modell
-  const n = mobile ? 14 : 24;
-  const bodyG = mergeGeometries([new THREE.BoxGeometry(4.5, 0.75, 1.85).translate(0, 0.7, 0), new THREE.BoxGeometry(4.3, 0.2, 1.8).translate(0, 1.12, 0)]);
-  const cabG = new THREE.BoxGeometry(2.3, 0.62, 1.66).translate(-0.2, 1.53, 0);
-  const wheelG = mergeGeometries([[-1.45, -0.86], [1.45, -0.86], [-1.45, 0.86], [1.45, 0.86]].map(([wx, wz]) => new THREE.CylinderGeometry(0.36, 0.36, 0.24, 12).rotateX(Math.PI / 2).translate(wx, 0.36, wz)));
-  const signG = new THREE.BoxGeometry(0.7, 0.22, 0.25).translate(-0.2, 1.95, 0); // Taxi-Schild auf dem Dach
-  const mk = (geo, mat) => { const im = new THREE.InstancedMesh(geo, mat, n); im.castShadow = true; world.add(im); return im; };
-  const body = mk(bodyG, new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.35, metalness: 0.5 }));
-  const cab = mk(cabG, new THREE.MeshStandardMaterial({ color: 0x1d2730, roughness: 0.15, metalness: 0.6 }));
-  const wheels = mk(wheelG, new THREE.MeshStandardMaterial({ color: 0x18191b, roughness: 0.9 }));
-  const signs = mk(signG, new THREE.MeshStandardMaterial({ color: 0xf2c94c, emissive: 0xf2a91c, emissiveIntensity: 0.4 }));
-  const colors = [0xf4f4f2, 0xf4f4f2, 0xc9ccd0, 0x222428, 0xe8e0cf, 0x7d8790, 0x8a1f1f, 0x1f3a5f];
+  // Fahrzeuge: echte Modelle (Autos, ein Motorrad, Busse) mit drehenden Rädern. Jedes Fahrzeug kann angehalten (hold)
+  // und ausgeliehen werden (take → aus dem Verkehr genommen, giveBack → fährt wieder mit). Erfundene Modelle ohne Marken.
+  void taxis;
+  const n = mobile ? 9 : 15;
   const lanes = [{ z: z0 + 2.5, dir: 1 }, { z: z0 + 7.5, dir: 1 }, { z: z0 + 12.5, dir: -1 }, { z: z0 + 17.5, dir: -1 }];
-  const V = [], col = new THREE.Color();
-  for (let i = 0; i < n; i++) {
-    const ln = lanes[i % 4], taxi = Math.random() < taxis;
-    V.push({ ln, x: x0 + Math.random() * (x1 - x0), v: 8, vmax: 9 + Math.random() * 5, len: 4.6, taxi });
-    body.setColorAt(i, col.setHex(taxi ? 0xf4f4f2 : colors[(Math.random() * colors.length) | 0]));
-  }
-  const buses = [0, 1].map((k) => { const b = bus(world, 0, 0, 0); return { ln: lanes[k * 2 + 1], x: x0 + (x1 - x0) * (0.25 + k * 0.5), v: 7, vmax: 8, len: 12.5, g: b.group }; });
-  const all = [...V, ...buses];
+  const all = [];
+  const add = (kind, ln, x) => { const veh = makeVehicle(world, kind); const sp = specOf(kind); all.push({ kind, veh, ln, x, v: 7, vmax: Math.min(sp.vmax, 9 + Math.random() * 4), len: sp.len + 0.3, held: false, borrowed: false }); };
+  for (let i = 0; i < n; i++) add(CAR_KINDS[i % CAR_KINDS.length], lanes[i % 4], x0 + Math.random() * (x1 - x0));
+  add('motorbike', lanes[0], x0 + (x1 - x0) * 0.6);
+  add('bus', lanes[1], x0 + (x1 - x0) * 0.25); add('bus', lanes[3], x0 + (x1 - x0) * 0.75);
   let t = 0, carGreen = true, phase = '';
   const stopLine = (vh) => (vh.ln.dir > 0 ? crossX - crossW / 2 - 2 : crossX + crossW / 2 + 2);
+  const place = (vh) => { const g = vh.veh.root; g.position.set(vh.x, 0, vh.ln.z); g.rotation.y = vh.ln.dir > 0 ? Math.PI / 2 : -Math.PI / 2; };
   return {
     get pedGreen() { return !carGreen; },
+    get vehicles() { return all.filter((v) => !v.borrowed); },
+    hold(vh, on = true) { vh.held = on; },                             // anhalten (Fahrer fragen)
+    take(vh) { vh.borrowed = true; vh.held = false; return vh.veh; },  // ausleihen: nicht mehr im Verkehr
+    // zurückgeben: fährt wieder auf seiner Spur mit (an der Stelle, die der Rückgabe am nächsten liegt)
+    giveBack(vh, x) { vh.borrowed = false; vh.held = false; vh.v = 0; vh.x = Math.min(x1 - 5, Math.max(x0 + 5, x)); place(vh); },
     update(dt) {
       t += dt; const c = t % 28; // 0–15 Autos grün, 15–18 gelb, 18–28 Fußgänger grün
       const ph = c < 15 ? 'g' : c < 18 ? 'y' : 'r';
       if (ph !== phase) { phase = ph; carGreen = ph === 'g'; for (const k of ['r', 'y', 'g']) lampM[k].emissiveIntensity = k === ph ? 3 : 0; pedM.r.emissiveIntensity = ph === 'r' ? 0 : 3; pedM.g.emissiveIntensity = ph === 'r' ? 3 : 0; }
       const ppl = people();
       for (const vh of all) {
+        if (vh.borrowed) continue;
         const d = vh.ln.dir, front = vh.x + d * vh.len / 2;
         let gap = 1e9;
-        for (const o of all) if (o !== vh && o.ln === vh.ln) { let dx = (o.x - vh.x) * d; if (dx < 0) dx += x1 - x0; gap = Math.min(gap, dx - (o.len + vh.len) / 2); }
+        for (const o of all) if (o !== vh && !o.borrowed && o.ln === vh.ln) { let dx = (o.x - vh.x) * d; if (dx < 0) dx += x1 - x0; gap = Math.min(gap, dx - (o.len + vh.len) / 2); }
         // rote/gelbe Ampel: vor der Haltelinie stehen bleiben (wenn noch davor)
         const toLine = (stopLine(vh) - front) * d;
         if (!carGreen && toLine > -0.5) gap = Math.min(gap, toLine);
         // Menschen auf der Fahrbahn vor dem Fahrzeug → bremsen (niemand wird angefahren)
         for (const p of ppl) { const dx = (p.x - front) * d; if (dx > -1 && dx < 14 && Math.abs(p.z - vh.ln.z) < 2.2) gap = Math.min(gap, dx - 2); }
-        const want = gap < 2 ? 0 : Math.min(vh.vmax, (gap - 2) * 0.9);
-        vh.v += (want - vh.v) * Math.min(1, dt * (want < vh.v ? 4 : 1.2));
+        const want = vh.held || gap < 2 ? 0 : Math.min(vh.vmax, (gap - 2) * 0.9);
+        vh.v += (want - vh.v) * Math.min(1, dt * (want < vh.v ? (vh.held ? 2.5 : 4) : 1.2));
         vh.x += d * vh.v * dt;
         if (vh.x > x1) vh.x -= x1 - x0; if (vh.x < x0) vh.x += x1 - x0;
+        place(vh); vh.veh.roll(vh.v, dt);
       }
-      V.forEach((vh, i) => {
-        dm.position.set(vh.x, 0, vh.ln.z); dm.rotation.set(0, vh.ln.dir > 0 ? 0 : Math.PI, 0); dm.scale.setScalar(1); dm.updateMatrix();
-        body.setMatrixAt(i, dm.matrix); cab.setMatrixAt(i, dm.matrix); wheels.setMatrixAt(i, dm.matrix);
-        if (!vh.taxi) dm.scale.setScalar(0), dm.updateMatrix(); signs.setMatrixAt(i, dm.matrix);
-      });
-      for (const im of [body, cab, wheels, signs]) im.instanceMatrix.needsUpdate = true;
-      for (const b of buses) { b.g.position.set(b.x, 0, b.ln.z); b.g.rotation.y = b.ln.dir > 0 ? Math.PI / 2 : -Math.PI / 2; }
     },
   };
 }
