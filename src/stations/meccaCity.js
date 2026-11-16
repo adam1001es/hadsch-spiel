@@ -324,6 +324,7 @@ export function create(ctx, { from, where = 'mecca' } = {}) {
   const baseActions = [{ label: T.cert, onClick: () => ctx.backToEnding?.() }];
   const borrow = createBorrow(ctx, { player, interact, traffic, stands, area: [...rects, roadRect], destinations, route: vroute, map, where, baseActions,
     people: () => { const out = agents ? agents.list.slice() : []; for (const o of ctx.multi?.status?.().others || []) if (o.x != null && o.s === ctx.stationIndex) out.push(o); return out; } });
+  ctx.debugLife = { borrow, traffic }; // für automatische Tests
   if (from === 'car' && ctx.borrowed) borrow.arriveWith(ctx.borrowed.kind, BUx - 18, RZ + 26, Math.PI / 2); // mit dem ausgeliehenen Fahrzeug angekommen
 
   ui.el.panel.classList.remove('collapsed');
