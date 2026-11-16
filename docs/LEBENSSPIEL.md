@@ -142,6 +142,7 @@ Für **jedes** Fahrzeug gibt es immer zwei Möglichkeiten:
 - **Autos fertig vorbereitet:** `public/assets/models/cars/*.glb` (10 Stück, siehe README dort, CC BY 4.0 Comrade1280): Front +z,
   Räder `wheel_fl/fr/rl/rr` einzeln drehbar. Sportwagen = `sport.glb` (kein Markenauto verwenden).
 - **Motorrad fertig vorbereitet:** `public/assets/models/vehicles/motorbike.glb` (CC BY 4.0 Yakpower, Markenschriftzug entfernt, Front +z, 2 m) – im Spiel „Motorrad“ nennen.
+- **Weitere Fahrzeuge fertig:** `vehicles/escooter.glb`, `vehicles/bicycle.glb`, `vehicles/ebike.glb`, `vehicles/dirtbike_<farbe>.glb` (6 Farben, Räder drehbar), `vehicles/helicopter.glb` – Details in `public/assets/models/vehicles/README.md`.
 - **Lizenzen:** nur CC BY oder CC0 (kein NC = nicht-kommerziell, kein SA nötig), keine echten Marken (Porsche, Hubschrauber-Hersteller …).
 
 ### Amanah-Ausleihe (Wunsch des Nutzers) – so kommt man an Fahrzeuge
