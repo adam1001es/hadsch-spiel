@@ -87,7 +87,7 @@ export function create(ctx, { from = 'mecca', to = 'medina' } = {}) {
   const prayer = createPrayer(ctx, { city: 'mecca', player, qibla });
   const interact = createInteract(ctx, player); prayer.interact = interact;
   let wuduAct = null;
-  interact.add({ obj: coach.group, color: 'blue', radius: 10, near: 3, push: 0.04, x: 0, z: -92.4, key: 'bus', label: T.go(to), run() { sfx.bus(); ctx.drive?.(from, to, { resume: 0.52 }); } });
+  interact.add({ obj: coach.group, color: 'blue', radius: 10, near: 3, push: 0.04, x: 0, z: -92.4, key: 'bus', label: T.go(to), run() { sfx.bus(); (ctx.borrowed?.kind && ctx.roadtrip ? ctx.roadtrip(from, to, { vehicle: ctx.borrowed.kind, at: 'rest' }) : ctx.drive?.(from, to, { resume: 0.52 })); } });
   interact.add({ obj: wudu, color: 'gold', radius: 7, near: 2.6, x: -39.3, z: 6, key: 'wudu', label: T.wuduDo, run() {
     ui.info(`<p>${T.wudu}</p>`); ui.el.panel.classList.remove('collapsed'); interact.enabled = false; ui.prompt(null);
     player.heading = -Math.PI / 2;
@@ -99,7 +99,7 @@ export function create(ctx, { from = 'mecca', to = 'medina' } = {}) {
   ctx.interact = interact;
   ui.el.panel.classList.remove('collapsed');
   ui.info(`<p>${T.intro}</p>`);
-  ui.actions([{ label: T.go(to), onClick: () => ctx.drive?.(from, to, { resume: 0.52 }) }]);
+  ui.actions([{ label: T.go(to), onClick: () => (ctx.borrowed?.kind && ctx.roadtrip ? ctx.roadtrip(from, to, { vehicle: ctx.borrowed.kind, at: 'rest' }) : ctx.drive?.(from, to, { resume: 0.52 })) }]);
   const map = showMinimap(ctx, {
     title: 'Karte · ' + T.title, city: 'mecca', bounds: { x0: -110, x1: 110, z0: -150, z1: 75 },
     areas: rects, roads: [{ x0: -500, x1: 500, z0: -140, z1: -120 }],

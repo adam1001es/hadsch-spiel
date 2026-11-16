@@ -161,3 +161,23 @@ export const BORROW = {
   info: '<b>Amanah</b> heißt: etwas, das dir anvertraut wurde. Wer sich ein Fahrzeug ausleiht, fährt vorsichtig, hält Fußgängern an und bringt es so zurück, wie er es bekommen hat. '
     + 'Fahren: linker Daumen auf die Lenkfläche (Gas kommt von selbst), rechter Daumen Bremse – in der Kurve bei Tempo = Drift, im Stand = rückwärts. ⚡ Nitro einmal antippen. Am Laptop W/A/S/D, Umschalt = Nitro, Leertaste = Bremse/Drift. Tacho antippen = eigene Einstellung.',
 };
+
+// Selbst fahren zwischen Mekka und Medina (eine Landschaft, mehrere Strecken). Maßstab verkleinert, Anzeige in echten km.
+export const ROADTRIP = {
+  day: 'Unterwegs',
+  title: (to) => `Nach ${to === 'medina' ? 'Medina' : 'Mekka'}`,
+  intro: 'Du fährst selbst! Drei Strecken führen zwischen Mekka und Medina: die <b>Autobahn</b> (schnell), die <b>Bergstraße</b> (Kurven durch die Berge) '
+    + 'und die <b>Wüstenpiste</b> durch das Sandmeer mit Dünen und Sprungschanzen. Unterwegs liegen Dörfer mit Moscheen und der Rastplatz mit der Oasen-Moschee. '
+    + 'Goldene Ringe sind <b>Parkours</b> – fahr hindurch und schlag deine Bestzeit. Die Karte oben rechts zeigt alles.',
+  fork: ['طريق الجبل · الطريق السريع · طريق الصحراء', '← Bergstraße  ·  Autobahn ↑  ·  Wüstenpiste →'],
+  forkBack: ['طريق الجبل · الطريق السريع · طريق الصحراء', '← Wüstenpiste  ·  Autobahn ↑  ·  Bergstraße →'],
+  km: (city, km) => `→ ${city} · ${km} km`,
+  courses: { wueste: 'Wüsten-Parkour', berg: 'Berg-Parkour' },
+  courseStart: (n) => `🏁 ${n} – los! Fahr durch alle goldenen Ringe.`,
+  courseRing: (n, i, all, t) => `${n} · Ring ${i}/${all} · ${t}`,
+  courseDone: (n, t, best) => `🏆 ${n} geschafft in ${t}${best ? ' – neue Bestzeit!' : ''}`,
+  courseBest: (t) => `Bestzeit: ${t}`,
+  rest: '🕌 Rastplatz mit Oasen-Moschee',
+  village: (n) => `Willkommen im ${n}`,
+  arrive: (c) => `Willkommen in ${c === 'medina' ? 'Medina' : 'Mekka'}!`,
+};

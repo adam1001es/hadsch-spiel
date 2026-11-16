@@ -94,7 +94,7 @@ for (const bx of ctx.bonus || []) {
   jump.appendChild(b);
 }
 // direkt per Link: …#kaaba, …#mekka, …#ballon
-{ const bm = { '#kaaba': 0, '#mekka': 1 }[location.hash]; if (location.hash === '#ballon' || location.hash === '#medina' || location.hash === '#bauhof') setTimeout(() => { readProfile(); startScreen.hidden = true; current = null; location.hash === '#ballon' ? ctx.balloon('mecca') : location.hash === '#bauhof' ? ctx.bauhof() : ctx.city(null, 'medina'); }, 0); if (bm != null) setTimeout(() => { readProfile(); startScreen.hidden = true; current = null; ctx.bonus[bm].go(); }, 0); }
+{ const bm = { '#kaaba': 0, '#mekka': 1 }[location.hash]; if (location.hash === '#ballon' || location.hash === '#medina' || location.hash === '#bauhof' || location.hash === '#strecke') setTimeout(() => { readProfile(); startScreen.hidden = true; current = null; location.hash === '#ballon' ? ctx.balloon('mecca') : location.hash === '#bauhof' ? ctx.bauhof() : location.hash === '#strecke' ? ctx.roadtrip('mecca', 'medina', { vehicle: 'sport' }) : ctx.city(null, 'medina'); }, 0); if (bm != null) setTimeout(() => { readProfile(); startScreen.hidden = true; current = null; ctx.bonus[bm].go(); }, 0); }
 // Weiterspielen, wenn es einen gespeicherten Stand gibt
 const resume = document.getElementById('resumeBtn');
 if (prog.next > 0 && prog.next < content.STATIONS.length) {

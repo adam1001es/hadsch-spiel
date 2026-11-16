@@ -232,10 +232,10 @@ export function createBorrow(ctx, opts) {
   function setAuto(dest) {
     if (dest.intercity) { // über die Autobahn in die andere Stadt
       const kind = drive.veh.kind; exit(false); ctx.borrowed = { kind, from: where };
-      return ctx.drive?.(where, dest.intercity, { vehicle: kind });
+      return (ctx.roadtrip || ctx.drive)?.(where, dest.intercity, { vehicle: kind }); // eigene Fahrt auf der Strecke
     }
     mode = 'auto'; autoName = dest.label; lastKey = '';
-    autoPts = drive.spec.air ? [{ x: dest.x, z: dest.z }] : route({ x: drive.x, z: drive.z }, { x: dest.x, z: dest.z }); // Helikopter fliegt direkt
+    autoPts = drive.spec.air ? [{ x: dest.x, z: dest.z }] : route({ x: drive.x, z: drive.z }, dest); // Helikopter fliegt direkt
   }
   function actions() {
     const key = mode + (autoPts ? 'a' : '');
@@ -263,11 +263,17 @@ export function createBorrow(ctx, opts) {
       if (braking || ctl.g || Math.abs(turn) > 0.3 || up) { mode = 'self'; autoPts = null; lastKey = ''; } // eigene Eingabe übernimmt
       turbo = false; drift = false;
       if (autoPts && autoPts.length) {
+        // Wegpunkt erreicht (Radius wächst mit dem Tempo), Punkte hinter dem Fahrzeug überspringen
+        const reach = (S.air ? 6 : 4) + Math.abs(D.v) * 0.28;
+        while (autoPts.length > 1) { const q = autoPts[0], qx = q.x - D.x, qz = q.z - D.z, qd = Math.hypot(qx, qz); if (qd < reach || (qd < reach * 3 && qx * Math.sin(D.h) + qz * Math.cos(D.h) < 0)) autoPts.shift(); else break; }
         const p = autoPts[0], dx = p.x - D.x, dz = p.z - D.z, d = Math.hypot(dx, dz);
         const last = autoPts.length === 1;
-        if (d < (S.air ? 6 : 4)) { autoPts.shift(); if (!autoPts.length) { ui.toast(T.arrived(autoName), 2500); autoPts = null; lastKey = ''; } }
+        if (last && d < (S.air ? 6 : 5)) { autoPts = null; lastKey = ''; ui.toast(T.arrived(autoName), 2500); }
         const want = Math.atan2(dx, dz), da = Math.atan2(Math.sin(want - D.h), Math.cos(want - D.h));
-        steer = Math.max(-1, Math.min(1, da * 2.5)); throttle = d < 12 && last ? 0.25 : 0.75 * (1 - Math.min(0.7, Math.abs(da)));
+        steer = Math.max(-1, Math.min(1, da * 2.5));
+        // automatisch: zügig, aber kontrolliert (max. ~120 km/h, in Kurven langsamer)
+        const cruise = Math.min(1, (S.air ? 40 : 33) / S.vmax) * (1 - Math.min(0.75, Math.abs(da) * 1.2));
+        throttle = last && d < 25 ? Math.min(cruise, 0.2) : Math.abs(D.v) > S.vmax * cruise + 1 ? -0.3 : cruise;
         if (S.air) lift = d > 40 ? (D.y < ground(D.x, D.z) + 70 ? 1 : 0) : -1; // aufsteigen, am Ziel landen
       } else if (S.air && mode === 'auto') lift = -1;
     }
@@ -319,11 +325,24 @@ export function createBorrow(ctx, opts) {
     resolve(q, S.wid / 2, S.air ? colliders.filter((c) => (c.h ?? 1e9) > D.y - 1) : colliders);
     if (Math.hypot(q.x - hit.x, q.z - hit.z) > 0.02) { D.v *= -0.25; D.slip = 0; } // anprallen und leicht zurückfedern
     D.x = q.x; D.z = q.z;
-    if (!S.air) D.y = ground(D.x, D.z); // Wüste und Berge: dem Boden folgen
+    if (!S.air) { // Boden folgen; über Kuppen und Rampen abheben (Sprung), weich landen
+      const g = ground(D.x, D.z);
+      if (D.air) { D.vy -= 22 * dt; D.y += D.vy * dt; if (D.y <= g) { D.y = g; D.air = false; if (D.vy < -7) { D.v *= 0.92; } D.vy = 0; } }
+      else {
+        const gv = Math.max(-25, Math.min(25, (g - D.y) / Math.max(dt, 1e-3))); // Steiggeschwindigkeit des Bodens unter dem Fahrzeug
+        if (D.vyG != null && gv < D.vyG - 7 && D.vyG > 2 && Math.abs(D.v) > 12) { D.air = true; D.vy = Math.min(11, D.vyG) * 0.85; D.y += D.vy * dt; } // Kuppe/Schanze → Sprung (begrenzt)
+        else { D.y = g; D.vyG = D.vyG == null ? gv : D.vyG + (gv - D.vyG) * Math.min(1, dt * 12); }
+      }
+      if (D.air) D.vyG = null;
+      D.airT = D.air ? (D.airT || 0) + dt : 0;
+    }
     const R = D.veh.root; R.position.set(D.x, D.y, D.z); R.rotation.y = D.h;
     const two = S.len < 2.5, sp2 = Math.min(1, Math.abs(D.v) / 8);
     R.rotation.order = 'YXZ';
-    R.rotation.x = S.air ? D.v / S.vmax * 0.15 : 0;
+    // Neigung am Hang (vorne/hinten), in der Luft Nase leicht nach unten
+    const pitchG = S.air ? 0 : Math.atan2(ground(D.x - fx * S.len * 0.4, D.z - fz * S.len * 0.4) - ground(D.x + fx * S.len * 0.4, D.z + fz * S.len * 0.4), S.len * 0.8);
+    D.pitch = (D.pitch || 0) + ((S.air ? D.v / S.vmax * 0.15 : D.air ? Math.max(-0.4, Math.min(0.4, -D.vy * 0.02)) : pitchG) - (D.pitch || 0)) * Math.min(1, dt * 8);
+    R.rotation.x = D.pitch;
     R.rotation.z = S.air ? -D.steer * 0.15 : two ? -D.steer * 0.38 * sp2 : -D.steer * 0.04 * sp2; // Zweiräder legen sich in die Kurve
     R.updateMatrixWorld(true);
     D.veh.roll(D.v, dt, D.steer);
@@ -350,7 +369,7 @@ export function createBorrow(ctx, opts) {
 
   // mitgebrachtes Fahrzeug aus der anderen Stadt (nach der Autobahnfahrt): gleich drinsitzen
   function arriveWith(kind, x, z, h) {
-    const veh = makeVehicle(world, kind); veh.root.position.set(x, 0, z); veh.root.rotation.y = h;
+    const veh = makeVehicle(world, kind); veh.root.position.set(x, ground(x, z), z); veh.root.rotation.y = h;
     const P = { veh, x, z, h, owner: null, home: { x, z, h }, src: 'away', mine: true };
     parked.push(P);
     interact.add({ obj: veh.root, color: 'blue', radius: 9, near: 3.6, pos: (o) => o.copy(veh.root.position), key: 'away', label: T.enter(veh.name), when: () => !drive && P.parked !== false && parked.includes(P), run: () => enter(P) });
@@ -361,6 +380,7 @@ export function createBorrow(ctx, opts) {
     get driving() { return !!drive; },
     get drive() { return drive; }, // für Tests
     get ctl() { return ctl; },
+    get parked() { return parked; },
     // mit dem eigenen Fahrzeug über die Autobahn in die andere Stadt
     intercity(to) { if (!drive || drive.spec.air && false) return; setAuto({ intercity: to }); },
     nitro: () => fireNitro(), start: () => { started = true; },
