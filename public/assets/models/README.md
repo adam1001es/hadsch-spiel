@@ -20,5 +20,6 @@
 | `player_m.glb` | Hauptfigur Junge/Mann (Kurta-Pyjama), vom Projekt-Inhaber mit **Tripo AI** erstellt und gerigged | Skelett mit 78 Knochen, Animationen Gehen/Stehen (Positionsspuren entfernt), ~54.000 Dreiecke; Gebetshaltungen werden im Spiel aus dem Skelett berechnet (`src/core/rigged.js`) |
 | `player_m_ihram_open.glb` | Hauptfigur im Ihram mit freier rechter Schulter (Idtiba'), vom Projekt-Inhaber mit **Tripo AI** erstellt und gerigged | gleiches Skelett wie `player_m.glb`, Animation Gehen, ~70.000 Dreiecke; im Tawaf der Umrah |
 | `player_m_ihram.glb` | Hauptfigur im Ihram, beide Schultern bedeckt, vom Projekt-Inhaber mit **Tripo AI** erstellt und gerigged | gleiches Skelett, Animation Gehen, ~76.000 Dreiecke; alle Ihram-Stationen außer dem Umrah-Tawaf |
+| `oasis_mosque.glb` | „Mosque“ von **Illia** (illidan.litvinyuk), https://skfb.ly/pvooG, Lizenz **CC BY 4.0** | Gelände entfernt, 669 Teile zu Stein / Palmblättern / Palmstämmen zusammengefasst, von 726.000 auf ~52.000 Dreiecke vereinfacht (meshoptimizer), Kanten-Normalen neu, eigene Farben (Steinstruktur im Spiel); Oasen-Moschee am Rastplatz der Autobahn Mekka–Medina |
 
 Das Umwandlungs-Werkzeug liegt nicht im Repository (lokal unter `tools/`).

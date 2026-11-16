@@ -15,6 +15,7 @@ import * as drive from '../stations/drive.js';
 import * as buildyard from '../stations/buildyard.js';
 import * as haramVisit from '../stations/haramVisit.js';
 import * as nabawiVisit from '../stations/nabawiVisit.js';
+import * as restStop from '../stations/restStop.js';
 import { progressStore } from './progress.js';
 import { createLife } from '../world/life.js';
 
@@ -148,7 +149,8 @@ export function createStations(ctx) {
   ctx.bauhof = (from = 'mecca') => { ctx.stationIndex = 'bauhof'; return scene((c) => buildyard.create(c, { from })); };
   ctx.haramVisit = () => { ctx.stationIndex = 'haram'; return scene(haramVisit.create); };   // in die Haram zur Kaaba (Lebensspiel)
   ctx.nabawiVisit = () => { ctx.stationIndex = 'nabawi'; return scene(nabawiVisit.create); }; // in die Prophetenmoschee
-  ctx.drive = (from, to) => { ctx.stationIndex = 'drive'; return scene((c) => drive.create(c, { from, to })); };
+  ctx.drive = (from, to, opts = {}) => { ctx.stationIndex = 'drive'; return scene((c) => drive.create(c, { from, to, ...opts })); };
+  ctx.restStop = (from, to) => { ctx.stationIndex = 'rest'; return scene((c) => restStop.create(c, { from, to })); }; // Rastplatz mit Oasen-Moschee
   ctx.backToEnding = () => { ctx.stationIndex = STATIONS.length; return scene(info.ending); };
 
   ctx.next = async () => {

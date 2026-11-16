@@ -111,3 +111,24 @@ export const PRAYER_UI = {
   tawafDone: 'Tawaf vollendet – 7 Runden. Möge Allah es annehmen.',
   times: 'Gebetszeiten heute',
 };
+
+// Rastplatz mit Oasen-Moschee an der Autobahn Mekka–Medina (erfundener Ort, wie die echten Rastplätze mit Moschee)
+export const REST = {
+  title: 'Rastplatz Oasen-Moschee', day: 'Autobahn Mekka – Medina',
+  stop: '🕌 Rast an der Oasen-Moschee',
+  prayerStop: 'Der Bus hält zum Gebet an der Oasen-Moschee.',
+  intro: 'Rast auf halbem Weg zwischen Mekka und Medina. Entlang der Autobahn gibt es Rastplätze mit Moscheen, damit Reisende unterwegs beten können. '
+    + 'Geh durch die Palmenallee in den Hof: Am Waschplatz kannst du den Wudu machen, vor der Moschee beten (zur Gebetszeit leuchtet der Gebetsplatz). Der Bus wartet auf dem Parkplatz.',
+  go: (to) => `🚌 Weiterfahren nach ${to === 'medina' ? 'Medina' : 'Mekka'}`,
+  wuduDo: '💧 Wudu machen',
+  wudu: '<b>Wudu – die Gebetswaschung</b> (vereinfacht): Absicht fassen, „Bismillah“ sagen, Hände waschen, Mund und Nase ausspülen, '
+    + 'das Gesicht waschen, die Arme bis zu den Ellbogen (rechts zuerst), über den Kopf streichen, die Füße bis zu den Knöcheln waschen (rechts zuerst). '
+    + 'Pflicht sind laut Koran: Gesicht, Arme bis zu den Ellbogen, über den Kopf streichen, Füße bis zu den Knöcheln (Sure 5, Vers 6). Vieles wird als Sunnah dreimal gemacht.',
+  wuduHold: 'Halten: Wudu',
+  wuduDone: 'Wudu fertig – jetzt kannst du beten.',
+  kioskDo: '🥤 Erfrischung am Kiosk',
+  kiosk: 'Am Kiosk gibt es Wasser, Saft und Datteln für die Weiterfahrt. Bismillah!',
+  infoDo: '📜 Über Rastplätze',
+  info: 'Auf der langen Autobahn zwischen Mekka und Medina gibt es Rastplätze mit Tankstelle, Laden und Moschee. '
+    + 'Wer reist, darf nach den Regeln für Reisende Gebete verkürzen (4 Rak\'at → 2) – die Einzelheiten unterscheiden sich je nach Rechtsschule. Diese Moschee ist eine erfundene Lerndarstellung.',
+};

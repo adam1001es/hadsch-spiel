@@ -5,16 +5,19 @@ import { buildHaram, matafRadius } from './haram.js';
 import { createCrowd } from './crowd.js';
 import { roads, bus } from './props.js';
 import { city, clockTower, nabawi } from '../stations/balloon.js';
+import { oasisMosque } from './oasis.js';
 
 // Gemeinsame Landschaft für Ballonflug und Busfahrt: Mekka bei (0, 0), Medina bei (0, −D), dazwischen die Autobahn durch
 // Wüste und Berge (stark verkleinert: in echt ca. 340 km). Eine Welt – man fliegt/fährt sichtbar von einer Stadt zur anderen.
 export const D = 3400, MED = { x: 0, z: -D };
 const smooth = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
 export const roadX = (z) => Math.sin(z * 0.0011) * 140 * smooth(0, 700, -z) * smooth(0, 700, z + D); // Straße mit sanften Kurven
+// Rastplatz mit Oasen-Moschee auf halbem Weg (östlich der Autobahn, Tor zur Straße)
+export const REST_Z = -1600, REST_X = roadX(REST_Z) + 80;
 
 export function H(x, z) {
   const toRoad = Math.abs(x - roadX(z)), dM = Math.hypot(x, z), dN = Math.hypot(x - MED.x, z - MED.z);
-  const open = Math.min(smooth(70, 420, toRoad), smooth(500, 900, dM), smooth(800, 1250, dN)); // Straße und Städte flach
+  const open = Math.min(smooth(70, 420, toRoad), smooth(500, 900, dM), smooth(800, 1250, dN), smooth(110, 260, Math.hypot(x - REST_X, z - REST_Z))); // Straße, Städte und Rastplatz flach
   return open * (fbm(x * 0.0018 + 7, z * 0.0018) * 260 + fbm(x * 0.009, z * 0.009) * 50) + (1 - open) * fbm(x * 0.03, z * 0.03) * 1.5 - 0.8;
 }
 
@@ -35,6 +38,7 @@ export function buildHejaz(world, engine, { pilgrims = true } = {}) {
   // Autobahn Mekka – Medina (in Abschnitten entlang der Kurven)
   const segs = []; for (let z = -620; z > -D + 820; z -= 120) segs.push({ x1: roadX(z), z1: z, x2: roadX(z - 120), z2: z - 120, w: 16 });
   roads(world, segs, { curb: false, y: 0.15 });
+  oasisMosque(world, { x: REST_X, z: REST_Z, ry: -Math.PI / 2, shadows: false }); // Oasen-Moschee am Rastplatz
   // Busse auf der Autobahn (fahren hin und her)
   const coaches = []; for (let k = 0; k < (mobile ? 4 : 7); k++) { const b = bus(world, 0, 0); coaches.push({ g: b.group, s: Math.random(), dir: k % 2 ? 1 : -1 }); }
   // Pilger beim Tawaf
