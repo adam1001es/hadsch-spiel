@@ -55,7 +55,7 @@ export function createBorrow(ctx, opts) {
   let autoGas = (() => { try { return localStorage.getItem('hp-autogas') !== '0'; } catch { return true; } })();
   // eigene Fahr-Einstellung je Gerät (versteckt: Tacho antippen): Lenkseite, Lenk-Stärke, Drift-Stärke
   const DS_KEY = 'hp-drive';
-  const ds = (() => { try { return { steerRight: false, steer: 1, drift: 1, ...JSON.parse(localStorage.getItem(DS_KEY) || '{}') }; } catch { return { steerRight: false, steer: 1, drift: 1 }; } })();
+  const ds = (() => { try { return { steerRight: false, steer: 1, drift: 1, view: 1, ...JSON.parse(localStorage.getItem(DS_KEY) || '{}') }; } catch { return { steerRight: false, steer: 1, drift: 1, view: 1 }; } })();
   const saveDS = () => { try { localStorage.setItem(DS_KEY, JSON.stringify(ds)); } catch { /* egal */ } };
   const pad = document.createElement('div'); pad.id = 'driveCtl'; pad.hidden = true;
   pad.innerHTML = '<div class="dc-l"><div class="dc-speed" role="button" aria-label="Tacho"><b>0</b><span>km/h</span><em></em><i class="dc-gear">⚙</i></div>'
@@ -75,6 +75,7 @@ export function createBorrow(ctx, opts) {
     <p class="ds-row"><span>Lenken mit</span><span class="ds-seg"><button type="button" data-side="0">linkem Daumen</button><button type="button" data-side="1">rechtem Daumen</button></span></p>
     <label class="ds-row"><span>Lenk-Stärke <em class="ds-v1"></em></span><input type="range" min="0.4" max="2" step="0.05" class="ds-steer"></label>
     <label class="ds-row"><span>Drift-Stärke <em class="ds-v2"></em></span><input type="range" min="0.3" max="1.8" step="0.05" class="ds-drift"></label>
+    <p class="ds-row"><span>Kamera</span><span class="ds-seg"><button type="button" data-view="0.75">nah</button><button type="button" data-view="1">weit</button><button type="button" data-view="1.45">sehr weit</button></span></p>
     <p class="ds-row"><span>Auto-Gas</span><span class="ds-seg"><button type="button" data-ag="1">an</button><button type="button" data-ag="0">aus</button></span></p>
     <button type="button" class="ds-reset">Zurücksetzen</button><p class="ds-note">Wird auf diesem Gerät gespeichert.</p></div>`;
   document.body.appendChild(setup);
@@ -84,6 +85,7 @@ export function createBorrow(ctx, opts) {
     pad.classList.toggle('swap', !!ds.steerRight);
     sSteer.value = ds.steer; sDrift.value = ds.drift; setup.querySelector('.ds-v1').textContent = pct(ds.steer); setup.querySelector('.ds-v2').textContent = pct(ds.drift);
     setup.querySelectorAll('[data-side]').forEach((b) => b.classList.toggle('on', +b.dataset.side === (ds.steerRight ? 1 : 0)));
+    setup.querySelectorAll('[data-view]').forEach((b) => b.classList.toggle('on', Math.abs(+b.dataset.view - ds.view) < 0.01));
     setup.querySelectorAll('[data-ag]').forEach((b) => b.classList.toggle('on', +b.dataset.ag === (autoGas ? 1 : 0)));
   }
   applyDS();
@@ -91,8 +93,9 @@ export function createBorrow(ctx, opts) {
   setup.addEventListener('click', (e) => {
     if (e.target === setup || e.target.closest('.ds-x')) { setup.hidden = true; return; }
     const side = e.target.closest('[data-side]'); if (side) { ds.steerRight = side.dataset.side === '1'; saveDS(); applyDS(); }
+    const vw = e.target.closest('[data-view]'); if (vw) { ds.view = +vw.dataset.view; saveDS(); applyDS(); }
     const ag = e.target.closest('[data-ag]'); if (ag) { autoGas = ag.dataset.ag === '1'; try { localStorage.setItem('hp-autogas', autoGas ? '1' : '0'); } catch { /* egal */ } showAG(); applyDS(); }
-    if (e.target.closest('.ds-reset')) { Object.assign(ds, { steerRight: false, steer: 1, drift: 1 }); saveDS(); applyDS(); }
+    if (e.target.closest('.ds-reset')) { Object.assign(ds, { steerRight: false, steer: 1, drift: 1, view: 1 }); saveDS(); applyDS(); }
   });
   sSteer.addEventListener('input', () => { ds.steer = +sSteer.value; saveDS(); applyDS(); });
   sDrift.addEventListener('input', () => { ds.drift = +sDrift.value; saveDS(); applyDS(); });
@@ -327,12 +330,12 @@ export function createBorrow(ctx, opts) {
     // Kamera hinter dem Fahrzeug (wischen = umschauen, kehrt langsam zurück)
     const look = input.yaw - yaw0; yaw0 += look * Math.min(1, dt * 0.8);
     D.camH = D.camH == null ? D.h : D.camH + Math.atan2(Math.sin(D.h - D.camH), Math.cos(D.h - D.camH)) * Math.min(1, dt * 4.5); // Kamera schwenkt weich nach
-    const ang = D.camH + Math.PI + look, [d0, hh] = S.cam, dist = d0 * (1 + Math.min(0.35, Math.abs(D.v) / 60));
+    const ang = D.camH + Math.PI + look, d0 = S.cam[0] * ds.view, hh = S.cam[1] * (0.6 + 0.4 * ds.view), dist = d0 * (1 + Math.min(0.35, Math.abs(D.v) / 60));
     const wp = tmp.set(D.x + Math.sin(ang) * dist, D.y + hh + input.pitch * 4, D.z + Math.cos(ang) * dist);
     const fovWant = 62 + (turbo && Math.abs(D.v) > 5 ? 8 : 0); if (Math.abs(cam.fov - fovWant) > 0.05) { cam.fov += (fovWant - cam.fov) * Math.min(1, dt * 3); cam.updateProjectionMatrix(); }
     wp.y = Math.max(wp.y, ground(wp.x, wp.z) + 1);
     const k = first ? 1 : 1 - Math.exp(-dt * 6); first = false;
-    camPos.lerp(wp, k); camLook.lerp(new THREE.Vector3(D.x + fx * 3, D.y + 1.2, D.z + fz * 3), k);
+    camPos.lerp(wp, k); camLook.lerp(new THREE.Vector3(D.x + fx * 9 * ds.view, D.y + 1.0, D.z + fz * 9 * ds.view), k); // weit nach vorn schauen: Straße und Stadt sichtbar
     cam.position.copy(camPos); cam.lookAt(camLook);
     speedEl.textContent = Math.round(Math.abs(D.v) * 3.6); unitEl.textContent = D.v < -0.3 ? 'km/h · R' : 'km/h';
     infoEl.textContent = S.air ? Math.round(D.y - gy) + ' m Höhe' : mode === 'auto' && autoPts ? '→ ' + autoName : turbo ? 'TURBO' : drift && Math.abs(D.slip) > 0.08 ? 'DRIFT' : '';
@@ -355,6 +358,8 @@ export function createBorrow(ctx, opts) {
     get driving() { return !!drive; },
     get drive() { return drive; }, // für Tests
     get ctl() { return ctl; },
+    // mit dem eigenen Fahrzeug über die Autobahn in die andere Stadt
+    intercity(to) { if (!drive || drive.spec.air && false) return; setAuto({ intercity: to }); },
     nitro: () => fireNitro(), start: () => { started = true; },
     arriveWith,
     update(dt) {

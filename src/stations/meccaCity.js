@@ -297,13 +297,14 @@ export function create(ctx, { from, where = 'mecca' } = {}) {
   const map = showMinimap(ctx, {
     title: medina ? 'Karte · Medina' : 'Karte · Mekka', city: where, bounds: L.bounds,
     areas: [...rects, ...(medina ? [{ x0: -230, x1: 230, z0: -190, z1: 190 }] : [])],
-    roads: [{ x0: -420, x1: 420, z0: RZ, z1: RZ + 20 }],
+    roads: [{ x0: -420, x1: 1200, z0: RZ, z1: RZ + 20 }], // Querstraße + Autobahn nach Osten
     blocks: [...towers.footprints, ...mosqueFoot],
     shapes: medina ? [{ t: 'rect', x0: -150, x1: 150, z0: -110, z1: 110, c: '#efe8da', label: 'Masjid an-Nabawi' }, { t: 'circle', x: -20, z: 80, r: 9, c: '#2f8a4e' }]
       : [{ t: 'circle', x: 0, z: 0, r: 200, c: '#ece8e0', label: 'Masjid al-Haram' }, { t: 'rect', x0: -6, x1: 6, z0: -5.25, z1: 5.25, c: '#111' }, { t: 'rect', x0: -40, x1: 170, z0: 263, z1: 413, c: '#d8ccb2', label: 'Abraj al-Bait' }],
     pois: [...SPOTS.filter((sp) => poiIcon[sp.key]).map((sp) => ({ x: sp.x, z: sp.z, icon: poiIcon[sp.key], label: poiName[sp.key] })),
       ...L.mosques.map((m) => ({ x: m.spot[0], z: m.spot[1], icon: '🕌', label: m.name })), { x: L.mats[0], z: L.mats[1], icon: '🧎', label: 'Gebetsplatz' },
-      { x: (medina ? 75 : 30) + 3, z: (medina ? 461 : 501) - 3, icon: '🚕', label: 'Taxi & Verleih' }],
+      { x: (medina ? 75 : 30) + 3, z: (medina ? 461 : 501) - 3, icon: '🚕', label: 'Taxi & Verleih' },
+      { x: 520, z: RZ + 10, icon: '🛣️', label: medina ? 'Autobahn nach Mekka' : 'Autobahn nach Medina' }],
   });
 
   // ---------- Fahrzeuge ausleihen (Amanah): im Verkehr anhalten oder am Taxistand den Fahrer fragen ----------
@@ -343,6 +344,24 @@ export function create(ctx, { from, where = 'mecca' } = {}) {
     avoid: (x, z) => (z > RZ - 1 && z < RZ + 21) || Math.hypot(x - HP[0], z - HP[1]) < 16 || Math.hypot(x - ST[0] - 4, z - ST[1]) < 12,
     people: () => { const out = agents ? agents.list.slice() : []; for (const o of ctx.multi?.status?.().others || []) if (o.x != null && o.s === ctx.stationIndex) out.push(o); return out; } });
   ctx.debugLife = { borrow, traffic }; // für automatische Tests
+  // ---------- Autobahn nach Medina bzw. Mekka: die Querstraße führt nach Osten aus der Stadt (vereinfachte Lage) ----------
+  const HW0 = 420, HW1 = 1200, HWZ = RZ + 10;
+  { const asph = new THREE.Mesh(new THREE.PlaneGeometry(HW1 - HW0, 20).rotateX(-Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0x55565a, roughness: 0.95 }));
+    asph.position.set((HW0 + HW1) / 2, 0.05, HWZ); asph.receiveShadow = true; world.add(asph);
+    const dash = new THREE.InstancedMesh(new THREE.PlaneGeometry(4, 0.2).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0xeeeeea }), 80);
+    for (let i = 0; i < 80; i++) { dm.position.set(HW0 + i * 10 + 2, 0.06, HWZ); dm.rotation.set(0, 0, 0); dm.scale.setScalar(1); dm.updateMatrix(); dash.setMatrixAt(i, dm.matrix); } world.add(dash);
+    // blaue Autobahn-Schilderbrücke (wie in Saudi-Arabien: Arabisch + Englisch, hier Arabisch + Deutsch)
+    const gantry = (x, lines) => {
+      const g = new THREE.Group(); g.position.set(x, 0, HWZ); world.add(g);
+      const metal = new THREE.MeshStandardMaterial({ color: 0x8a9096, metalness: 0.6, roughness: 0.4 });
+      for (const z of [-11, 11]) { const p = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.25, 7.5, 8), metal); p.position.set(0, 3.75, z); g.add(p); }
+      const beam = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.4, 22.5), metal); beam.position.y = 7.3; g.add(beam);
+      const sg = sign(g, -0.3, 0, -Math.PI / 2, lines, { w: 12, h: 3, y: 5.8, bg: '#1f4f9a', fg: '#ffffff', accent: '#ffffff', wall: true }); void sg;
+      return g;
+    };
+    gantry(HW0 + 25, medina ? ['مكة المكرمة', 'Mekka · Autobahn →'] : ['المدينة المنورة', 'Medina · Autobahn →']);
+    gantry(HW0 - 330, medina ? ['طريق مكة', '→ Autobahn nach Mekka'] : ['طريق المدينة', '→ Autobahn nach Medina']); }
+  let hwBusy = false;
   if (from === 'car' && ctx.borrowed) borrow.arriveWith(ctx.borrowed.kind, BUx - 18, RZ + 26, Math.PI / 2); // mit dem ausgeliehenen Fahrzeug angekommen
 
   ui.el.panel.classList.remove('collapsed');
@@ -364,6 +383,8 @@ export function create(ctx, { from, where = 'mecca' } = {}) {
       life.update(dt);
       interact.update(dt); // Randleuchten + Aktionsknopf in der Nähe
       borrow.update(dt);
+      // mit dem eigenen Fahrzeug über die Autobahn hinausgefahren → Fahrt in die andere Stadt
+      { const D = borrow.drive; if (D && !hwBusy && !D.spec.air && D.x > HW0 + 60 && Math.abs(D.z - HWZ) < 40) { hwBusy = true; ui.toast(medina ? 'Auf der Autobahn nach Mekka …' : 'Auf der Autobahn nach Medina …', 2500); borrow.intercity(other); } }
       map.update();
       // Tauben: picken, weichen dem Spieler aus, kommen beim Füttern zusammen
       feed = Math.max(0, feed - dt);

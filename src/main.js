@@ -46,6 +46,12 @@ document.getElementById('disclaimer').textContent = content.DISCLAIMER;
 // Version + Status der 3D-Modelle (hilft beim Testen am iPhone)
 const ver = document.createElement('p'); ver.className = 'small'; ver.id = 'version';
 document.getElementById('disclaimer').after(ver);
+// Neue Version online? (Browser wie Firefox am iPhone halten die alte Seite lange im Speicher) → einmal neu laden
+fetch('./version.json?t=' + Date.now(), { cache: 'no-store' }).then((r) => (r.ok ? r.json() : null)).then((v) => {
+  if (!v || v.build === __BUILD__) return;
+  try { if (sessionStorage.getItem('hp-reloaded') === v.build) return; sessionStorage.setItem('hp-reloaded', v.build); } catch { return; }
+  location.reload();
+}).catch(() => {});
 const showVer = () => { ver.textContent = `Version ${__BUILD__} · Pilgerin: ${peopleStatus.woman} · Pilger: ${peopleStatus.man} · Kameez: ${peopleStatus.kameez}`; };
 showVer(); peopleReady.then(showVer);
 // Profil (Vorname, Geschlecht, Alter) – nur lokal im Browser gespeichert
