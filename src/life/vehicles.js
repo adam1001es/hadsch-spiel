@@ -5,15 +5,25 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 // Motorrad (vehicles/motorbike.glb, CC BY 4.0 Yakpower), Bus (bus.glb, CC BY 4.0 agungkuncoro13021986).
 // Alle mit Front nach +z, Boden y = 0. makeVehicle(kind) gibt sofort eine Gruppe zurück; das Modell wird nachgeladen.
 // Räder: Autos haben wheel_fl/fr/rl/rr (Drehpunkt in der Radmitte); beim Motorrad werden die Räder aus der Form erkannt.
+// Weitere (vehicles/README.md): Geländemotorräder dirtbike_<farbe> (wheel_f/wheel_r), E-Scooter, Fahrrad, E-Bike, Helikopter
+// (rotor_main dreht um y, rotor_tail um x). Beim Laden wird jedes Modell auf Mitte x = z = 0 und Boden y = 0 gesetzt.
+export const DIRT_COLORS = ['orange', 'red', 'green', 'black', 'white', 'yellow'];
+export const SMALL_KINDS = ['escooter', 'bicycle', 'ebike', 'motorbike', ...DIRT_COLORS.map((c) => 'dirtbike_' + c)];
+export const isAir = (k) => k === 'helicopter';
 export const CAR_KINDS = ['sedan', 'compact', 'suv', 'minivan', 'hatchback', 'wagon', 'pickup', 'offroad', 'coupe', 'sport'];
-export const VEHICLE_NAME = { sedan: 'Limousine', compact: 'Kleinwagen', suv: 'SUV', minivan: 'Minivan', hatchback: 'Schrägheck', wagon: 'Kombi', pickup: 'Pickup', offroad: 'Geländewagen', coupe: 'Coupé', sport: 'Sportwagen', motorbike: 'Motorrad', bus: 'Bus' };
+export const VEHICLE_NAME = { sedan: 'Limousine', compact: 'Kleinwagen', suv: 'SUV', minivan: 'Minivan', hatchback: 'Schrägheck', wagon: 'Kombi', pickup: 'Pickup', offroad: 'Geländewagen', coupe: 'Coupé', sport: 'Sportwagen', motorbike: 'Motorrad', bus: 'Bus', escooter: 'E-Scooter', bicycle: 'Fahrrad', ebike: 'E-Bike', helicopter: 'Helikopter', ...Object.fromEntries(DIRT_COLORS.map((c) => ['dirtbike_' + c, 'Geländemotorrad'])) };
 const CAR = { seat: [0.37, -0.14, -0.25], pose: 'drive', len: 4.4, wid: 1.9, wheelR: 0.31, vmax: 15, acc: 5, cam: [7, 2.6] };
 export const SPEC = {
   motorbike: { seat: [0, 0.42, -0.25], pose: 'ride', len: 2.1, wid: 0.8, wheelR: 0.33, vmax: 17, acc: 6, cam: [5, 2.1] },
   bus: { seat: [0.75, 1.05, 4.9], pose: 'drive', len: 12.4, wid: 3, wheelR: 0.5, vmax: 11, acc: 2.5, cam: [15, 5] },
+  escooter: { seat: [0, 0.12, -0.15], pose: 'stand', len: 1.1, wid: 0.6, wheelR: 0.1, vmax: 7, acc: 4, cam: [4.5, 2.2] },
+  bicycle: { seat: [0, 0.32, -0.2], pose: 'ride', len: 1.8, wid: 0.6, wheelR: 0.34, vmax: 7, acc: 3, cam: [4.5, 2.1] },
+  ebike: { seat: [0, 0.34, -0.25], pose: 'ride', len: 1.9, wid: 0.6, wheelR: 0.34, vmax: 9, acc: 4, cam: [4.5, 2.1] },
+  dirt: { seat: [0, 0.48, -0.2], pose: 'ride', len: 2.1, wid: 0.8, wheelR: 0.35, vmax: 16, acc: 7, cam: [5, 2.1], offroad: true },
+  helicopter: { seat: [0.55, 0.45, 2.4], pose: 'drive', len: 11, wid: 3, wheelR: 1, vmax: 30, acc: 8, cam: [18, 6], air: true },
 };
-export const specOf = (kind) => SPEC[kind] || CAR;
-const FILE = (k) => (k === 'motorbike' ? 'vehicles/motorbike.glb' : k === 'bus' ? 'bus.glb' : `cars/${k}.glb`);
+export const specOf = (kind) => (kind?.startsWith('dirtbike') ? SPEC.dirt : SPEC[kind] || CAR);
+const FILE = (k) => (k === 'bus' ? 'bus.glb' : CAR_KINDS.includes(k) ? `cars/${k}.glb` : `vehicles/${k}.glb`);
 const cache = {};
 export const loadVehicle = (kind) => (cache[kind] ||= new GLTFLoader().loadAsync('./assets/models/' + FILE(kind)).then((g) => {
   // Scheiben hell getönt und durchsichtig, damit man sieht, wer im Fahrzeug sitzt
@@ -59,14 +69,21 @@ export function makeVehicle(world, kind, { shadows = true, driver = false } = {}
   if (driver) { v.driver = driverMesh(); v.driver.position.set(spec.seat[0], spec.seat[1] + (kind === 'motorbike' ? 0.15 : 0.5), spec.seat[2]); root.add(v.driver); }
   loadVehicle(kind).then((sc) => {
     if (!sc || !root.parent) return;
-    const m = sc.clone(true); root.add(m);
+    const raw = sc.clone(true), m = new THREE.Group(); m.add(raw); root.add(m);
+    // auf Mitte und Boden setzen (manche Modelle sind im Paket verschoben)
+    const bb = new THREE.Box3().setFromObject(raw), cc = bb.getCenter(new THREE.Vector3());
+    raw.position.set(-cc.x, -bb.min.y, -cc.z);
     m.traverse((o) => { if (o.isMesh) { o.castShadow = shadows; o.receiveShadow = true; } });
     if (kind === 'motorbike') v.wheels = findWheels(m);
+    else if (kind.startsWith('dirtbike')) { for (const n of ['wheel_f', 'wheel_r']) { const w = m.getObjectByName(n); if (w) v.wheels.push({ obj: w, steer: n === 'wheel_f' }); } }
+    else if (kind === 'helicopter') { v.rotorMain = m.getObjectByName('rotor_main'); v.rotorTail = m.getObjectByName('rotor_tail'); }
     else for (const n of ['wheel_fl', 'wheel_fr', 'wheel_rl', 'wheel_rr']) { const w = m.getObjectByName(n); if (w) { w.rotation.order = 'YXZ'; v.wheels.push({ obj: w, steer: n.includes('f') && n[6] === 'f' }); } }
     v.ready = true;
   });
   // Räder drehen (Geschwindigkeit m/s) und Vorderräder lenken (Radiant)
+  v.rotor = 0; // Helikopter: Rotordrehzahl 0…1
   v.roll = (speed, dt, steer = 0) => {
+    if (v.rotorMain) { v.rotorMain.rotation.y += dt * 28 * v.rotor; if (v.rotorTail) v.rotorTail.rotation.x += dt * 40 * v.rotor; }
     v.spin += (speed * dt) / spec.wheelR;
     for (const w of v.wheels) { w.obj.rotation.order = 'YXZ'; w.obj.rotation.x = v.spin; if (w.steer) w.obj.rotation.y = steer * 0.5; }
   };

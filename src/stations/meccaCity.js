@@ -251,15 +251,19 @@ export function create(ctx, { from, where = 'mecca' } = {}) {
   }, { speed: 1.1, clear: clearView });
 
   // ---------- Spielfigur ----------
+  const groundH = (x, z) => Math.max(0, h(x, z) - 0.08); // Wüste und Berge sind begehbar und befahrbar
+  for (const c of mosqueCols) c.h = 35;
   const colliders = [
-    walkable(rects),
+    // keine unsichtbaren Wände: nur Gebäude halten auf (Hotels, Uhrturm, Moscheen, Haram/Nabawi); h = Höhe für den Helikopter
+    ...towers.footprints.map((f) => ({ type: 'box', x: f.x, z: f.z, hw: f.w / 2, hd: f.d / 2, rot: f.ry || 0, h: f.h })),
+    ...(medina ? [{ type: 'box', x: 0, z: 0, hw: 150, hd: 110, h: 40 }] : [{ type: 'box', x: 115, z: -7, hw: 225, hd: 207, h: 110 }]),
     { type: 'box', x: L.dates[0], z: L.dates[1], hw: 0.9, hd: 2 }, { type: 'box', x: L.zamzam[0], z: L.zamzam[1], hw: 2, hd: 0.9 },
     { type: 'circle', x: BXb + 0.3, z: BZb - 0.9, r: 1.2 }, coach.collider,
     ...umbrellaPoles.map(([x, z]) => ({ type: 'circle', x, z, r: 0.5 })), ...mosqueCols,
     ...(medina ? [-150, 0, 150].map((x) => ({ type: 'circle', x, z: 110, r: 5 })) : []), // Minarette an der Südseite der Nabawi
   ];
   const start = from === 'haram' || from === 'nabawi' ? { x: L.gate[0], z: L.gate[1] + 7, h: 0 } : from === 'bauhof' ? { x: L.bauhof[0], z: L.bauhof[1] + 4, h: Math.PI } : from === 'balloon' ? { x: BXb + 4, z: BZb + 8, h: Math.PI } : from === 'bus' ? { x: BUx - 2, z: BUz + 5, h: Math.PI } : { x: bx + 22, z: PZ.z1 - 14, h: Math.PI };
-  const player = createPlayer(ctx, { x: start.x, z: start.z, heading: start.h, color: ctx.profile?.gender === 'f' ? 0x2c3a4a : 0x34506a, speed: 2.2, fastSpeed: 4, colliders, surface: 'stone' });
+  const player = createPlayer(ctx, { x: start.x, z: start.z, heading: start.h, color: ctx.profile?.gender === 'f' ? 0x2c3a4a : 0x34506a, speed: 2.2, fastSpeed: 4, colliders, ground: groundH, surface: 'stone' });
   const life = createLife(ctx, { kind: 'haram' });
   const interact = createInteract(ctx, player);
   for (const sp of SPOTS) interact.add(sp);
@@ -322,7 +326,21 @@ export function create(ctx, { from, where = 'mecca' } = {}) {
     { label: medina ? 'Nach Mekka (Autobahn)' : 'Nach Medina (Autobahn)', intercity: other },
   ];
   const baseActions = [{ label: T.cert, onClick: () => ctx.backToEnding?.() }];
-  const borrow = createBorrow(ctx, { player, interact, traffic, stands, area: [...rects, roadRect], destinations, route: vroute, map, where, baseActions,
+  // Helikopter-Landeplatz auf dem Südplatz
+  const HP = medina ? [-100, 480] : [-122, 522];
+  { const c = document.createElement('canvas'); c.width = c.height = 256; const g = c.getContext('2d');
+    g.fillStyle = '#3d4247'; g.beginPath(); g.arc(128, 128, 126, 0, 7); g.fill(); g.strokeStyle = '#f2c94c'; g.lineWidth = 10; g.beginPath(); g.arc(128, 128, 108, 0, 7); g.stroke();
+    g.fillStyle = '#f4f1ea'; g.font = 'bold 150px Figtree, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('H', 128, 136);
+    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
+    const pad = new THREE.Mesh(new THREE.CircleGeometry(9, 40).rotateX(-Math.PI / 2), new THREE.MeshStandardMaterial({ map: t, roughness: 0.8 })); pad.position.set(HP[0], 0.06, HP[1]); pad.receiveShadow = true; world.add(pad); }
+  sign(world, HP[0] + 11, HP[1], -Math.PI / 2, ['مهبط', 'Helikopter'], { w: 2.6, h: 0.9, y: 2.4 });
+  stands.push({ kind: 'helicopter', x: HP[0], z: HP[1], ry: 0 });
+  player.colliders.push({ type: 'box', x: HP[0], z: HP[1], hw: 1.6, hd: 4.5 });
+  const inBox = (x, z, cx, cz, hw, hd) => Math.abs(x - cx) < hw && Math.abs(z - cz) < hd;
+  const noLand = (x, z) => (medina ? (inBox(x, z, 0, 0, 155, 115) ? BORROW.noLandNabawi : null) : (inBox(x, z, 115, -7, 228, 210) ? BORROW.noLandKaaba : null))
+    || (L.mosques.some((m) => Math.hypot(x - m.x, z - m.z) < 14) ? BORROW.noLandMosque : null);
+  const borrow = createBorrow(ctx, { player, interact, traffic, stands, colliders, ground: groundH, noLand, destinations, route: vroute, map, where, baseActions,
+    avoid: (x, z) => (z > RZ - 1 && z < RZ + 21) || Math.hypot(x - HP[0], z - HP[1]) < 10,
     people: () => { const out = agents ? agents.list.slice() : []; for (const o of ctx.multi?.status?.().others || []) if (o.x != null && o.s === ctx.stationIndex) out.push(o); return out; } });
   ctx.debugLife = { borrow, traffic }; // für automatische Tests
   if (from === 'car' && ctx.borrowed) borrow.arriveWith(ctx.borrowed.kind, BUx - 18, RZ + 26, Math.PI / 2); // mit dem ausgeliehenen Fahrzeug angekommen

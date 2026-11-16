@@ -148,9 +148,16 @@ export const BORROW = {
   ownerName: 'dem Fahrer', standName: 'dem Taxistand',
   standReturn: 'Danke! Der Fahrer holt es hier am Taxistand ab.',
   braking: 'Vorsicht – Fußgänger! Das Fahrzeug bremst.',
+  rent: (name) => `🔑 Ausleihen: ${name}`,
+  rentBack: 'Abgestellt – danke, dass du gut darauf aufgepasst hast!',
+  landFirst: 'Erst landen (Runter), dann aussteigen.',
+  noLandKaaba: 'Hier nicht landen – über der Kaaba und dem Mataf wird aus Respekt nicht geflogen und nicht gelandet.',
+  noLandNabawi: 'Hier nicht landen – auf der Prophetenmoschee wird aus Respekt nicht gelandet.',
+  noLandMosque: 'Bitte nicht auf einer Moschee landen – such dir einen freien Platz.',
+  heli: '🚁 Helikopter-Landeplatz',
   arrived: (n) => `Angekommen: ${n}`,
   choose: 'Wohin soll es gehen?',
   stand: ['موقف سيارات الأجرة', 'Taxi & Verleih'],
   info: '<b>Amanah</b> heißt: etwas, das dir anvertraut wurde. Wer sich ein Fahrzeug ausleiht, fährt vorsichtig, hält Fußgängern an und bringt es so zurück, wie er es bekommen hat. '
-    + 'Fahren: Joystick bzw. W/S = Gas/Bremse, A/D = lenken – oder „Automatisch“ und ein Ziel wählen.',
+    + 'Fahren: die großen Knöpfe ▲ ▼ ◀ ▶ gedrückt halten (Helikopter zusätzlich Hoch/Runter), am Laptop W/A/S/D oder Pfeiltasten (Leertaste = hoch, C = runter) – oder „Automatisch“ und ein Ziel wählen.',
 };

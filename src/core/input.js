@@ -114,8 +114,8 @@ export function createInput(canvas, holdBtn, stickEl) {
     let x = 0, y = 0;
     if (keys.has('KeyW') || keys.has('ArrowUp')) y -= 1;
     if (keys.has('KeyS') || keys.has('ArrowDown')) y += 1;
-    if (keys.has('KeyA')) x -= 1;
-    if (keys.has('KeyD')) x += 1;
+    if (keys.has('KeyA') || keys.has('ArrowLeft')) x -= 1;
+    if (keys.has('KeyD') || keys.has('ArrowRight')) x += 1;
     // Pfeil links/rechts dreht die Kamera (bequemer am Laptop)
     if (keys.has('ArrowLeft')) s.yaw += dt * 1.8;
     if (keys.has('ArrowRight')) s.yaw -= dt * 1.8;

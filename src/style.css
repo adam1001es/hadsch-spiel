@@ -383,3 +383,18 @@ body:has(#start:not([hidden])) #panel, body:has(#start:not([hidden])) #goal { di
 .bubble::after { content: ''; position: absolute; left: 50%; bottom: -8px; transform: translateX(-50%); border: 8px solid transparent; border-top-color: #fffaf0; border-bottom: 0; }
 .bubble.npc { background: #eaf4ee; border-color: #2f6b55; }
 .bubble.npc::after { border-top-color: #eaf4ee; }
+
+/* Fahrknöpfe (Fahrzeuge): links ◀ ▶, rechts ▲ ▼, Helikopter zusätzlich Hoch/Runter – groß, unten an den Rändern (Figur bleibt frei) */
+#driveCtl { position: fixed; inset: auto 0 0 0; z-index: 7; pointer-events: none; }
+#driveCtl[hidden] { display: none; }
+#driveCtl .dc-l, #driveCtl .dc-r { position: absolute; bottom: calc(var(--sb) + 4px); display: flex; gap: 12px; align-items: flex-end; }
+#driveCtl .dc-l { left: var(--sl); }
+#driveCtl .dc-r { right: var(--sr); flex-direction: column; align-items: center; gap: 10px; }
+#driveCtl .dc-r > button[data-k="f"] { order: 1; } #driveCtl .dc-r > button[data-k="b"] { order: 2; }
+#driveCtl .dc-air { display: none; gap: 8px; order: 0; }
+#driveCtl.air .dc-air { display: flex; }
+#driveCtl button { pointer-events: auto; touch-action: none; width: 76px; height: 76px; padding: 0; border-radius: 22px; font-size: 30px; line-height: 1; color: #f5efe0; background: rgba(20,37,31,.72); border: 2px solid rgba(230,196,110,.85); box-shadow: 0 4px 14px rgba(0,0,0,.35); user-select: none; -webkit-user-select: none; }
+#driveCtl .dc-air button { width: 76px; height: 46px; font-size: 15px; font-weight: 600; border-radius: 14px; }
+#driveCtl button.on { background: #e6c46e; color: #14251f; transform: scale(.95); }
+@media (min-width: 1000px) { #driveCtl button { width: 62px; height: 62px; font-size: 24px; } #driveCtl .dc-air button { width: 62px; height: 40px; } }
+body.driving #minimap { display: block; }

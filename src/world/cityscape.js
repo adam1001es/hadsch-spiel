@@ -116,7 +116,7 @@ export function createTowers(world, { podiumStyle = 'podium' } = {}) {
   return {
     footprints: foot,
     add(x, z, w, d, h, { style = 'mecca', podium = 8, ry = 0, tint = 1, crown = true } = {}) {
-      foot.push({ x, z, w, d, ry });
+      foot.push({ x, z, w, d, ry, h });
       if (podium) push(podiumStyle, x, 0, z, w, podium, d, ry, 1);
       const inset = Math.min(4, Math.min(w, d) * 0.12), base = podium || 0;
       const bw = w - inset * 2, bd = d - inset * 2, hv = Math.abs(Math.sin(x * 12.9898 + z * 78.233)) % 1; // feste Variante je Ort

@@ -6,7 +6,7 @@ import { createLife } from '../world/life.js';
 import { REST } from '../content/life.js';
 import { clock } from '../life/clock.js';
 import { cityNight } from '../world/cityscape.js';
-import { makeVehicle, specOf } from '../life/vehicles.js';
+import { makeVehicle, specOf, isAir } from '../life/vehicles.js';
 import { createFigure } from '../core/player.js';
 import { peopleModels } from '../world/crowd.js';
 
@@ -45,7 +45,8 @@ export function create(ctx, { from = 'mecca', to = 'medina', resume = 0, vehicle
       clock.advance(dt); sky.state.artificial = 0.85; sky.setHour(clock.hour); cityNight.value = clock.night;
       if (!veh && s0 < SR && s >= SR) { const p = clock.current(to === 'medina' ? 'mecca' : 'medina'); if (p && !clock.prayed(p) && !resume) { ui.toast(REST.prayerStop, 3500); restNow(); return; } ui.actions([{ label: T.skip, kind: 'primary', onClick: arrive }]); }
       const z = z0 + (z1 - z0) * s, x = roadX(z) + (to === 'medina' ? -3.5 : 3.5), zn = z + Math.sign(z1 - z0) * 8, xn = roadX(zn) + (to === 'medina' ? -3.5 : 3.5);
-      coach.position.set(x, 0.15, z); coach.rotation.y = Math.atan2(xn - x, zn - z);
+      coach.position.set(x, veh && isAir(vehicle) ? 70 : 0.15, z); coach.rotation.y = Math.atan2(xn - x, zn - z); // Helikopter fliegt über der Autobahn
+      if (veh) veh.rotor = 1;
       if (veh) { // Räder drehen sich mit der Geschwindigkeit, Figur sitzt im Sitz
         const sp = prevX == null ? 0 : Math.hypot(x - prevX, z - prevZ) / Math.max(dt, 1e-3); prevX = x; prevZ = z;
         veh.roll(sp, dt); coach.updateMatrixWorld(true); veh.seat(seat); fig.root.position.copy(seat); fig.root.rotation.y = coach.rotation.y; fig.update(dt, 0);
