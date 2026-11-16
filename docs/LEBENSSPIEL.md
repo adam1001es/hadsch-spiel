@@ -144,6 +144,19 @@ Für **jedes** Fahrzeug gibt es immer zwei Möglichkeiten:
 - **Motorrad fertig vorbereitet:** `public/assets/models/vehicles/motorbike.glb` (CC BY 4.0 Yakpower, Markenschriftzug entfernt, Front +z, 2 m) – im Spiel „Motorrad“ nennen.
 - **Lizenzen:** nur CC BY oder CC0 (kein NC = nicht-kommerziell, kein SA nötig), keine echten Marken (Porsche, Hubschrauber-Hersteller …).
 
+### Amanah-Ausleihe (Wunsch des Nutzers) – so kommt man an Fahrzeuge
+Fahrzeuge sind **leicht zu finden** und werden **ausgeliehen**, nicht gestohlen (Amanah = anvertrautes Gut):
+- Fahrende Autos/Motorräder/Busse im Verkehr (`createTraffic`) und geparkte Fahrzeuge leuchten blau, wenn man nah ist.
+- Knopf „✋ Anhalten & fragen“ → Fahrzeug hält an, Fahrer steigt kurz aus, kurze Sprechblase
+  („Salam! Darf ich dein Auto ausleihen?“ – „Wa alaikum salam, gern – es ist eine Amanah, bring es gut zurück!“), alles in 1–2 s.
+- Spieler steigt ein (Figur sichtbar sitzend), Fahrer wartet am Straßenrand oder geht zu Fuß weiter.
+- Fahren: **selbst steuern** oder **automatisch** (Ziel wählen, z. B. Masjid an-Nabawi, Medina, Bauhof); jederzeit umschalten.
+- „Zurückgeben“-Knopf: Fahrzeug wird ordentlich abgestellt, Fahrer bedankt sich; ehrliches Zurückgeben gibt Hasanat.
+  Wer das Fahrzeug weit weg stehen lässt, bekommt einen freundlichen Hinweis (keine Strafe, kein Diebstahl, keine Verfolgung).
+- Gilt für Autos (`public/assets/models/cars/*.glb`), Motorrad (`vehicles/motorbike.glb`), Bus (`bus.glb`),
+  später Helikopter (eigenes Tripo-Modell oder CC-BY-Modell – das MD-902 ist CC BY-NC und Markenmodell, nicht verwenden).
+- Zusätzlich an festen Orten (Taxistand/Parkplatz am Haram, Busbahnhof) ein Fahrzeug, damit man immer schnell eins findet.
+
 ### Hauptfigur (Stand)
 Junge/Mann: geriggte Tripo-Figur (`src/core/rigged.js`, Modelle `player_m*.glb`) in drei Kleidungen (Alltag, Ihram bedeckt, Ihram
 Schulter frei), Gehen aus der Datei, Stehen/Gebet/Sitzen/Dua/Werfen als eigene Haltungen. Für Fahrzeuge: Haltung `sit` verwenden bzw.
