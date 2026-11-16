@@ -47,28 +47,48 @@ export function createBorrow(ctx, opts) {
   const world = engine.world;
   const { player, interact, traffic = null, people = () => [], destinations = [], route = (a, b) => [b], map = null, where = 'mecca',
     colliders = [], ground = () => 0, noLand = () => null, avoid = () => false } = opts;
-  // ---------- große Fahrknöpfe (Touch: gedrückt halten) ----------
-  // links: Gas, Turbo (Supergas), Bremse/Rückwärts + Tacho; rechts: Lenken ‹ ›, Drift (Helikopter: Hoch/Runter)
-  const ctl = { g: 0, t: 0, b: 0, l: 0, r: 0, x: 0, u: 0, d: 0 };
+  // ---------- Fahrbedienung wie in Handy-Rennspielen: zwei Daumen ----------
+  // Linker Daumen: Lenkfläche (Daumen hin und her schieben, weiter außen = stärker lenken).
+  // Gas automatisch (Auto-Gas, abschaltbar → dann GAS-Pedal). Rechter Daumen: BREMSE/DRIFT (bei Tempo in der Kurve = Drift,
+  // sonst bremsen, im Stand halten = rückwärts); NITRO einmal antippen = 3 s Turbo. Helikopter: Hoch/Runter statt Nitro.
+  const ctl = { g: 0, b: 0, u: 0, d: 0, steer: 0 }; let nitroT = 0, nitroCool = 0, started = false;
+  let autoGas = (() => { try { return localStorage.getItem('hp-autogas') !== '0'; } catch { return true; } })();
   const pad = document.createElement('div'); pad.id = 'driveCtl'; pad.hidden = true;
   pad.innerHTML = '<div class="dc-l"><div class="dc-speed"><b>0</b><span>km/h</span><em></em></div>'
-    + '<div class="dc-pedals"><div class="dc-col"><button data-k="t" class="turbo" aria-label="Turbo"><span>⚡</span><small>TURBO</small></button>'
-    + '<button data-k="b" class="pedal brake" aria-label="Bremse und rückwärts"><span>BREMSE</span><small>halten = rückwärts</small></button></div>'
-    + '<button data-k="g" class="pedal gas" aria-label="Gas"><span>GAS</span></button></div></div>'
-    + '<div class="dc-r"><div class="dc-extra"><button data-k="x" class="drift" aria-label="Drift">DRIFT</button><button data-k="u" class="air" aria-label="Hoch">▲ HOCH</button><button data-k="d" class="air" aria-label="Runter">▼ RUNTER</button></div>'
-    + '<div class="dc-steer"><button data-k="l" class="steer" aria-label="Links lenken">‹</button><button data-k="r" class="steer" aria-label="Rechts lenken">›</button></div></div>';
+    + '<div class="dc-wheel" aria-label="Lenken: Daumen nach links oder rechts schieben"><i class="a l">‹</i><i class="knob"></i><i class="a r">›</i></div></div>'
+    + '<div class="dc-r"><div class="dc-top"><button data-k="ag" class="ag" aria-label="Auto-Gas an oder aus"></button><button data-k="n" class="nitro" aria-label="Nitro"><span>⚡</span><small>NITRO</small></button>'
+    + '<button data-k="u" class="air" aria-label="Hoch">▲ HOCH</button><button data-k="d" class="air" aria-label="Runter">▼ RUNTER</button></div>'
+    + '<div class="dc-pedals"><button data-k="b" class="pedal brake" aria-label="Bremse, Drift und rückwärts"><span>BREMSE</span><small>Kurve = Drift</small></button>'
+    + '<button data-k="g" class="pedal gas" aria-label="Gas"><span>GAS</span></button></div></div>';
   document.body.appendChild(pad);
   const speedEl = pad.querySelector('.dc-speed b'), infoEl = pad.querySelector('.dc-speed em'), unitEl = pad.querySelector('.dc-speed span');
-  const press = (e, on) => { const b = e.target.closest('button[data-k]'); if (!b) return; e.preventDefault(); ctl[b.dataset.k] = on ? 1 : 0; b.classList.toggle('on', on); if (on) try { b.setPointerCapture(e.pointerId); } catch { /* egal */ } };
+  const wheel = pad.querySelector('.dc-wheel'), knob = wheel.querySelector('.knob'), agBtn = pad.querySelector('.ag'), nitroBtn = pad.querySelector('.nitro');
+  const showAG = () => { agBtn.innerHTML = `<small>AUTO-GAS</small><span>${autoGas ? 'AN' : 'AUS'}</span>`; pad.classList.toggle('autogas', autoGas); };
+  showAG();
+  // Lenkfläche: analog, Daumen darf rutschen
+  let wheelId = null;
+  const steerAt = (e) => { const r = wheel.getBoundingClientRect(), k = ((e.clientX - r.left) / r.width - 0.5) * 2; ctl.steer = -Math.max(-1, Math.min(1, k * 1.25)); knob.style.transform = `translateX(${(-ctl.steer) * r.width * 0.36}px)`; wheel.classList.toggle('on', true); started = true; };
+  const steerOff = () => { wheelId = null; ctl.steer = 0; knob.style.transform = ''; wheel.classList.remove('on'); };
+  wheel.addEventListener('pointerdown', (e) => { e.preventDefault(); wheelId = e.pointerId; try { wheel.setPointerCapture(e.pointerId); } catch { /* egal */ } steerAt(e); });
+  wheel.addEventListener('pointermove', (e) => { if (e.pointerId === wheelId) steerAt(e); });
+  for (const ev of ['pointerup', 'pointercancel', 'lostpointercapture']) wheel.addEventListener(ev, (e) => { if (e.pointerId === wheelId) steerOff(); });
+  const press = (e, on) => {
+    const b = e.target.closest('button[data-k]'); if (!b) return; e.preventDefault(); const k = b.dataset.k;
+    if (k === 'ag') { if (on) { autoGas = !autoGas; try { localStorage.setItem('hp-autogas', autoGas ? '1' : '0'); } catch { /* egal */ } showAG(); } return; }
+    if (k === 'n') { if (on) fireNitro(); return; }
+    ctl[k] = on ? 1 : 0; b.classList.toggle('on', on); if (on) { started = true; try { b.setPointerCapture(e.pointerId); } catch { /* egal */ } }
+  };
+  function fireNitro() { if (nitroCool > 0 || !drive || drive.spec.air) return; nitroT = 3; nitroCool = 6; started = true; }
   pad.addEventListener('pointerdown', (e) => press(e, true));
   for (const ev of ['pointerup', 'pointercancel', 'lostpointercapture']) pad.addEventListener(ev, (e) => press(e, false));
   pad.addEventListener('contextmenu', (e) => e.preventDefault());
-  // Tastatur: W/↑ Gas, S/↓ Bremse/rückwärts, A/D bzw. ←/→ lenken, Umschalt = Turbo, Leertaste = Drift (Helikopter: hoch), C = runter
+  // Tastatur: W/↑ Gas, S/↓ Bremse (Kurve = Drift, Stand = rückwärts), A/D bzw. ←/→ lenken, Umschalt = Nitro, Leertaste = Drift/Bremse (Helikopter: hoch), C = runter
   const keys = (e, on) => {
     if (!drive) return; const v = on ? 1 : 0;
-    if (e.code === 'Space') { if (drive.spec.air) ctl.u = v; else ctl.x = v; e.preventDefault(); }
+    if (e.code === 'Space') { if (drive.spec.air) ctl.u = v; else ctl.b = v; e.preventDefault(); }
     if (e.code === 'KeyC') ctl.d = v;
-    if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') ctl.t = v;
+    if ((e.code === 'ShiftLeft' || e.code === 'ShiftRight') && on) fireNitro();
+    if (on && /Key[WASD]|Arrow/.test(e.code)) started = true;
   };
   const kd = (e) => keys(e, true), ku = (e) => keys(e, false);
   window.addEventListener('keydown', kd); window.addEventListener('keyup', ku);
@@ -135,7 +155,7 @@ export function createBorrow(ctx, opts) {
     if (drive) return;
     P.parked = false; P.mine = true;
     drive = { P, veh: P.veh, spec: P.veh.spec, x: P.veh.root.position.x, z: P.veh.root.position.z, h: P.veh.root.rotation.y, v: 0, steer: 0, y: P.veh.root.position.y, vy: 0 };
-    pad.hidden = false; pad.classList.toggle('air', !!drive.spec.air); document.body.classList.add('driving'); ui.el.stick.classList.add('off');
+    pad.hidden = false; pad.classList.toggle('air', !!drive.spec.air); started = false; nitroT = 0; document.body.classList.add('driving'); ui.el.stick.classList.add('off');
     player.ride = ride; player.freeze(true); player.fig.pose(drive.spec.pose); first = true; yaw0 = input.yaw;
     mode = 'self'; autoPts = null; lastKey = '';
     ctx.vehicle = drive.veh.kind; // für Mitspieler (multi.js)
@@ -147,7 +167,7 @@ export function createBorrow(ctx, opts) {
     const D = drive, P = D.P;
     if (D.spec.air && D.y > ground(D.x, D.z) + 0.6) { ui.toast(T.landFirst, 2200); return; } // erst landen
     drive = null; player.ride = null; player.freeze(false); player.fig.pose('stand'); ctx.vehicle = null;
-    pad.hidden = true; for (const k of Object.keys(ctl)) ctl[k] = 0; pad.querySelectorAll('button.on').forEach((b) => b.classList.remove('on')); cam.fov = 62; cam.updateProjectionMatrix(); document.body.classList.remove('driving'); ui.el.stick.classList.remove('off'); D.veh.rotor = 0;
+    pad.hidden = true; for (const k of Object.keys(ctl)) ctl[k] = 0; steerOff(); nitroT = 0; pad.querySelectorAll('button.on').forEach((b) => b.classList.remove('on')); cam.fov = 62; cam.updateProjectionMatrix(); document.body.classList.remove('driving'); ui.el.stick.classList.remove('off'); D.veh.rotor = 0;
     // neben dem Fahrzeug aussteigen (links)
     const side = D.spec.wid / 2 + 0.8; player.teleport(D.x + Math.cos(D.h) * side, D.z - Math.sin(D.h) * side, D.h);
     P.x = D.x; P.z = D.z; P.h = D.h; P.parked = true;
@@ -191,12 +211,18 @@ export function createBorrow(ctx, opts) {
   // Fahren (ersetzt player.update): Steuerung, Fußgänger-Bremse, Gebäude, Boden/Berge, Figur im Sitz, Kamera
   function ride(dt) {
     const D = drive, S = D.spec;
-    let throttle = 0, steer = 0, lift = 0, turbo = ctl.t > 0, drift = ctl.x > 0;
-    const manual = ctl.g - ctl.b - input.move.y, turn = ctl.l - ctl.r - input.move.x, up = ctl.u - ctl.d;
+    nitroT = Math.max(0, nitroT - dt); nitroCool = Math.max(0, nitroCool - dt);
+    const sp0 = Math.abs(D.v), braking = ctl.b > 0 || input.move.y > 0.5;
+    const turn = ctl.steer - input.move.x, up = ctl.u - ctl.d;
+    // Bremse in der Kurve bei Tempo = Drift (wie die Handbremse in Rennspielen)
+    let drift = !S.air && braking && sp0 > 8 && Math.abs(turn) > 0.3 && D.v > 0;
+    const gas = ctl.g > 0 || input.move.y < -0.3 || (autoGas && started && !S.air);
+    let manual = braking ? (drift ? 0.35 : -1) : gas ? 1 : 0;
+    let throttle = 0, steer = 0, lift = 0, turbo = nitroT > 0;
     if (mode === 'self') {
-      throttle = Math.max(-1, Math.min(1, manual)); steer = Math.max(-1, Math.min(1, turn)); lift = up;
+      throttle = manual; steer = Math.max(-1, Math.min(1, turn)); lift = up;
     } else {
-      if (Math.abs(manual) > 0.3 || Math.abs(turn) > 0.3 || up) { mode = 'self'; autoPts = null; lastKey = ''; } // eigene Eingabe übernimmt
+      if (braking || ctl.g || Math.abs(turn) > 0.3 || up) { mode = 'self'; autoPts = null; lastKey = ''; } // eigene Eingabe übernimmt
       turbo = false; drift = false;
       if (autoPts && autoPts.length) {
         const p = autoPts[0], dx = p.x - D.x, dz = p.z - D.z, d = Math.hypot(dx, dz);
@@ -279,6 +305,8 @@ export function createBorrow(ctx, opts) {
     speedEl.textContent = Math.round(Math.abs(D.v) * 3.6); unitEl.textContent = D.v < -0.3 ? 'km/h · R' : 'km/h';
     infoEl.textContent = S.air ? Math.round(D.y - gy) + ' m Höhe' : mode === 'auto' && autoPts ? '→ ' + autoName : turbo ? 'TURBO' : drift && Math.abs(D.slip) > 0.08 ? 'DRIFT' : '';
     pad.classList.toggle('boost', turbo && Math.abs(D.v) > 3);
+    nitroBtn.classList.toggle('cool', nitroCool > 0 && nitroT <= 0); nitroBtn.style.setProperty('--cd', String(nitroT > 0 ? 1 : 1 - nitroCool / 6));
+    if (!started && !S.air && autoGas) infoEl.textContent = 'Lenken oder Bremse = los';
     actions();
   }
 
@@ -295,6 +323,7 @@ export function createBorrow(ctx, opts) {
     get driving() { return !!drive; },
     get drive() { return drive; }, // für Tests
     get ctl() { return ctl; },
+    nitro: () => fireNitro(), start: () => { started = true; },
     arriveWith,
     update(dt) {
       if (pending) { // angehaltenes Fahrzeug: warten bis es steht, Fahrer steigt aus, kurze Unterhaltung, einsteigen

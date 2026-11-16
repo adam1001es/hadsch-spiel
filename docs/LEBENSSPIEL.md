@@ -178,10 +178,11 @@ Fahrzeuge sind **leicht zu finden** und werden **ausgeliehen**, nicht gestohlen 
 - **Fahrende Autos und Busse anhalten**: Knopf „✋ Anhalten & fragen“ → Fahrer hält, sagt kurz Ja (Amanah), man fährt selbst
   weiter – siehe Abschnitt „Amanah-Ausleihe“. Immer schnell (1–2 s), keine langen Dialoge.
 - Immer wählbar: **selbst fahren** oder **automatisch fahren** (Ziel wählen).
-- ✅ **Fahrbedienung neu (Wunsch des Nutzers):** links Pedale **GAS**, **⚡ TURBO** (Supergas, ×1,6 Höchstgeschwindigkeit), **BREMSE** (halten = rückwärts) + Tacho;
-  rechts **Lenken ‹ ›** und **DRIFT** (Heck bricht aus, Rutschwinkel `D.slip`); Helikopter: Hoch/Runter statt Drift/Turbo. Laptop: W/↑ Gas, S/↓ Bremse,
-  A/D bzw. ←/→ lenken, Umschalt = Turbo, Leertaste = Drift (Helikopter hoch), C = runter. Physik: Beschleunigung, Bremsen, Ausrollen, Lenkung
-  geschwindigkeitsabhängig, Zweiräder legen sich in die Kurve, Kamera schwenkt weich nach, Sichtfeld weitet sich beim Turbo.
+- ✅ **Fahrbedienung wie in Handy-Rennspielen (Wunsch des Nutzers, nur zwei Daumen):** linker Daumen = **Lenkfläche** (analog, Daumen
+  schieben); **Auto-Gas** (Standard an, Knopf „AUTO-GAS AN/AUS“; aus = GAS-Pedal), fährt erst los, wenn man lenkt oder bremst;
+  rechter Daumen = **BREMSE** (bei Tempo + Lenken = **Drift** wie Handbremse, im Stand halten = rückwärts); **NITRO** einmal antippen = 3 s
+  Turbo (6 s Abklingzeit, Ring zeigt Ladung). Helikopter: GAS/BREMSE = vor/zurück, HOCH/RUNTER. Laptop: W/S, A/D, Umschalt = Nitro,
+  Leertaste = Bremse/Drift (Helikopter hoch), C = runter.
 - ✅ **Gebaut:** Fahrknöpfe `#driveCtl` (▲▼◀▶, Helikopter Hoch/Runter; Laptop WASD/Pfeile, Leertaste/C) in `borrow.js`; Mekka/Medina ohne
   unsichtbare Wände (nur Gebäude-Kollision aus `towers.footprints` mit Höhe `h`, Haram/Nabawi als Block, Boden folgt dem Gelände);
   Verleih-Fahrzeuge erscheinen hinter der Figur, wenn keins in 22 m steht (`keepNearby`); Helikopter-Landeplatz auf dem Südplatz,
