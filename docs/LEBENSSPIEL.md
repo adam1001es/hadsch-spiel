@@ -139,6 +139,10 @@ Für **jedes** Fahrzeug gibt es immer zwei Möglichkeiten:
 - Modelle verkleinern wie gehabt (`tools/convert_bus2.html`: Ausrichtung Front +z, Länge in Metern, ~10–15 Tsd. Flächen).
 - Multiplayer: Fahrzeug-Typ und Position mitsenden, andere sieht man im Fahrzeug.
 
+- **Autos fertig vorbereitet:** `public/assets/models/cars/*.glb` (10 Stück, siehe README dort, CC BY 4.0 Comrade1280): Front +z,
+  Räder `wheel_fl/fr/rl/rr` einzeln drehbar. Sportwagen = `sport.glb` (kein Markenauto verwenden).
+- **Lizenzen:** nur CC BY oder CC0 (kein NC = nicht-kommerziell, kein SA nötig), keine echten Marken (Porsche, Hubschrauber-Hersteller …).
+
 ### Hauptfigur (Stand)
 Junge/Mann: geriggte Tripo-Figur (`src/core/rigged.js`, Modelle `player_m*.glb`) in drei Kleidungen (Alltag, Ihram bedeckt, Ihram
 Schulter frei), Gehen aus der Datei, Stehen/Gebet/Sitzen/Dua/Werfen als eigene Haltungen. Für Fahrzeuge: Haltung `sit` verwenden bzw.
