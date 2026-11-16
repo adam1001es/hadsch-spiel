@@ -73,13 +73,16 @@ const DEF = {
   ],
 };
 
-let RIG = null;
-export const rigModel = () => RIG;
-export const rigReady = new GLTFLoader().loadAsync('./assets/models/player_m.glb').then((g) => {
+// Kleidungen der Hauptfigur (gleiches Skelett): Alltag, Ihram mit freier rechter Schulter (Idtiba'), später Ihram bedeckt
+const FILES = { casual: 'player_m.glb', ihramOpen: 'player_m_ihram_open.glb' };
+const RIGS = {};
+export const rigModel = (k = 'casual') => RIGS[k] || null;
+export const hasRig = (k) => !!RIGS[k];
+export const rigReady = Promise.all(Object.entries(FILES).map(([k, f]) => new GLTFLoader().loadAsync('./assets/models/' + f).then((g) => {
   // Bewegung an Ort und Stelle: Positions-Spuren entfernen (die Figur wird vom Spiel bewegt)
   for (const c of g.animations) c.tracks = c.tracks.filter((t) => !t.name.endsWith('.position'));
-  RIG = g; return g;
-}).catch((e) => { console.error('player_m.glb', e); return null; });
+  RIGS[k] = g;
+}).catch((e) => console.error(f, e))));
 
 function rotWorld(root, b, axis, deg) {
   root.updateMatrixWorld(true);
@@ -98,10 +101,10 @@ function aimWorld(root, b, child, dir) {
 }
 
 // Haltungen einmal pro geladenem Modell vorberechnen (an einer Hilfskopie in Ruhehaltung)
-let POSED = null;
+const POSED_CACHE = new WeakMap();
 function precompute(g) {
-  if (POSED) return POSED;
-  POSED = {};
+  if (POSED_CACHE.has(g)) return POSED_CACHE.get(g);
+  const POSED = {}; POSED_CACHE.set(g, POSED);
   const ref = cloneSkinned(g.scene);
   const rest = new Map(); ref.traverse((o) => { if (o.isBone) rest.set(o.name, o.quaternion.clone()); });
   const mesh = (() => { let m = null; ref.traverse((o) => { if (o.isSkinnedMesh) m = o; }); return m; })();
@@ -120,8 +123,8 @@ function precompute(g) {
   return POSED;
 }
 
-export function createRiggedFigure(parent) {
-  const g = RIG; if (!g) return null;
+export function createRiggedFigure(parent, key = 'casual') {
+  const g = RIGS[key]; if (!g) return null;
   const posed = precompute(g);
   const model = cloneSkinned(g.scene);
   const box = new THREE.Box3().setFromObject(model), scale = HEIGHT / (box.max.y - box.min.y);
@@ -129,8 +132,8 @@ export function createRiggedFigure(parent) {
   model.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.frustumCulled = false; } });
   const mixer = new THREE.AnimationMixer(model);
   const clip = (n) => g.animations.find((a) => a.name.toLowerCase().startsWith(n));
-  const walk = mixer.clipAction(clip('walk')), idle = mixer.clipAction(clip('idle'));
-  walk.play(); idle.play(); walk.setEffectiveWeight(0); idle.setEffectiveWeight(1);
+  const walk = mixer.clipAction(clip('walk')), idleClip = clip('idle'), idle = idleClip ? mixer.clipAction(idleClip) : null;
+  walk.play(); walk.setEffectiveWeight(0); if (idle) { idle.play(); idle.setEffectiveWeight(1); }
   const bones = new Map(); model.traverse((o) => { if (o.isBone) bones.set(o.name, o); });
   const allPoseBones = new Set(); for (const p of Object.values(posed)) for (const bn of p.q.keys()) allPoseBones.add(bn);
   const cur = new Map([...allPoseBones].map((bn) => [bn, bones.get(bn).quaternion.clone()])); // aktuelle Haltung je Knochen
@@ -143,7 +146,7 @@ export function createRiggedFigure(parent) {
       // Gehen ↔ Stehen überblenden, Schritttempo an die Geschwindigkeit anpassen
       const wk = target ? 0 : Math.min(1, walking * 1.6);
       wAmt += (wk - wAmt) * Math.min(1, dt * 8);
-      walk.setEffectiveWeight(wAmt); idle.setEffectiveWeight(1 - wAmt);
+      walk.setEffectiveWeight(Math.max(wAmt, idle ? 0 : 1e-3)); idle?.setEffectiveWeight(1 - wAmt);
       walk.timeScale = 0.75 + Math.min(1.2, walking) * 0.55;
       mixer.update(dt);
       // Haltung darüberlegen

@@ -95,13 +95,15 @@ export function createFigure(world, { color = 0xf3f1ea, skin = 0xc68642, ring = 
   if (models) { if (covered) buildVariant('woman', models.woman); else { buildVariant('ihram', models.man); buildVariant('kameez', models.kameez); } }
   const procedural = () => [lowerDress, lowerIzar, upper, torso, rida, ridaIdt, head, hair, khimar, face];
   // Hauptfigur mit Skelett (Jungen/Männer in Alltagskleidung; Ihram-Versionen folgen)
-  const rig = !covered && models && rigged ? createRiggedFigure(body) : null;
-  let rigOn = false;
+  const rigs = !covered && models && rigged ? { casual: createRiggedFigure(body, 'casual'), ihramOpen: createRiggedFigure(body, 'ihramOpen') } : {};
+  let rig = null, rigOn = false;
   let armGroups = [];
   function outfit() {
     const ih = isIhram();
-    rigOn = !!rig && !ih;
-    if (rig) rig.holder.visible = rigOn;
+    // passende Kleidung der Hauptfigur: Alltag / Ihram mit freier Schulter (Ihram bedeckt folgt – bis dahin die bisherige Figur)
+    rig = !ih ? rigs.casual : idtiba ? rigs.ihramOpen : null;
+    rigOn = !!rig;
+    for (const r of Object.values(rigs)) if (r) r.holder.visible = r === rig;
     const want = rigOn ? 'rig' : covered ? 'woman' : ih ? 'ihram' : 'kameez';
     const useModel = rigOn || !!variants[want];
     for (const [id, v] of Object.entries(variants)) v.grp.visible = id === want;
@@ -157,7 +159,7 @@ export function createFigure(world, { color = 0xf3f1ea, skin = 0xc68642, ring = 
     setColor(c) { cloth.color.setHex(c); outfit(); },
     // Idtiba': rechte Schulter frei (nur Männer, nur im Tawaf der Umrah)
     setIdtiba(v) { idtiba = v; outfit(); },
-    pose(name) { target = POSES[name] || POSES.stand; rig?.pose(name === 'stand' || name === 'walk' ? null : name); },
+    pose(name) { target = POSES[name] || POSES.stand; for (const r of Object.values(rigs)) r?.pose(name === 'stand' || name === 'walk' ? null : name); },
     get poseName() { return Object.keys(POSES).find((k) => POSES[k] === target); },
     update(dt, walking = 0) {
       if (ringMesh) ringMesh.material.uniforms.uT.value += dt;
