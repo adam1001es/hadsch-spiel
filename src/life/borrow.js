@@ -48,16 +48,28 @@ export function createBorrow(ctx, opts) {
   const { player, interact, traffic = null, people = () => [], destinations = [], route = (a, b) => [b], map = null, where = 'mecca',
     colliders = [], ground = () => 0, noLand = () => null, avoid = () => false } = opts;
   // ---------- große Fahrknöpfe (Touch: gedrückt halten) ----------
-  const ctl = { f: 0, b: 0, l: 0, r: 0, u: 0, d: 0 };
+  // links: Gas, Turbo (Supergas), Bremse/Rückwärts + Tacho; rechts: Lenken ‹ ›, Drift (Helikopter: Hoch/Runter)
+  const ctl = { g: 0, t: 0, b: 0, l: 0, r: 0, x: 0, u: 0, d: 0 };
   const pad = document.createElement('div'); pad.id = 'driveCtl'; pad.hidden = true;
-  pad.innerHTML = '<div class="dc-l"><button data-k="l" aria-label="Links">◀</button><button data-k="r" aria-label="Rechts">▶</button></div>'
-    + '<div class="dc-r"><div class="dc-air"><button data-k="u" aria-label="Hoch">Hoch</button><button data-k="d" aria-label="Runter">Runter</button></div><button data-k="f" aria-label="Vor">▲</button><button data-k="b" aria-label="Zurück">▼</button></div>';
+  pad.innerHTML = '<div class="dc-l"><div class="dc-speed"><b>0</b><span>km/h</span><em></em></div>'
+    + '<div class="dc-pedals"><div class="dc-col"><button data-k="t" class="turbo" aria-label="Turbo"><span>⚡</span><small>TURBO</small></button>'
+    + '<button data-k="b" class="pedal brake" aria-label="Bremse und rückwärts"><span>BREMSE</span><small>halten = rückwärts</small></button></div>'
+    + '<button data-k="g" class="pedal gas" aria-label="Gas"><span>GAS</span></button></div></div>'
+    + '<div class="dc-r"><div class="dc-extra"><button data-k="x" class="drift" aria-label="Drift">DRIFT</button><button data-k="u" class="air" aria-label="Hoch">▲ HOCH</button><button data-k="d" class="air" aria-label="Runter">▼ RUNTER</button></div>'
+    + '<div class="dc-steer"><button data-k="l" class="steer" aria-label="Links lenken">‹</button><button data-k="r" class="steer" aria-label="Rechts lenken">›</button></div></div>';
   document.body.appendChild(pad);
+  const speedEl = pad.querySelector('.dc-speed b'), infoEl = pad.querySelector('.dc-speed em'), unitEl = pad.querySelector('.dc-speed span');
   const press = (e, on) => { const b = e.target.closest('button[data-k]'); if (!b) return; e.preventDefault(); ctl[b.dataset.k] = on ? 1 : 0; b.classList.toggle('on', on); if (on) try { b.setPointerCapture(e.pointerId); } catch { /* egal */ } };
   pad.addEventListener('pointerdown', (e) => press(e, true));
   for (const ev of ['pointerup', 'pointercancel', 'lostpointercapture']) pad.addEventListener(ev, (e) => press(e, false));
   pad.addEventListener('contextmenu', (e) => e.preventDefault());
-  const keys = (e, on) => { if (!drive) return; if (e.code === 'Space') { ctl.u = on ? 1 : 0; e.preventDefault(); } if (e.code === 'KeyC') ctl.d = on ? 1 : 0; };
+  // Tastatur: W/↑ Gas, S/↓ Bremse/rückwärts, A/D bzw. ←/→ lenken, Umschalt = Turbo, Leertaste = Drift (Helikopter: hoch), C = runter
+  const keys = (e, on) => {
+    if (!drive) return; const v = on ? 1 : 0;
+    if (e.code === 'Space') { if (drive.spec.air) ctl.u = v; else ctl.x = v; e.preventDefault(); }
+    if (e.code === 'KeyC') ctl.d = v;
+    if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') ctl.t = v;
+  };
   const kd = (e) => keys(e, true), ku = (e) => keys(e, false);
   window.addEventListener('keydown', kd); window.addEventListener('keyup', ku);
   const talk = bubbles(engine);
@@ -135,7 +147,7 @@ export function createBorrow(ctx, opts) {
     const D = drive, P = D.P;
     if (D.spec.air && D.y > ground(D.x, D.z) + 0.6) { ui.toast(T.landFirst, 2200); return; } // erst landen
     drive = null; player.ride = null; player.freeze(false); player.fig.pose('stand'); ctx.vehicle = null;
-    pad.hidden = true; for (const k of Object.keys(ctl)) ctl[k] = 0; document.body.classList.remove('driving'); ui.el.stick.classList.remove('off'); D.veh.rotor = 0;
+    pad.hidden = true; for (const k of Object.keys(ctl)) ctl[k] = 0; pad.querySelectorAll('button.on').forEach((b) => b.classList.remove('on')); cam.fov = 62; cam.updateProjectionMatrix(); document.body.classList.remove('driving'); ui.el.stick.classList.remove('off'); D.veh.rotor = 0;
     // neben dem Fahrzeug aussteigen (links)
     const side = D.spec.wid / 2 + 0.8; player.teleport(D.x + Math.cos(D.h) * side, D.z - Math.sin(D.h) * side, D.h);
     P.x = D.x; P.z = D.z; P.h = D.h; P.parked = true;
@@ -179,72 +191,94 @@ export function createBorrow(ctx, opts) {
   // Fahren (ersetzt player.update): Steuerung, Fußgänger-Bremse, Gebäude, Boden/Berge, Figur im Sitz, Kamera
   function ride(dt) {
     const D = drive, S = D.spec;
-    let throttle = 0, steer = 0, lift = 0;
-    const manual = ctl.f - ctl.b - input.move.y, turn = ctl.l - ctl.r - input.move.x, up = ctl.u - ctl.d;
+    let throttle = 0, steer = 0, lift = 0, turbo = ctl.t > 0, drift = ctl.x > 0;
+    const manual = ctl.g - ctl.b - input.move.y, turn = ctl.l - ctl.r - input.move.x, up = ctl.u - ctl.d;
     if (mode === 'self') {
       throttle = Math.max(-1, Math.min(1, manual)); steer = Math.max(-1, Math.min(1, turn)); lift = up;
     } else {
       if (Math.abs(manual) > 0.3 || Math.abs(turn) > 0.3 || up) { mode = 'self'; autoPts = null; lastKey = ''; } // eigene Eingabe übernimmt
+      turbo = false; drift = false;
       if (autoPts && autoPts.length) {
         const p = autoPts[0], dx = p.x - D.x, dz = p.z - D.z, d = Math.hypot(dx, dz);
         const last = autoPts.length === 1;
         if (d < (S.air ? 6 : 4)) { autoPts.shift(); if (!autoPts.length) { ui.toast(T.arrived(autoName), 2500); autoPts = null; lastKey = ''; } }
         const want = Math.atan2(dx, dz), da = Math.atan2(Math.sin(want - D.h), Math.cos(want - D.h));
-        steer = Math.max(-1, Math.min(1, da * 2)); throttle = d < 12 && last ? 0.3 : 0.8 * (1 - Math.min(0.6, Math.abs(da)));
+        steer = Math.max(-1, Math.min(1, da * 2.5)); throttle = d < 12 && last ? 0.25 : 0.75 * (1 - Math.min(0.7, Math.abs(da)));
         if (S.air) lift = d > 40 ? (D.y < ground(D.x, D.z) + 70 ? 1 : 0) : -1; // aufsteigen, am Ziel landen
       } else if (S.air && mode === 'auto') lift = -1;
     }
     const fx = Math.sin(D.h), fz = Math.cos(D.h);
-    let limit = S.vmax;
+    let limit = 1e9;
     const gy = ground(D.x, D.z);
-    if (!S.air || D.y < gy + 2) for (const p of people()) { // Fußgänger vor dem Fahrzeug → bremsen
+    if (!S.air || D.y < gy + 2) for (const p of people()) { // Fußgänger vor dem Fahrzeug → automatisch bremsen
       const rx = p.x - D.x, rz = p.z - D.z, ahead = rx * fx + rz * fz, side = Math.abs(rx * fz - rz * fx);
       const dirAhead = D.v >= 0 ? ahead : -ahead;
       if (dirAhead > 0 && dirAhead < S.len / 2 + 2 + Math.abs(D.v) * 0.8 && side < S.wid / 2 + 0.9) limit = Math.min(limit, Math.max(0, dirAhead - S.len / 2 - 1.2));
     }
+    D.steer += (steer - D.steer) * Math.min(1, dt * 9); // Lenkung spricht schnell an
+    const vmax = S.vmax * (turbo ? 1.6 : 1), acc = S.acc * (turbo ? 1.9 : 1) * (S.air ? 1 : 1.6);
     if (S.air) { // Helikopter: Rotor hochfahren, steigen/sinken, am Boden nicht vorwärts
       const onGround = D.y <= gy + 0.05;
       D.veh.rotor += ((lift > 0 || !onGround || Math.abs(throttle) > 0.1 ? 1 : 0.25) - D.veh.rotor) * Math.min(1, dt * 1.2);
-      D.vy += ((lift * 6) - D.vy) * Math.min(1, dt * 2.5);
+      D.vy += ((lift * 7) - D.vy) * Math.min(1, dt * 2.5);
       if (D.veh.rotor < 0.7 && D.vy > 0) D.vy = 0;
       D.y += D.vy * dt;
-      const minY = gy;
-      if (D.y < minY) { // Landung – aber nicht auf Kaaba/Prophetenmoschee/Moscheen
+      if (D.y < gy) { // Landung – aber nicht auf Kaaba/Prophetenmoschee/Moscheen
         const why = noLand(D.x, D.z);
-        if (why) { D.y = Math.max(D.y, minY); if (D.vy < 0 && (D.noLandT = (D.noLandT || 0) + dt) > 0.3) { ui.toast(why, 2600); D.noLandT = -3; } D.vy = Math.max(0, D.vy); D.y = minY + 0.01; }
-        else { D.y = minY; D.vy = 0; }
+        if (why) { if (D.vy < 0 && (D.noLandT = (D.noLandT || 0) + dt) > 0.3) { ui.toast(why, 2600); D.noLandT = -3; } D.vy = Math.max(0, D.vy); D.y = gy + 0.01; }
+        else { D.y = gy; D.vy = 0; }
       }
       const forbidden = noLand(D.x, D.z); if (forbidden && D.y < gy + 25) { D.y += (gy + 25 - D.y) * Math.min(1, dt * 1.5); if ((D.noLandT = (D.noLandT || 0) + dt) > 0.5) { ui.toast(forbidden, 2600); D.noLandT = -4; } }
-      if (onGround && D.y <= gy + 0.05) { throttle = 0; steer *= 0.6; }
-      D.h += steer * dt * 1.1;
+      if (onGround && D.y <= gy + 0.05) throttle = 0;
+      D.v += ((throttle * vmax) - D.v) * Math.min(1, dt * 0.9);
+      D.h += D.steer * dt * 1.3; D.slip = 0;
+    } else { // Boden: Gas, Bremse, Rückwärts, Rollen, Lenken, Driften
+      if (throttle > 0.05) D.v += (D.v < 0 ? 14 : acc * throttle * Math.max(0.15, 1 - D.v / vmax)) * dt; // Gas (aus dem Rückwärtsgang erst bremsen)
+      else if (throttle < -0.05) D.v -= (D.v > 0.4 ? 16 : acc * 0.7 * -throttle * Math.max(0, 1 + D.v / (S.vmax * 0.35))) * dt; // Bremse, dann rückwärts
+      else D.v -= Math.sign(D.v) * Math.min(Math.abs(D.v), (0.9 + Math.abs(D.v) * 0.05) * dt); // ausrollen
+      if (D.v > vmax) D.v -= Math.min(D.v - vmax, 6 * dt);
+      if (D.v > limit) D.v = Math.max(limit, D.v - 22 * dt); // Fußgänger
+      const sp = Math.abs(D.v), low = Math.min(1, sp / 3.5), high = 1 - 0.45 * Math.min(1, sp / S.vmax);
+      const maxYaw = (S.len > 8 ? 0.8 : S.len < 2.5 ? 2.6 : 2.1) * (drift ? 1.35 : 1);
+      const yawRate = D.steer * maxYaw * low * high * Math.sign(D.v || 1);
+      D.h += yawRate * dt;
+      // Driften: das Heck bricht aus (Bewegungsrichtung hinkt der Fahrzeugrichtung hinterher)
+      D.slip = D.slip || 0;
+      if (drift && sp > 5) { D.slip -= yawRate * dt * 0.8; D.v *= Math.exp(-0.18 * dt); }
+      D.slip *= Math.exp(-(drift && sp > 5 ? 1.1 : 7) * dt); D.slip = Math.max(-0.9, Math.min(0.9, D.slip));
     }
-    const target = throttle * S.vmax;
-    D.v += (Math.max(-S.vmax * 0.3, Math.min(limit, target)) - D.v) * Math.min(1, dt * (Math.abs(target) < Math.abs(D.v) ? 2.5 : S.acc / S.vmax * 2));
-    if (limit < 0.5 && throttle > 0.2 && D.v < 0.6 && (D.brakeT = (D.brakeT || 0) + dt) > 1.2) { ui.toast(T.braking, 1500); D.brakeT = -3; }
-    D.steer += (steer - D.steer) * Math.min(1, dt * 5);
-    if (!S.air) D.h += D.steer * D.v * dt / (S.len * 0.55);
+    if (limit < 0.5 && throttle > 0.2 && Math.abs(D.v) < 0.6 && (D.brakeT = (D.brakeT || 0) + dt) > 1.2) { ui.toast(T.braking, 1500); D.brakeT = -3; }
     // Bewegen; Gebäude halten auf (der Helikopter fliegt über Gebäude, die niedriger sind als er)
-    const q = { x: D.x + Math.sin(D.h) * D.v * dt, z: D.z + Math.cos(D.h) * D.v * dt };
+    const mdir = D.h + (D.slip || 0);
+    const q = { x: D.x + Math.sin(mdir) * D.v * dt, z: D.z + Math.cos(mdir) * D.v * dt };
     const hit = { x: q.x, z: q.z };
     resolve(q, S.wid / 2, S.air ? colliders.filter((c) => (c.h ?? 1e9) > D.y - 1) : colliders);
-    if (Math.hypot(q.x - hit.x, q.z - hit.z) > 0.02) D.v *= 0.6;
+    if (Math.hypot(q.x - hit.x, q.z - hit.z) > 0.02) { D.v *= -0.25; D.slip = 0; } // anprallen und leicht zurückfedern
     D.x = q.x; D.z = q.z;
     if (!S.air) D.y = ground(D.x, D.z); // Wüste und Berge: dem Boden folgen
     const R = D.veh.root; R.position.set(D.x, D.y, D.z); R.rotation.y = D.h;
-    R.rotation.x = S.air ? D.v / S.vmax * 0.15 : 0; R.rotation.z = S.air ? -D.steer * 0.12 : 0; R.updateMatrixWorld(true);
+    const two = S.len < 2.5, sp2 = Math.min(1, Math.abs(D.v) / 8);
+    R.rotation.order = 'YXZ';
+    R.rotation.x = S.air ? D.v / S.vmax * 0.15 : 0;
+    R.rotation.z = S.air ? -D.steer * 0.15 : two ? -D.steer * 0.38 * sp2 : -D.steer * 0.04 * sp2; // Zweiräder legen sich in die Kurve
+    R.updateMatrixWorld(true);
     D.veh.roll(D.v, dt, D.steer);
     // Figur sitzt im Fahrzeug
     D.veh.seat(tmp); player.fig.root.position.copy(tmp); player.fig.root.rotation.y = D.h; player.fig.update(dt, 0);
     player.pos.set(D.x, D.y, D.z); player.heading = D.h;
     // Kamera hinter dem Fahrzeug (wischen = umschauen, kehrt langsam zurück)
     const look = input.yaw - yaw0; yaw0 += look * Math.min(1, dt * 0.8);
-    const ang = D.h + Math.PI + look, [dist, hh] = S.cam;
+    D.camH = D.camH == null ? D.h : D.camH + Math.atan2(Math.sin(D.h - D.camH), Math.cos(D.h - D.camH)) * Math.min(1, dt * 4.5); // Kamera schwenkt weich nach
+    const ang = D.camH + Math.PI + look, [d0, hh] = S.cam, dist = d0 * (1 + Math.min(0.35, Math.abs(D.v) / 60));
     const wp = tmp.set(D.x + Math.sin(ang) * dist, D.y + hh + input.pitch * 4, D.z + Math.cos(ang) * dist);
+    const fovWant = 62 + (turbo && Math.abs(D.v) > 5 ? 8 : 0); if (Math.abs(cam.fov - fovWant) > 0.05) { cam.fov += (fovWant - cam.fov) * Math.min(1, dt * 3); cam.updateProjectionMatrix(); }
     wp.y = Math.max(wp.y, ground(wp.x, wp.z) + 1);
     const k = first ? 1 : 1 - Math.exp(-dt * 6); first = false;
     camPos.lerp(wp, k); camLook.lerp(new THREE.Vector3(D.x + fx * 3, D.y + 1.2, D.z + fz * 3), k);
     cam.position.copy(camPos); cam.lookAt(camLook);
-    ui.counter(`${Math.round(Math.abs(D.v) * 3.6)} km/h${S.air ? ' · ' + Math.round(D.y - gy) + ' m' : ''}${mode === 'auto' && autoPts ? ' · → ' + autoName : ''}`);
+    speedEl.textContent = Math.round(Math.abs(D.v) * 3.6); unitEl.textContent = D.v < -0.3 ? 'km/h · R' : 'km/h';
+    infoEl.textContent = S.air ? Math.round(D.y - gy) + ' m Höhe' : mode === 'auto' && autoPts ? '→ ' + autoName : turbo ? 'TURBO' : drift && Math.abs(D.slip) > 0.08 ? 'DRIFT' : '';
+    pad.classList.toggle('boost', turbo && Math.abs(D.v) > 3);
     actions();
   }
 
@@ -260,6 +294,7 @@ export function createBorrow(ctx, opts) {
   return {
     get driving() { return !!drive; },
     get drive() { return drive; }, // für Tests
+    get ctl() { return ctl; },
     arriveWith,
     update(dt) {
       if (pending) { // angehaltenes Fahrzeug: warten bis es steht, Fahrer steigt aus, kurze Unterhaltung, einsteigen
