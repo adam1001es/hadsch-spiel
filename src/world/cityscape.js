@@ -243,7 +243,7 @@ export function createTraffic(world, { z0, x0 = -420, x1 = 420, crossX, crossW =
   const n = mobile ? 9 : 15;
   const lanes = [{ z: z0 + 2.5, dir: 1 }, { z: z0 + 7.5, dir: 1 }, { z: z0 + 12.5, dir: -1 }, { z: z0 + 17.5, dir: -1 }];
   const all = [];
-  const add = (kind, ln, x) => { const veh = makeVehicle(world, kind); const sp = specOf(kind); all.push({ kind, veh, ln, x, v: 7, vmax: Math.min(sp.vmax, 9 + Math.random() * 4), len: sp.len + 0.3, held: false, borrowed: false }); };
+  const add = (kind, ln, x) => { const veh = makeVehicle(world, kind, { driver: true }); const sp = specOf(kind); all.push({ kind, veh, ln, x, v: 7, vmax: Math.min(sp.vmax, 9 + Math.random() * 4), len: sp.len + 0.3, held: false, borrowed: false }); };
   for (let i = 0; i < n; i++) add(CAR_KINDS[i % CAR_KINDS.length], lanes[i % 4], x0 + Math.random() * (x1 - x0));
   add('motorbike', lanes[0], x0 + (x1 - x0) * 0.6);
   add('bus', lanes[1], x0 + (x1 - x0) * 0.25); add('bus', lanes[3], x0 + (x1 - x0) * 0.75);
@@ -254,9 +254,9 @@ export function createTraffic(world, { z0, x0 = -420, x1 = 420, crossX, crossW =
     get pedGreen() { return !carGreen; },
     get vehicles() { return all.filter((v) => !v.borrowed); },
     hold(vh, on = true) { vh.held = on; },                             // anhalten (Fahrer fragen)
-    take(vh) { vh.borrowed = true; vh.held = false; return vh.veh; },  // ausleihen: nicht mehr im Verkehr
+    take(vh) { vh.borrowed = true; vh.held = false; if (vh.veh.driver) vh.veh.driver.visible = false; return vh.veh; },  // ausleihen: nicht mehr im Verkehr, Fahrer steigt aus
     // zurückgeben: fährt wieder auf seiner Spur mit (an der Stelle, die der Rückgabe am nächsten liegt)
-    giveBack(vh, x) { vh.borrowed = false; vh.held = false; vh.v = 0; vh.x = Math.min(x1 - 5, Math.max(x0 + 5, x)); place(vh); },
+    giveBack(vh, x) { vh.borrowed = false; vh.held = false; vh.v = 0; if (vh.veh.driver) vh.veh.driver.visible = true; vh.x = Math.min(x1 - 5, Math.max(x0 + 5, x)); place(vh); },
     update(dt) {
       t += dt; const c = t % 28; // 0–15 Autos grün, 15–18 gelb, 18–28 Fußgänger grün
       const ph = c < 15 ? 'g' : c < 18 ? 'y' : 'r';

@@ -63,7 +63,7 @@ export function createBorrow(ctx, opts) {
 
   let drive = null, pending = null, mode = 'self', autoPts = null, autoName = '', lastKey = '';
   const cam = engine.camera, camPos = new THREE.Vector3(), camLook = new THREE.Vector3(), tmp = new THREE.Vector3();
-  let first = true, yaw0 = 0;
+  let first = true, yaw0 = 0, seenInfo = false;
 
   function hail(vh) { // anhalten → Fahrer steigt aus → fragen → einsteigen
     traffic.hold(vh, true); pending = { vh, t: 0, step: 0 }; ui.prompt(null);
@@ -80,7 +80,8 @@ export function createBorrow(ctx, opts) {
     player.ride = ride; player.freeze(true); player.fig.pose(drive.spec.pose); first = true; yaw0 = input.yaw;
     mode = 'self'; autoPts = null; lastKey = '';
     ctx.vehicle = drive.veh.kind; // für Mitspieler (multi.js)
-    sfx.bus?.(); ui.toast(T.info.replace(/<[^>]+>/g, '').split('. ').slice(0, 1).join('') + '.', 2500);
+    sfx.bus?.();
+    if (!seenInfo) { seenInfo = true; ui.info(`<p>${T.info}</p>`); } // einmal erklären: Amanah + Bedienung
   }
   function exit(giveBack = false) {
     if (!drive) return;

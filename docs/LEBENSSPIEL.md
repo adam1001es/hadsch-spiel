@@ -157,6 +157,14 @@ Fahrzeuge sind **leicht zu finden** und werden **ausgeliehen**, nicht gestohlen 
 - Gilt für Autos (`public/assets/models/cars/*.glb`), Motorrad (`vehicles/motorbike.glb`), Bus (`bus.glb`),
   Helikopter: `public/assets/models/vehicles/helicopter.glb` (CC BY 4.0 surveytown, Rotoren `rotor_main`/`rotor_tail` drehbar). Das MD-902 (CC BY-NC) nicht verwenden.
 - Zusätzlich an festen Orten (Taxistand/Parkplatz am Haram, Busbahnhof) ein Fahrzeug, damit man immer schnell eins findet.
+- ✅ **Gebaut (erste Version):** `src/life/vehicles.js` (`makeVehicle(world, kind, { driver })`: Modelle laden/klonen, Scheiben
+  durchsichtig, Räder drehen `roll(v, dt, steer)`, Motorrad-Räder aus der Form erkannt, `seat()` = Sitzplatz, `SPEC` je Fahrzeug),
+  `src/life/borrow.js` (`createBorrow(ctx, { player, interact, traffic, stands, area, people, destinations, route, map, where })`:
+  Anhalten & fragen mit Sprechblasen, Taxistand, Fahrmodus über `player.ride`, selbst/automatisch, Fußgänger-Bremse, Aussteigen,
+  Zurückgeben mit Dank bzw. freundlichem Hinweis + Kartenziel, Fahrt in die andere Stadt über `ctx.drive(from, to, { vehicle })`,
+  Ankunft im Fahrzeug `arriveWith`). `createTraffic` nutzt die echten Modelle (`hold/take/giveBack`). Haltungen `drive`/`ride`
+  in `rigged.js`/`player.js`. Multiplayer: `myState().v` = Fahrzeug, Mitspieler sitzen sichtbar im Fahrzeug.
+  Taxistand: Mekka am Südplatz (30 | 501), Medina (75 | 461). Helikopter noch nicht eingebaut. Gute Taten: `hp-life.amanah`.
 
 ### Hauptfigur (Stand)
 Junge/Mann: geriggte Tripo-Figur (`src/core/rigged.js`, Modelle `player_m*.glb`) in drei Kleidungen (Alltag, Ihram bedeckt, Ihram

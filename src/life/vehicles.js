@@ -15,7 +15,23 @@ export const SPEC = {
 export const specOf = (kind) => SPEC[kind] || CAR;
 const FILE = (k) => (k === 'motorbike' ? 'vehicles/motorbike.glb' : k === 'bus' ? 'bus.glb' : `cars/${k}.glb`);
 const cache = {};
-export const loadVehicle = (kind) => (cache[kind] ||= new GLTFLoader().loadAsync('./assets/models/' + FILE(kind)).then((g) => g.scene).catch(() => null));
+export const loadVehicle = (kind) => (cache[kind] ||= new GLTFLoader().loadAsync('./assets/models/' + FILE(kind)).then((g) => {
+  // Scheiben hell getönt und durchsichtig, damit man sieht, wer im Fahrzeug sitzt
+  g.scene.traverse((o) => { const m = o.material; if (o.isMesh && m && /glass/i.test(m.name)) { m.color.set(0x8fa6b3); m.opacity = 0.22; m.transparent = true; m.depthWrite = false; m.roughness = 0.1; m.metalness = 0.2; } });
+  return g.scene;
+}).catch(() => null));
+
+// einfacher Fahrer (Oberkörper + Kopf mit Ghutra) für Fahrzeuge im Verkehr – sehr leicht, eine geteilte Form
+let driverGeo = null;
+const driverMat = new THREE.MeshStandardMaterial({ color: 0xf1eee6, roughness: 0.85 });
+function driverMesh() {
+  if (!driverGeo) {
+    const torso = new THREE.CylinderGeometry(0.17, 0.21, 0.6, 8).translate(0, 0.3, 0);
+    const headG = new THREE.SphereGeometry(0.12, 10, 8).translate(0, 0.75, 0.02);
+    driverGeo = [torso, headG];
+  }
+  const g = new THREE.Group(); for (const geo of driverGeo) g.add(new THREE.Mesh(geo, driverMat)); return g;
+}
 
 // Motorrad: runde, schmale Teile nahe am Boden vorne/hinten = Räder → in eine Drehgruppe um ihre Mitte legen
 function findWheels(model) {
@@ -36,10 +52,11 @@ function findWheels(model) {
   return wheels;
 }
 
-export function makeVehicle(world, kind, { shadows = true } = {}) {
+export function makeVehicle(world, kind, { shadows = true, driver = false } = {}) {
   const spec = specOf(kind);
   const root = new THREE.Group(); world.add(root);
-  const v = { kind, spec, root, wheels: [], ready: false, spin: 0, name: VEHICLE_NAME[kind] || 'Auto' };
+  const v = { kind, spec, root, wheels: [], ready: false, spin: 0, name: VEHICLE_NAME[kind] || 'Auto', driver: null };
+  if (driver) { v.driver = driverMesh(); v.driver.position.set(spec.seat[0], spec.seat[1] + (kind === 'motorbike' ? 0.15 : 0.5), spec.seat[2]); root.add(v.driver); }
   loadVehicle(kind).then((sc) => {
     if (!sc || !root.parent) return;
     const m = sc.clone(true); root.add(m);
