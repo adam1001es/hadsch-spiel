@@ -53,7 +53,7 @@ export function createBorrow(ctx, opts) {
   pad.innerHTML = '<div class="dc-l"><button data-k="l" aria-label="Links">◀</button><button data-k="r" aria-label="Rechts">▶</button></div>'
     + '<div class="dc-r"><div class="dc-air"><button data-k="u" aria-label="Hoch">Hoch</button><button data-k="d" aria-label="Runter">Runter</button></div><button data-k="f" aria-label="Vor">▲</button><button data-k="b" aria-label="Zurück">▼</button></div>';
   document.body.appendChild(pad);
-  const press = (e, on) => { const b = e.target.closest('button[data-k]'); if (!b) return; e.preventDefault(); ctl[b.dataset.k] = on ? 1 : 0; b.classList.toggle('on', on); if (on) b.setPointerCapture?.(e.pointerId); };
+  const press = (e, on) => { const b = e.target.closest('button[data-k]'); if (!b) return; e.preventDefault(); ctl[b.dataset.k] = on ? 1 : 0; b.classList.toggle('on', on); if (on) try { b.setPointerCapture(e.pointerId); } catch { /* egal */ } };
   pad.addEventListener('pointerdown', (e) => press(e, true));
   for (const ev of ['pointerup', 'pointercancel', 'lostpointercapture']) pad.addEventListener(ev, (e) => press(e, false));
   pad.addEventListener('contextmenu', (e) => e.preventDefault());
@@ -81,7 +81,7 @@ export function createBorrow(ctx, opts) {
     const veh = makeVehicle(world, kind); veh.root.position.set(x, ground(x, z), z); veh.root.rotation.y = h;
     const P = { veh, x, z, h, owner: null, home: { x, z, h }, src: 'rent', mine: true, parked: true };
     parked.push(P);
-    P.ia = interact.add({ obj: veh.root, color: 'blue', radius: 10, near: Math.max(2.4, veh.spec.len / 2 + 1.2), pos: (o) => o.copy(veh.root.position), key: 'rent-' + kind + '-' + parked.length, label: T.rent(veh.name), when: () => !drive && P.parked && parked.includes(P), run: () => enter(P) });
+    P.ia = interact.add({ obj: veh.root, color: 'blue', radius: 10, near: Math.max(3, veh.spec.len / 2 + 1.4), pos: (o) => o.copy(veh.root.position), key: 'rent-' + kind + '-' + parked.length, label: T.rent(veh.name), when: () => !drive && P.parked && parked.includes(P), run: () => enter(P) });
     return P;
   }
   const RENT = [...SMALL_KINDS, 'escooter', 'bicycle', 'motorbike', ...CAR_KINDS];
@@ -97,7 +97,7 @@ export function createBorrow(ctx, opts) {
     for (let k = 0; k < 10; k++) {
       const a = back + (Math.random() - 0.5) * 1.6, d = 7 + Math.random() * 6;
       const x = px + Math.sin(a) * d, z = pz + Math.cos(a) * d;
-      if (avoid(x, z)) continue;
+      if (avoid(x, z) || parked.some((P) => Math.hypot(P.x - x, P.z - z) < 12)) continue; // nicht neben anderen Fahrzeugen
       const q = { x, z }; resolve(q, 1.4, colliders); if (Math.hypot(q.x - x, q.z - z) > 0.01) continue;
       addRental(RENT[(Math.random() * RENT.length) | 0], x, z, Math.random() * Math.PI * 2); return;
     }
@@ -128,7 +128,7 @@ export function createBorrow(ctx, opts) {
     mode = 'self'; autoPts = null; lastKey = '';
     ctx.vehicle = drive.veh.kind; // für Mitspieler (multi.js)
     sfx.bus?.();
-    if (!seenInfo) { seenInfo = true; ui.info(`<p>${T.info}</p>`); } // einmal erklären: Amanah + Bedienung
+    if (!seenInfo) { seenInfo = true; ui.el.panel.classList.add('collapsed'); ui.info(`<p>${T.info}</p>`); } // einmal erklären (Karte bleibt zu, „i“ zeigt einen Punkt)
   }
   function exit(giveBack = false) {
     if (!drive) return;
@@ -259,6 +259,7 @@ export function createBorrow(ctx, opts) {
 
   return {
     get driving() { return !!drive; },
+    get drive() { return drive; }, // für Tests
     arriveWith,
     update(dt) {
       if (pending) { // angehaltenes Fahrzeug: warten bis es steht, Fahrer steigt aus, kurze Unterhaltung, einsteigen

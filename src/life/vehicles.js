@@ -62,6 +62,8 @@ function findWheels(model) {
   return wheels;
 }
 
+const isIn = (o, p) => { for (let q = o; q; q = q.parent) if (q === p) return true; return false; };
+
 export function makeVehicle(world, kind, { shadows = true, driver = false } = {}) {
   const spec = specOf(kind);
   const root = new THREE.Group(); world.add(root);
@@ -76,7 +78,14 @@ export function makeVehicle(world, kind, { shadows = true, driver = false } = {}
     m.traverse((o) => { if (o.isMesh) { o.castShadow = shadows; o.receiveShadow = true; } });
     if (kind === 'motorbike') v.wheels = findWheels(m);
     else if (kind.startsWith('dirtbike')) { for (const n of ['wheel_f', 'wheel_r']) { const w = m.getObjectByName(n); if (w) v.wheels.push({ obj: w, steer: n === 'wheel_f' }); } }
-    else if (kind === 'helicopter') { v.rotorMain = m.getObjectByName('rotor_main'); v.rotorTail = m.getObjectByName('rotor_tail'); }
+    else if (kind === 'helicopter') {
+      v.rotorMain = m.getObjectByName('rotor_main'); v.rotorTail = m.getObjectByName('rotor_tail');
+      // Sitz aus der Form: Kabine = Rumpf ohne Rotoren; Pilot vorne rechts in der Kabine, unter der Rotornabe nach vorn
+      root.updateMatrixWorld(true); const inv = root.matrixWorld.clone().invert(), hub = new THREE.Vector3();
+      v.rotorMain?.getWorldPosition(hub); hub.applyMatrix4(inv);
+      const body = new THREE.Box3(); m.traverse((o) => { if (o.isMesh && !(v.rotorMain && isIn(o, v.rotorMain)) && !(v.rotorTail && isIn(o, v.rotorTail))) { const b = new THREE.Box3().setFromObject(o).applyMatrix4(inv); if (b.max.z > hub.z - 1) body.union(b); } });
+      if (!body.isEmpty()) v.seatPos = new THREE.Vector3(hub.x + 0.35, body.min.y + 0.55, Math.min(body.max.z - 1.4, hub.z + 1.2));
+    }
     else for (const n of ['wheel_fl', 'wheel_fr', 'wheel_rl', 'wheel_rr']) { const w = m.getObjectByName(n); if (w) { w.rotation.order = 'YXZ'; v.wheels.push({ obj: w, steer: n.includes('f') && n[6] === 'f' }); } }
     v.ready = true;
   });
@@ -88,6 +97,6 @@ export function makeVehicle(world, kind, { shadows = true, driver = false } = {}
     for (const w of v.wheels) { w.obj.rotation.order = 'YXZ'; w.obj.rotation.x = v.spin; if (w.steer) w.obj.rotation.y = steer * 0.5; }
   };
   // Weltposition des Sitzes (für die Figur)
-  v.seat = (out = new THREE.Vector3()) => out.set(...spec.seat).applyMatrix4(root.matrixWorld);
+  v.seat = (out = new THREE.Vector3()) => (v.seatPos ? out.copy(v.seatPos) : out.set(...spec.seat)).applyMatrix4(root.matrixWorld);
   return v;
 }

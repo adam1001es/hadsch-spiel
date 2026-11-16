@@ -340,7 +340,7 @@ export function create(ctx, { from, where = 'mecca' } = {}) {
   const noLand = (x, z) => (medina ? (inBox(x, z, 0, 0, 155, 115) ? BORROW.noLandNabawi : null) : (inBox(x, z, 115, -7, 228, 210) ? BORROW.noLandKaaba : null))
     || (L.mosques.some((m) => Math.hypot(x - m.x, z - m.z) < 14) ? BORROW.noLandMosque : null);
   const borrow = createBorrow(ctx, { player, interact, traffic, stands, colliders, ground: groundH, noLand, destinations, route: vroute, map, where, baseActions,
-    avoid: (x, z) => (z > RZ - 1 && z < RZ + 21) || Math.hypot(x - HP[0], z - HP[1]) < 10,
+    avoid: (x, z) => (z > RZ - 1 && z < RZ + 21) || Math.hypot(x - HP[0], z - HP[1]) < 16 || Math.hypot(x - ST[0] - 4, z - ST[1]) < 12,
     people: () => { const out = agents ? agents.list.slice() : []; for (const o of ctx.multi?.status?.().others || []) if (o.x != null && o.s === ctx.stationIndex) out.push(o); return out; } });
   ctx.debugLife = { borrow, traffic }; // für automatische Tests
   if (from === 'car' && ctx.borrowed) borrow.arriveWith(ctx.borrowed.kind, BUx - 18, RZ + 26, Math.PI / 2); // mit dem ausgeliehenen Fahrzeug angekommen
