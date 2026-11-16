@@ -154,7 +154,7 @@ Fahrzeuge sind **leicht zu finden** und werden **ausgeliehen**, nicht gestohlen 
 - „Zurückgeben“-Knopf: Fahrzeug wird ordentlich abgestellt, Fahrer bedankt sich; ehrliches Zurückgeben gibt Hasanat.
   Wer das Fahrzeug weit weg stehen lässt, bekommt einen freundlichen Hinweis (keine Strafe, kein Diebstahl, keine Verfolgung).
 - Gilt für Autos (`public/assets/models/cars/*.glb`), Motorrad (`vehicles/motorbike.glb`), Bus (`bus.glb`),
-  später Helikopter (eigenes Tripo-Modell oder CC-BY-Modell – das MD-902 ist CC BY-NC und Markenmodell, nicht verwenden).
+  Helikopter: `public/assets/models/vehicles/helicopter.glb` (CC BY 4.0 surveytown, Rotoren `rotor_main`/`rotor_tail` drehbar). Das MD-902 (CC BY-NC) nicht verwenden.
 - Zusätzlich an festen Orten (Taxistand/Parkplatz am Haram, Busbahnhof) ein Fahrzeug, damit man immer schnell eins findet.
 
 ### Hauptfigur (Stand)
