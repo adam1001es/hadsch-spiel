@@ -137,3 +137,10 @@ export function burnerKeep() {
   };
   tick();
 }
+
+// Sanfter, würdiger Hinweiston zur Gebetszeit (wenn keine Adhan-Aufnahme vorhanden ist): drei ruhige Glockentöne
+export function chime() {
+  if (!on()) return;
+  const t = ac.currentTime;
+  [[0, 523.25], [0.9, 659.25], [1.8, 783.99]].forEach(([d, f]) => { tone(t + d, 2.6, f, { gain: 0.07, attack: 0.02 }); tone(t + d, 2.6, f * 2, { gain: 0.015, attack: 0.02 }); });
+}

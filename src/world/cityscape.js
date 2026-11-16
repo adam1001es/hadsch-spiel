@@ -73,22 +73,32 @@ const FACADES = {
 };
 
 // Material mit Fassade in Metern (Instanz-Skalierung aus der Matrix), Dach flach eingefärbt
+// Nacht (0…1) für alle Fassaden: Fenster leuchten unregelmäßig warm, Läden hell (von der Station aus der Spieluhr gesetzt)
+export const cityNight = { value: 0 };
 function facadeMat(style, { roof = 0xcfc4ae, rough = 0.75 } = {}) {
   const f = FACADES[style];
   const m = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: rough, metalness: 0.05 });
   const tex = f.tex(), bay = new THREE.Vector2(...f.bay), rc = new THREE.Color(roof);
   m.onBeforeCompile = (sh) => {
-    sh.uniforms.tFac = { value: tex }; sh.uniforms.uBay = { value: bay }; sh.uniforms.uRoof = { value: rc };
+    sh.uniforms.tFac = { value: tex }; sh.uniforms.uBay = { value: bay }; sh.uniforms.uRoof = { value: rc }; sh.uniforms.uNight = cityNight; sh.uniforms.uShop = { value: /odium/.test(style) ? 1 : 0 };
     sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vFac;')
       .replace('#include <begin_vertex>', `#include <begin_vertex>
         vec3 sc = vec3(length(instanceMatrix[0].xyz), length(instanceMatrix[1].xyz), length(instanceMatrix[2].xyz));
         vec3 lp = position * sc;
         float u = abs(normal.x) > 0.5 ? lp.z * sign(normal.x) : -lp.x * sign(normal.z);
         vFac = vec3(u + 1000.0, lp.y, abs(normal.y));`);
-    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform sampler2D tFac; uniform vec2 uBay; uniform vec3 uRoof; varying vec3 vFac;')
+    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform sampler2D tFac; uniform vec2 uBay; uniform vec3 uRoof; uniform float uNight, uShop; varying vec3 vFac;')
       .replace('#include <map_fragment>', `
+        vec3 facGlow = vec3(0.0);
         if (vFac.z > 0.5) diffuseColor.rgb *= uRoof;
-        else diffuseColor.rgb *= texture2D(tFac, vec2(vFac.x / uBay.x, vFac.y / uBay.y)).rgb;`);
+        else {
+          vec3 fc = texture2D(tFac, vec2(vFac.x / uBay.x, vFac.y / uBay.y)).rgb; diffuseColor.rgb *= fc;
+          float lum = dot(fc, vec3(0.3, 0.55, 0.15));
+          vec2 cellId = floor(vec2(vFac.x / uBay.x, vFac.y / uBay.y));
+          float lit = step(0.42, fract(sin(dot(cellId, vec2(12.9898, 78.233))) * 43758.5453));
+          if (uShop > 0.5) facGlow = fc * smoothstep(0.45, 0.75, lum) * uNight * 0.9;            // Läden: Schaufenster hell
+          else facGlow = vec3(1.0, 0.76, 0.42) * (1.0 - smoothstep(0.12, 0.3, lum)) * lit * uNight * 0.75; // Fenster: manche hell
+        }`).replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\n        totalEmissiveRadiance += facGlow;');
   };
   m.customProgramCacheKey = () => 'facade-' + style;
   return m;
@@ -102,8 +112,11 @@ export function createTowers(world, { podiumStyle = 'podium' } = {}) {
     (L[style] ||= []).push({ x, y, z, w, h, d, ry, tint });
   };
   const box = new THREE.BoxGeometry(1, 1, 1).translate(0, 0.5, 0);
+  const foot = []; // Grundrisse für die Karte
   return {
+    footprints: foot,
     add(x, z, w, d, h, { style = 'mecca', podium = 8, ry = 0, tint = 1, crown = true } = {}) {
+      foot.push({ x, z, w, d, ry });
       if (podium) push(podiumStyle, x, 0, z, w, podium, d, ry, 1);
       const inset = Math.min(4, Math.min(w, d) * 0.12), base = podium || 0;
       const bw = w - inset * 2, bd = d - inset * 2, hv = Math.abs(Math.sin(x * 12.9898 + z * 78.233)) % 1; // feste Variante je Ort
@@ -164,7 +177,8 @@ export function abrajAlBait(world, towers, { x, z, w = 210, d = 150, sky }) {
   add(new THREE.SphereGeometry(3, 12, 8), gold, 580);
   const cres = add(new THREE.TorusGeometry(8, 1.8, 8, 28, Math.PI * 1.45), gold, 592); cres.rotation.z = Math.PI * 0.77;
   return {
-    update() {
+    update(night = 0) {
+      face.emissiveIntensity = 0.15 + night * 1.4; green.emissiveIntensity = 0.25 + night * 1.6;
       const hrs = ((sky?.hour ?? 12) % 12 + 12) % 12, min = (hrs % 1) * 60;
       for (const [hr, mn] of hands) { hr.rotation.z = -hrs / 12 * Math.PI * 2; mn.rotation.z = -min / 60 * Math.PI * 2; }
     },

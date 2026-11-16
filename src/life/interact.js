@@ -86,6 +86,7 @@ export function createInteract(ctx, player, { radius: R0 = 7, near: N0 = 2.6 } =
       return box.isEmpty() ? v.set(1e9, 0, 1e9) : box.getCenter(v);
     },
     get items() { return items; },
+    enabled: true, // false: kein Knopf (z. B. während man betet)
     update(dt) {
       dt = Number.isFinite(dt) ? dt : 0.016;
       t += dt;
@@ -95,7 +96,7 @@ export function createInteract(ctx, player, { radius: R0 = 7, near: N0 = 2.6 } =
       let best = null, bd = 1e9;
       const pulse = 0.78 + 0.22 * Math.sin(t * 3.2);
       for (const e of items) {
-        const ok = !e.when || e.when();
+        const ok = api.enabled && (!e.when || e.when());
         const p = api.point(e);
         const d = Math.hypot(p.x - px, p.z - pz);
         // weich ein- und ausblenden: voll ab halber Entfernung, darüber hinaus weniger
@@ -109,7 +110,8 @@ export function createInteract(ctx, player, { radius: R0 = 7, near: N0 = 2.6 } =
       }
       if (best) {
         active = best;
-        ui.prompt(best.label, () => { const e = active; if (e) e.run?.(); }, { key: best.key, tone: best.color });
+        const label = typeof best.label === 'function' ? best.label() : best.label; // Beschriftung darf sich ändern
+        ui.prompt(label, () => { const e = active; if (e) e.run?.(); }, { key: best.key + '|' + label, tone: best.color });
       } else if (active) { active = null; ui.prompt(null); }
     },
     dispose() { for (const e of [...items]) api.remove(e); ui.prompt(null); },

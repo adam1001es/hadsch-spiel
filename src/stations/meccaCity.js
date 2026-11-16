@@ -3,7 +3,7 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { MECCA_CITY as T } from '../content/hajj.js';
 import { BUILDYARD, CITY as C } from '../content/life.js';
 import { heightFn, buildTerrain } from '../world/terrain.js';
-import { sign, lamps, palms, bus } from '../world/props.js';
+import { sign, lamps, palms, bus, mosque } from '../world/props.js';
 import { pbr } from '../world/assets.js';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { createCrowd } from '../world/crowd.js';
@@ -13,7 +13,11 @@ import { createPlayer } from '../core/player.js';
 import { viewLine, clearView } from '../core/kit.js';
 import { city, nabawi } from './balloon.js';
 import { buildHaram } from '../world/haram.js';
-import { createTowers, abrajAlBait, umbrellas, walkable, createTraffic, benches, bollards } from '../world/cityscape.js';
+import { createTowers, abrajAlBait, umbrellas, walkable, createTraffic, benches, bollards, cityNight } from '../world/cityscape.js';
+import { PRAYER_UI as U } from '../content/life.js';
+import { clock } from '../life/clock.js';
+import { createPrayer } from '../life/prayer.js';
+import { showMinimap } from '../life/minimap.js';
 import { createInteract } from '../life/interact.js';
 import * as sfx from '../core/sfx.js';
 
@@ -31,11 +35,15 @@ const LAYOUT = {
     bx: -55, plaza: { x0: -150, x1: 230, z0: 205, z1: 263 }, roadZ: 470, endZ: 600, square: { x0: -150, x1: 40 },
     hotelH: [90, 170], style: 'mecca', alt: 'glass',
     dates: [-66, 330], zamzam: [20, 232], pigeons: [-100, 234], balloon: [-100, 565], bus: [0, 495], bauhof: [22, 494], haramInfo: [-20, 212],
+    gate: [-35, 209], mats: [10, 236], bounds: { x0: -420, x1: 420, z0: -240, z1: 680 },
+    mosques: [{ x: -128, z: 578, ry: Math.PI / 2, spot: [-114, 578] }, { x: 85, z: 448, ry: 0, spot: [85, 460], court: { x0: 74, x1: 96, z0: 456, z1: 466 } }],
   },
   medina: {
     bx: 0, plaza: { x0: -225, x1: 225, z0: 113, z1: 190 }, roadZ: 430, endZ: 560, square: { x0: -120, x1: 120 },
     hotelH: [45, 90], style: 'medina', alt: 'medina',
     dates: [-11, 300], zamzam: [40, 160], pigeons: [-70, 160], balloon: [-70, 525], bus: [40, 455], bauhof: [62, 454], haramInfo: [24, 118],
+    gate: [40, 115], mats: [-30, 128], bounds: { x0: -320, x1: 320, z0: -260, z1: 600 },
+    mosques: [{ x: 100, z: 530, ry: -Math.PI / 2, spot: [86, 530] }, { x: 100, z: 408, ry: 0, spot: [100, 420], court: { x0: 89, x1: 111, z0: 416, z1: 426 } }],
   },
 };
 
@@ -64,7 +72,6 @@ export function create(ctx, { from, where = 'mecca' } = {}) {
   const L = LAYOUT[where] || LAYOUT.mecca;
   const { engine, sky, ui } = ctx;
   const world = engine.world, mobile = engine.isMobile;
-  sky.setHour(15.5);
   sky.state.shadowSize = 70;
   ui.el.day.textContent = T.day;
   ui.el.title.textContent = medina ? T.titleMedina : T.title;
@@ -81,7 +88,7 @@ export function create(ctx, { from, where = 'mecca' } = {}) {
 
   // ---------- Wahrzeichen ----------
   const towers = createTowers(world, { podiumStyle: medina ? 'medinaPodium' : 'podium' });
-  let glow = [], clock = null, umbrellaPoles = [];
+  let glow = [], abraj = null, umbrellaPoles = [];
   if (medina) {
     const g = new THREE.Group(); world.add(g); nabawi(g, { umbrellas: false });
     // große Schirme auf dem Vorplatz (Reihen rund um die Moschee)
@@ -93,14 +100,14 @@ export function create(ctx, { from, where = 'mecca' } = {}) {
     umbrellaPoles = U;
   } else {
     ({ glow } = buildHaram(world, { tower: false }));
-    clock = abrajAlBait(world, towers, { x: 65, z: 338, sky });
+    abraj = abrajAlBait(world, towers, { x: 65, z: 338, sky });
   }
 
   // ---------- begehbare Flächen ----------
   const blvd = { x0: bx - BW, x1: bx + BW, z0: PZ.z1 - 2, z1: EZ };
   const walkN = { x0: -150, x1: 150, z0: RZ - 5, z1: RZ + 0.5 };       // Gehweg nördlich der Straße
   const square = { x0: L.square.x0, x1: L.square.x1, z0: RZ + 19.5, z1: EZ }; // Platz südlich der Straße
-  const rects = [PZ, blvd, walkN, square];
+  const rects = [PZ, blvd, walkN, square, ...L.mosques.filter((m) => m.court).map((m) => m.court)];
   pave(blvd.x0, blvd.x1, PZ.z1 - 1, RZ, 0xeeeae2);
   pave(walkN.x0, walkN.x1, walkN.z0, RZ, 0xe2ddd3);
   pave(square.x0, square.x1, RZ + 20, EZ + 10, 0xeeeae2);
@@ -202,6 +209,22 @@ export function create(ctx, { from, where = 'mecca' } = {}) {
   if (!medina) { const pq = plaque(world, 30, 257, Math.PI);
     SPOTS.push({ obj: pq, color: 'gold', radius: 6, near: 2, key: 'info-clock', x: 30, z: 255.6, label: C.clockDo, run() { ui.info(`<p>${C.clock}</p>`); ui.el.panel.classList.remove('collapsed'); } }); }
 
+  // ---------- Moscheen, Eingang der großen Moschee, Gebetsplatz ----------
+  const glowMosque = [], mosqueCols = [], mosqueFoot = [];
+  L.mosques.forEach((m, i) => {
+    const g = mosque(world, { x: m.x, z: m.z, ry: m.ry, w: 22, d: 18, h: 7, minarets: 1, glow: glowMosque });
+    const c = Math.cos(m.ry), sn = Math.sin(m.ry), mx = m.x + 14 * c + 6 * sn, mz = m.z - 14 * sn + 6 * c; // Minarett (lokal 14 | 6)
+    mosqueCols.push({ type: 'box', x: m.x, z: m.z, hw: 11, hd: 9, rot: m.ry }, { type: 'circle', x: mx, z: mz, r: 1.8 });
+    mosqueFoot.push({ x: m.x, z: m.z, w: 22, d: 18, ry: m.ry });
+    m.obj = g; m.name = U.mosqueNames[i] || 'Moschee';
+  });
+  { const [x, z] = L.gate; const sg = sign(world, x, z, 0, medina ? ['المسجد النبوي', 'Eingang zur Moschee'] : ['المسجد الحرام', 'Eingang zur Haram'], { w: 3.4, h: 1.1, y: 2.8 });
+    SPOTS.push({ obj: sg, color: 'gold', radius: 9, near: 3, push: 0.03, key: 'gate', x, z: z + 2, label: medina ? U.enterNabawi : U.enterHaram, run() { medina ? ctx.nabawiVisit?.() : ctx.haramVisit?.(); } }); }
+  // Gebetsteppiche auf dem Platz (hier kann man auch beten – in Mekka mit Blick zur Kaaba)
+  const mats = new THREE.Group(); world.add(mats);
+  { const [x, z] = L.mats, cols = [0x7e2a22, 0x22405f, 0x2e5a4a, 0x5a1f3a], q = medina ? { x: x - 170, z: z + 1000 } : { x: 0, z: 0 }, a = Math.atan2(q.x - x, q.z - z);
+    for (let i = 0; i < 6; i++) { const mm = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.03, 2), new THREE.MeshStandardMaterial({ color: cols[i % 4], roughness: 0.9 })); const o = (i - 2.5) * 1.3; mm.position.set(x + Math.cos(a) * o, 0.05, z - Math.sin(a) * o); mm.rotation.y = a; mats.add(mm); } }
+
   // ---------- Menschen ----------
   const N = mobile ? 90 : 150, crowd = createCrowd(world, N, { ihram: false, men: 0.55 });
   const zones = [PZ, { ...blvd, z1: RZ - 1 }, square];
@@ -230,30 +253,70 @@ export function create(ctx, { from, where = 'mecca' } = {}) {
     walkable(rects),
     { type: 'box', x: L.dates[0], z: L.dates[1], hw: 0.9, hd: 2 }, { type: 'box', x: L.zamzam[0], z: L.zamzam[1], hw: 2, hd: 0.9 },
     { type: 'circle', x: BXb + 0.3, z: BZb - 0.9, r: 1.2 }, coach.collider,
-    ...umbrellaPoles.map(([x, z]) => ({ type: 'circle', x, z, r: 0.5 })),
+    ...umbrellaPoles.map(([x, z]) => ({ type: 'circle', x, z, r: 0.5 })), ...mosqueCols,
     ...(medina ? [-150, 0, 150].map((x) => ({ type: 'circle', x, z: 110, r: 5 })) : []), // Minarette an der Südseite der Nabawi
   ];
-  const start = from === 'bauhof' ? { x: L.bauhof[0], z: L.bauhof[1] + 4, h: Math.PI } : from === 'balloon' ? { x: BXb + 4, z: BZb + 8, h: Math.PI } : from === 'bus' ? { x: BUx - 2, z: BUz + 5, h: Math.PI } : { x: bx + 22, z: PZ.z1 - 14, h: Math.PI };
+  const start = from === 'haram' || from === 'nabawi' ? { x: L.gate[0], z: L.gate[1] + 7, h: 0 } : from === 'bauhof' ? { x: L.bauhof[0], z: L.bauhof[1] + 4, h: Math.PI } : from === 'balloon' ? { x: BXb + 4, z: BZb + 8, h: Math.PI } : from === 'bus' ? { x: BUx - 2, z: BUz + 5, h: Math.PI } : { x: bx + 22, z: PZ.z1 - 14, h: Math.PI };
   const player = createPlayer(ctx, { x: start.x, z: start.z, heading: start.h, color: ctx.profile?.gender === 'f' ? 0x2c3a4a : 0x34506a, speed: 2.2, fastSpeed: 4, colliders, surface: 'stone' });
   const life = createLife(ctx, { kind: 'haram' });
   const interact = createInteract(ctx, player);
   for (const sp of SPOTS) interact.add(sp);
   ctx.interact = interact; // für Tests
+  // Beten: Spieluhr, Adhan, Moscheen und Gebetsteppiche leuchten zur Gebetszeit
+  const qibla = (x, z) => (medina ? { x: x - 170, z: z + 1000 } : { x: 0, z: 0 }); // Mekka: zur Kaaba; Medina: Richtung Mekka (Süd-Südwest)
+  const prayer = createPrayer(ctx, { city: where, player, qibla });
+  prayer.interact = interact;
+  for (const m of L.mosques) interact.add(prayer.spot({ obj: m.obj, x: m.spot[0], z: m.spot[1], key: 'pray-' + m.name, radius: 14 }));
+  interact.add(prayer.spot({ obj: mats, x: L.mats[0], z: L.mats[1], key: 'pray-mats', radius: 8, near: 3.5 }));
+  prayer.update(0);
+  // Gemeinschaftsgebet: Menschen stellen sich in Reihen auf (Mekka: Bögen um die Kaaba auf dem Platz), in Medina gehen sie zur Moschee
+  const slots = [];
+  if (!medina) { for (let r = 212; r < 258 && slots.length < N; r += 1.4) for (let a = -Math.PI / 2 - 0.5; a < -Math.PI / 2 + 0.5; a += 0.9 / r) { const sx = Math.cos(a) * r, sz = -Math.sin(a) * r; if (sx > PZ.x0 + 3 && sx < PZ.x1 - 3 && sz > PZ.z0 + 4 && sz < PZ.z1 - 3) slots.push({ x: sx, z: sz }); } }
+  let wasJamaah = false; // auch wer mitten in die Gebetszeit kommt, sieht die Reihen
+  function gather() {
+    const left = 23; // Sekunden (≈ 15 Spielminuten)
+    const list = agents.list.map((a, i) => ({ a, i })).filter(({ a }) => (medina ? a.z < RZ : a.z < RZ)).slice(0, Math.floor(N * 0.75));
+    list.forEach(({ a }, k) => {
+      let p;
+      if (!medina && slots[k]) { const sl = slots[k]; p = { x: sl.x, z: sl.z, wait: left, act: 'pray', face: Math.atan2(-sl.x, -sl.z) }; }
+      else p = { x: L.gate[0] + rr(-25, 25), z: L.gate[1] + rr(2, 8), wait: left, act: 'stand', face: Math.PI };
+      const from = { x: a.x, z: a.z };
+      a.pts = [...via(from, p), p, ...via(p, inZone(zones[1])), inZone(zones[1])]; a.k = 0; a.wait = 0; a.act = null;
+    });
+  }
+  // Karte
+  const poiIcon = { dates: '🌴', zamzam: '💧', pigeons: '🕊️', balloon: '🎈', bus: '🚌', bauhof: '🧱', 'info-main': '📜', 'info-clock': '📜', gate: medina ? '🕌' : '🕋' };
+  const poiName = { dates: 'Datteln', zamzam: 'Zamzam', pigeons: 'Tauben', balloon: 'Ballon', bus: medina ? 'Bus nach Mekka' : 'Bus nach Medina', bauhof: 'Sandstein-Bauhof', 'info-main': 'Infotafel', 'info-clock': 'Uhrturm', gate: medina ? 'Prophetenmoschee' : 'Haram (Kaaba)' };
+  const map = showMinimap(ctx, {
+    title: medina ? 'Karte · Medina' : 'Karte · Mekka', city: where, bounds: L.bounds,
+    areas: [...rects, ...(medina ? [{ x0: -230, x1: 230, z0: -190, z1: 190 }] : [])],
+    roads: [{ x0: -420, x1: 420, z0: RZ, z1: RZ + 20 }],
+    blocks: [...towers.footprints, ...mosqueFoot],
+    shapes: medina ? [{ t: 'rect', x0: -150, x1: 150, z0: -110, z1: 110, c: '#efe8da', label: 'Masjid an-Nabawi' }, { t: 'circle', x: -20, z: 80, r: 9, c: '#2f8a4e' }]
+      : [{ t: 'circle', x: 0, z: 0, r: 200, c: '#ece8e0', label: 'Masjid al-Haram' }, { t: 'rect', x0: -6, x1: 6, z0: -5.25, z1: 5.25, c: '#111' }, { t: 'rect', x0: -40, x1: 170, z0: 263, z1: 413, c: '#d8ccb2', label: 'Abraj al-Bait' }],
+    pois: [...SPOTS.filter((sp) => poiIcon[sp.key]).map((sp) => ({ x: sp.x, z: sp.z, icon: poiIcon[sp.key], label: poiName[sp.key] })),
+      ...L.mosques.map((m) => ({ x: m.spot[0], z: m.spot[1], icon: '🕌', label: m.name })), { x: L.mats[0], z: L.mats[1], icon: '🧎', label: 'Gebetsplatz' }],
+  });
 
   ui.el.panel.classList.remove('collapsed');
-  ui.info(`<p>${medina ? T.introMedina : T.intro}</p>`);
+  ui.info(`<p>${medina ? T.introMedina : T.intro}</p><p class="small">🗺️ Karte oben rechts antippen. ${U.note}</p>`);
   ui.actions([{ label: T.cert, onClick: () => ctx.backToEnding?.() }]);
 
   return {
     update(dt) {
+      prayer.update(dt);
       player.update(dt);
-      for (const m of glowLamps) m.emissiveIntensity = 0.4;
+      const night = clock.night; cityNight.value = night;
+      for (const m of glowLamps) m.emissiveIntensity = 0.4 + night * 2.2;
+      for (const m of glowMosque) m.emissiveIntensity = night * 1.6;
+      const jm = !!prayer.jamaah; if (jm && !wasJamaah) gather(); wasJamaah = jm;
       for (const m of glow) m.emissiveIntensity = sky.art * 0.55;
       agents.update(dt, viewLine(ctx));
       traffic.update(dt);
-      clock?.update();
+      abraj?.update(night);
       life.update(dt);
       interact.update(dt); // Randleuchten + Aktionsknopf in der Nähe
+      map.update();
       // Tauben: picken, weichen dem Spieler aus, kommen beim Füttern zusammen
       feed = Math.max(0, feed - dt);
       const px = player.pos.x, pz = player.pos.z;
@@ -270,6 +333,6 @@ export function create(ctx, { from, where = 'mecca' } = {}) {
       }
       pigeons.instanceMatrix.needsUpdate = true;
     },
-    dispose() { interact.dispose(); ui.prompt(null); ui.goal(null); },
+    dispose() { prayer.dispose(); map.dispose(); interact.dispose(); cityNight.value = 0; ui.prompt(null); ui.goal(null); },
   };
 }

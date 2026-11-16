@@ -52,3 +52,62 @@ export const CITY = {
   taxi: '🚕 Taxi-Stand',
   crossInfo: 'Rot heißt warten – die Autos halten aber auch so für Fußgänger an.',
 };
+
+// Gebetszeiten im Spiel: ungefähre Durchschnittszeiten (Umm-al-Qura-Kalender), echte Zeiten ändern sich mit der Jahreszeit.
+// iqama: Minuten zwischen Adhan und Gemeinschaftsgebet (wie in der Haram üblich, gerundet). rakat: Pflichtgebet (Fard).
+export const PRAYERS = {
+  mecca: [
+    { id: 'fajr', name: 'Fajr', ar: 'الفجر', t: 5 * 60 + 15, iqama: 25, rakat: 2 },
+    { id: 'dhuhr', name: 'Dhuhr', ar: 'الظهر', t: 12 * 60 + 20, iqama: 20, rakat: 4 },
+    { id: 'asr', name: 'Asr', ar: 'العصر', t: 15 * 60 + 40, iqama: 20, rakat: 4 },
+    { id: 'maghrib', name: 'Maghrib', ar: 'المغرب', t: 18 * 60 + 5, iqama: 10, rakat: 3 },
+    { id: 'isha', name: 'Isha', ar: 'العشاء', t: 19 * 60 + 35, iqama: 20, rakat: 4 },
+  ],
+  medina: [
+    { id: 'fajr', name: 'Fajr', ar: 'الفجر', t: 5 * 60 + 20, iqama: 25, rakat: 2 },
+    { id: 'dhuhr', name: 'Dhuhr', ar: 'الظهر', t: 12 * 60 + 25, iqama: 20, rakat: 4 },
+    { id: 'asr', name: 'Asr', ar: 'العصر', t: 15 * 60 + 45, iqama: 20, rakat: 4 },
+    { id: 'maghrib', name: 'Maghrib', ar: 'المغرب', t: 18 * 60 + 10, iqama: 10, rakat: 3 },
+    { id: 'isha', name: 'Isha', ar: 'العشاء', t: 19 * 60 + 40, iqama: 20, rakat: 4 },
+  ],
+};
+
+// Wortlaut des Adhan (Gebetsruf). Quelle: Sunan Abi Dawud 499 (Hadith von Abdullah ibn Zaid); der Zusatz beim Fajr: Sunan Abi Dawud 500.
+export const ADHAN = {
+  lines: [
+    ['اللّٰهُ أَكْبَرُ، اللّٰهُ أَكْبَرُ', 'Allāhu akbar, Allāhu akbar (2×)', 'Allah ist größer (als alles).'],
+    ['أَشْهَدُ أَنْ لَا إِلٰهَ إِلَّا اللّٰهُ', 'Aschhadu an lā ilāha illa-llāh (2×)', 'Ich bezeuge, dass es keinen Gott gibt außer Allah.'],
+    ['أَشْهَدُ أَنَّ مُحَمَّدًا رَسُولُ اللّٰهِ', 'Aschhadu anna Muhammadan rasūlu-llāh (2×)', 'Ich bezeuge, dass Muhammad der Gesandte Allahs ist.'],
+    ['حَيَّ عَلَى الصَّلَاةِ', 'Hayya ʿala-s-salāh (2×)', 'Kommt zum Gebet.'],
+    ['حَيَّ عَلَى الْفَلَاحِ', 'Hayya ʿala-l-falāh (2×)', 'Kommt zum Erfolg.'],
+    ['الصَّلَاةُ خَيْرٌ مِنَ النَّوْمِ', 'As-salātu chairun mina-n-naum (2×, nur beim Fajr)', 'Das Gebet ist besser als der Schlaf.', 'fajr'],
+    ['اللّٰهُ أَكْبَرُ، اللّٰهُ أَكْبَرُ', 'Allāhu akbar, Allāhu akbar', 'Allah ist größer.'],
+    ['لَا إِلٰهَ إِلَّا اللّٰهُ', 'Lā ilāha illa-llāh', 'Es gibt keinen Gott außer Allah.'],
+  ],
+  source: 'Wortlaut nach Sunan Abi Dawud 499 und 500. (Beim ersten „Allāhu akbar“ sagen viele Rechtsschulen es 4×.)',
+};
+
+export const PRAYER_UI = {
+  adhanToast: (p) => `🕌 Adhan – Zeit für ${p.name}`,
+  adhanHead: (p) => `Es ist Zeit für das ${p.name}-Gebet`,
+  iqama: (p) => `${p.name}: Das Gemeinschaftsgebet beginnt`,
+  pray: (p) => `🕌 ${p.name} beten (${p.rakat} Rak'at)`,
+  prayed: (p) => `${p.name} gebetet – möge Allah es annehmen.`,
+  hold: 'Halten: beten',
+  none: 'Gerade ist keine Gebetszeit – das nächste Gebet kommt bald.',
+  enterHaram: '🕋 In die Haram gehen (zur Kaaba)',
+  enterNabawi: '🕌 In die Prophetenmoschee gehen',
+  leaveHaram: 'Hinaus auf den Platz',
+  leaveNabawi: 'Hinaus auf den Vorplatz',
+  mosque: (n) => `🕌 ${n}`,
+  mosqueNames: ['Moschee am Südplatz', 'Moschee an der Straße'],
+  note: 'Gebetszeiten im Spiel sind ungefähre Durchschnittswerte – die echten Zeiten ändern sich mit der Jahreszeit. Zum Beten in die nächste Moschee gehen (leuchtet), in die Haram oder in die Prophetenmoschee.',
+  haramTitle: 'In der Masjid al-Haram', nabawiTitle: 'In der Masjid an-Nabawi',
+  haramIntro: 'Du bist in der Masjid al-Haram bei der Kaaba. Hier kannst du beten (Knopf oben) und – wenn du möchtest – einen freiwilligen Tawaf gehen: 7 Runden, die Kaaba immer links. Zur Gebetszeit stellen sich alle in Kreisen um die Kaaba auf.',
+  nabawiIntro: 'Du bist in der Masjid an-Nabawi, der Moschee des Propheten ﷺ. Vorne (Süden) ist die Qibla-Wand mit der Gebetsnische. Der Bereich mit dem grünen Teppich ist die Rawda.',
+  rawdaDo: '📜 Über die Rawda',
+  rawda: '<b>Die Rawda</b> liegt zwischen dem früheren Haus des Propheten ﷺ und seiner Kanzel (Minbar). Er sagte: „Was zwischen meinem Haus und meiner Kanzel liegt, ist ein Garten von den Gärten des Paradieses.“ (Sahih al-Bukhari 1196, Sahih Muslim 1391)',
+  tawafLap: (n) => `Tawaf: Runde ${n} von 7`,
+  tawafDone: 'Tawaf vollendet – 7 Runden. Möge Allah es annehmen.',
+  times: 'Gebetszeiten heute',
+};

@@ -343,3 +343,31 @@ body:has(#start:not([hidden])) #panel, body:has(#start:not([hidden])) #goal { di
 #buildbar .mode { padding: 10px 16px; }
 #buildbar.removing .mode { background: #e6c46e; color: #14251f; }
 #buildbar.removing .mat { opacity: .45; }
+
+/* Karte (Lebensspiel): runder Kreis oben rechts unter dem Menüknopf, große Karte als Fenster */
+#minimap { position: fixed; z-index: 8; top: calc(env(safe-area-inset-top, 0px) + 66px); right: var(--sr); width: 96px; height: 96px; padding: 0; border-radius: 50%; border: 2.5px solid #e6c46e; background: #e8dbbd; box-shadow: 0 3px 14px rgba(0,0,0,.35); overflow: visible; }
+#minimap canvas { width: 100%; height: 100%; border-radius: 50%; display: block; }
+#minimap .mm-time { position: absolute; left: 50%; bottom: -9px; transform: translateX(-50%); white-space: nowrap; font: 600 11px Figtree, system-ui, sans-serif; color: #f5efe0; background: rgba(20,37,31,.88); border: 1px solid #e6c46e; border-radius: 999px; padding: 2px 8px; }
+#minimap[hidden] { display: none; }
+@media (max-width: 700px) {
+  #minimap { width: 82px; height: 82px; }
+  body:has(#panel:not(.collapsed):not(.empty)) #minimap { display: none; } /* aufgeklappte Infokarte geht vor */
+}
+#mapPop { position: fixed; inset: 0; z-index: 30; display: grid; place-items: center; padding: 12px var(--sr) 12px var(--sl); background: rgba(8,16,26,.6); }
+#mapPop[hidden] { display: none; }
+#mapPop .mp-card { width: 100%; max-width: 760px; max-height: 94vh; overflow-y: auto; background: var(--ivory); border: 1px solid var(--gold); border-radius: 16px; padding: 12px; box-shadow: 0 10px 40px rgba(0,0,0,.45); }
+#mapPop .mp-head { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; font: 18px/1.2 var(--f-display); }
+#mapPop .mp-now { margin-left: auto; font: 600 14px Figtree, system-ui; color: #1d5642; }
+#mapPop .mp-close { width: 36px; height: 36px; border-radius: 50%; padding: 0; font-size: 16px; }
+#mapPop .mp-canvas { width: 100%; height: min(62vh, 520px); border-radius: 12px; background: #e8dbbd; display: block; touch-action: manipulation; }
+#mapPop .mp-target { margin: 8px 0 0; font-size: 14px; }
+#mapPop .mp-target button { margin-left: 6px; padding: 4px 10px; font-size: 13px; }
+#mapPop .mp-places { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0; }
+#mapPop .mp-places button { padding: 6px 10px; font-size: 13px; border-radius: 999px; }
+#mapPop .mp-pt { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0; }
+#mapPop .mp-pt span { padding: 4px 10px; border-radius: 999px; background: rgba(47,107,85,.12); font-size: 13px; }
+#mapPop .mp-pt span.now { background: #e6c46e; color: #14251f; font-weight: 600; }
+#mapPop .mp-wrap { position: relative; }
+#mapPop .mp-canvas { touch-action: none; cursor: grab; }
+#mapPop .mp-zoom { position: absolute; right: 8px; top: 8px; display: flex; flex-direction: column; gap: 6px; }
+#mapPop .mp-zoom button { width: 40px; height: 40px; padding: 0; border-radius: 50%; font-size: 20px; background: rgba(250,246,236,.95); box-shadow: 0 2px 8px rgba(0,0,0,.25); }
