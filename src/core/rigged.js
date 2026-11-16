@@ -29,8 +29,8 @@ const DEF = {
     ['rot', 'Hip', X, 78], ['aim', 'L_Thigh', 'L_Calf', V(0.04, -1, -0.04)], ['aim', 'L_Calf', 'L_Foot', V(0, -1, -0.02)], ['aim', 'L_Foot', 'L_ToeBase', V(0, -0.3, 1)],
     ['aim', 'R_Thigh', 'R_Calf', V(-0.04, -1, -0.04)], ['aim', 'R_Calf', 'R_Foot', V(0, -1, -0.02)], ['aim', 'R_Foot', 'R_ToeBase', V(0, -0.3, 1)],
     ['rot', 'Spine01', X, 6], ['rot', 'Head', X, -10],
-    ['aim', 'L_Upperarm', 'L_Forearm', V(0.1, -0.9, 0.45)], ['aim', 'L_Forearm', 'L_Hand', V(0.03, -0.97, 0.25)],
-    ['aim', 'R_Upperarm', 'R_Forearm', V(-0.1, -0.9, 0.45)], ['aim', 'R_Forearm', 'R_Hand', V(-0.03, -0.97, 0.25)],
+    ['aim', 'L_Upperarm', 'L_Forearm', V(0.12, -1, -0.02)], ['aim', 'L_Forearm', 'L_Hand', V(0.04, -1, -0.12)],
+    ['aim', 'R_Upperarm', 'R_Forearm', V(-0.12, -1, -0.02)], ['aim', 'R_Forearm', 'R_Hand', V(-0.04, -1, -0.12)],
   ],
   sujud: [ // Knie, Hände und Stirn am Boden, Hüfte hoch
     ['rot', 'Hip', X, 128],
@@ -49,8 +49,8 @@ const DEF = {
   ],
   dua: [ // Hände vor der Brust erhoben
     ['rot', 'Head', X, 8],
-    ['aim', 'L_Upperarm', 'L_Forearm', V(0.28, -0.75, 0.6)], ['aim', 'L_Forearm', 'L_Hand', V(-0.05, 0.45, 0.9)],
-    ['aim', 'R_Upperarm', 'R_Forearm', V(-0.28, -0.75, 0.6)], ['aim', 'R_Forearm', 'R_Hand', V(0.05, 0.45, 0.9)],
+    ['aim', 'L_Upperarm', 'L_Forearm', V(0.18, -0.95, 0.22)], ['aim', 'L_Forearm', 'L_Hand', V(0.05, 0.5, 0.86)],
+    ['aim', 'R_Upperarm', 'R_Forearm', V(-0.18, -0.95, 0.22)], ['aim', 'R_Forearm', 'R_Hand', V(-0.05, 0.5, 0.86)],
   ],
   istilam: [ // rechte Hand zum Schwarzen Stein erhoben
     ...ARMS_DOWN(),
