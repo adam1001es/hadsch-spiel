@@ -95,13 +95,13 @@ export function createFigure(world, { color = 0xf3f1ea, skin = 0xc68642, ring = 
   if (models) { if (covered) buildVariant('woman', models.woman); else { buildVariant('ihram', models.man); buildVariant('kameez', models.kameez); } }
   const procedural = () => [lowerDress, lowerIzar, upper, torso, rida, ridaIdt, head, hair, khimar, face];
   // Hauptfigur mit Skelett (Jungen/Männer in Alltagskleidung; Ihram-Versionen folgen)
-  const rigs = !covered && models && rigged ? { casual: createRiggedFigure(body, 'casual'), ihramOpen: createRiggedFigure(body, 'ihramOpen') } : {};
+  const rigs = !covered && models && rigged ? { casual: createRiggedFigure(body, 'casual'), ihram: createRiggedFigure(body, 'ihram'), ihramOpen: createRiggedFigure(body, 'ihramOpen') } : {};
   let rig = null, rigOn = false;
   let armGroups = [];
   function outfit() {
     const ih = isIhram();
-    // passende Kleidung der Hauptfigur: Alltag / Ihram mit freier Schulter (Ihram bedeckt folgt – bis dahin die bisherige Figur)
-    rig = !ih ? rigs.casual : idtiba ? rigs.ihramOpen : null;
+    // passende Kleidung der Hauptfigur: Alltag / Ihram (bedeckt) / Ihram mit freier rechter Schulter (Idtiba')
+    rig = !ih ? rigs.casual : idtiba ? rigs.ihramOpen : rigs.ihram;
     rigOn = !!rig;
     for (const r of Object.values(rigs)) if (r) r.holder.visible = r === rig;
     const want = rigOn ? 'rig' : covered ? 'woman' : ih ? 'ihram' : 'kameez';

@@ -73,8 +73,8 @@ const DEF = {
   ],
 };
 
-// Kleidungen der Hauptfigur (gleiches Skelett): Alltag, Ihram mit freier rechter Schulter (Idtiba'), später Ihram bedeckt
-const FILES = { casual: 'player_m.glb', ihramOpen: 'player_m_ihram_open.glb' };
+// Kleidungen der Hauptfigur (gleiches Skelett): Alltag, Ihram (beide Schultern bedeckt), Ihram mit freier rechter Schulter (Idtiba')
+const FILES = { casual: 'player_m.glb', ihram: 'player_m_ihram.glb', ihramOpen: 'player_m_ihram_open.glb' };
 const RIGS = {};
 export const rigModel = (k = 'casual') => RIGS[k] || null;
 export const hasRig = (k) => !!RIGS[k];
