@@ -65,7 +65,7 @@ export function createSky(engine) {
   const hemi = new THREE.HemisphereLight(0xcfe0f2, 0x8c7656, 0.8);
   const sun = new THREE.DirectionalLight(0xffffff, 2);
   sun.castShadow = true;
-  sun.shadow.mapSize.set(2048, 2048);
+  sun.shadow.mapSize.set(engine.perf?.low ? 1024 : engine.perf?.mobile ? 1536 : 2048, engine.perf?.low ? 1024 : engine.perf?.mobile ? 1536 : 2048);
   sun.shadow.bias = -0.0004;
   sun.shadow.normalBias = 0.03;
   scene.add(hemi, sun, sun.target);

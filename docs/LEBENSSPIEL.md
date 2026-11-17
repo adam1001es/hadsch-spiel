@@ -245,3 +245,8 @@ Spielstand (Geld, Hasanat, Besitz, Position) in `localStorage` (`hp-life`), mit 
 - `ctx.city`, `ctx.balloon`, `ctx.bauhof`, `ctx.roadtrip` sind gekapselt (prüfen `unlockStore.cityAllowed()`). Neue Einstiege bitte über diese Funktionen.
 - Überraschung **„In der Kaaba“** (`ctx.reward`) gibt es nur **einmal**, nach dem ersten erfolgreichen Hadsch (nicht mehr im Startmenü, kein `#kaaba`-Link).
   Zum Testen: `localStorage.setItem('hp-unlock', JSON.stringify({hajj:true, kaabaPending:true}))`.
+
+## Leistung / Akku (src/core/perf.js)
+- `engine.perf.low` = Sparmodus (schwaches Gerät, Einstellung „Akku sparen“ oder dauerhaft < 22 FPS): 30 FPS, Auflösung 1, kein Antialiasing,
+  Schattenkarte 1024. `engine.isMobile` ist im Sparmodus ebenfalls `true` → neue Bereiche bitte Mengen/Details daran ausrichten.
+- Handy allgemein: Auflösung max. 1,5, harte Schatten (PCF), max. 60 FPS.

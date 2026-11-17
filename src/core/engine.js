@@ -1,11 +1,14 @@
 import * as THREE from 'three';
 import { initAssets } from '../world/assets.js';
+import { perf } from './perf.js';
 
 // Renderer, Kamera, Szene. Alles Stationsspezifische kommt in `world` und wird beim Wechsel entsorgt.
 export function createEngine(canvas) {
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
-  // Auflösung: so scharf wie das Display (max. 2). Sinkt die Bildrate, wird sie stufenweise reduziert.
-  const maxRatio = Math.min(window.devicePixelRatio || 1, 2);
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: !perf.low, powerPreference: perf.low ? 'default' : 'high-performance' });
+  // Auflösung: am Laptop so scharf wie das Display (max. 2), am Handy max. 1,5 (kaum sichtbar, aber viel weniger Wärme),
+  // im Sparmodus 1. Sinkt die Bildrate, wird sie stufenweise reduziert.
+  const dpr = window.devicePixelRatio || 1;
+  let maxRatio = perf.low ? 1 : perf.mobile && perf.mode !== 'nice' ? Math.min(dpr, 1.5) : Math.min(dpr, 2);
   let ratio = maxRatio;
   renderer.setPixelRatio(ratio);
   initAssets(renderer);
@@ -13,7 +16,7 @@ export function createEngine(canvas) {
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 0.6;
   renderer.shadowMap.enabled = true;
-  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.shadowMap.type = perf.mobile || perf.low ? THREE.PCFShadowMap : THREE.PCFSoftShadowMap; // weiche Schatten nur am Laptop
 
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(62, 1, 0.1, 5000);
@@ -50,7 +53,7 @@ export function createEngine(canvas) {
   }
 
   // Bildrate messen: unter ~26 FPS Auflösung senken, über ~55 FPS wieder anheben.
-  let acc = 0, frames = 0;
+  let acc = 0, frames = 0, slow = 0;
   function adapt(dt) {
     if (dt > 0.25) return; // Tab war im Hintergrund o. Ä.
     acc += dt; frames++;
@@ -60,13 +63,19 @@ export function createEngine(canvas) {
     if (fps < 26 && ratio > 1) next = Math.max(1, ratio - 0.25);
     else if (fps > 55 && ratio < maxRatio) next = Math.min(maxRatio, ratio + 0.25);
     if (next !== ratio) { ratio = next; renderer.setPixelRatio(ratio); resize(); }
+    // schon niedrigste Auflösung und trotzdem dauerhaft ruckelig → automatisch in den Sparmodus
+    slow = fps < 22 && ratio <= 1 ? slow + 1 : 0;
+    if (slow >= 4 && perf.goLow()) { maxRatio = 1; api.onLow?.(); }
   }
 
-  return {
+  const api = {
     setViewShift(fn) { shiftOverride = fn; resize(); }, // fn(w, h) → Anteil (positiv = Bild nach unten), null = Standard
     THREE, adapt, renderer, scene, camera,
     get world() { return world; },
     clearWorld,
-    isMobile: Math.min(window.innerWidth, window.innerHeight) < 700,
+    isMobile: Math.min(window.innerWidth, window.innerHeight) < 700 || perf.low, // weniger Menschen/Details auch im Sparmodus
+    perf,
+    onLow: null,
   };
+  return api;
 }

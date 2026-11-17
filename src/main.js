@@ -30,8 +30,12 @@ const multi = createMulti(ctx); ctx.multi = multi;
 
 let current = preview(ctx);
 const clock = new THREE.Clock();
+let frameAcc = 0;
 engine.renderer.setAnimationLoop(() => {
-  const raw = clock.getDelta();
+  // Bildrate begrenzen (60, im Sparmodus 30): Handy bleibt kühler, Akku hält länger
+  frameAcc += clock.getDelta();
+  if (frameAcc < 1 / engine.perf.fpsCap - 0.004) return;
+  const raw = frameAcc; frameAcc = 0;
   const dt = Math.min(raw, 0.05);
   engine.adapt(raw);
   sky.update(dt);
@@ -150,6 +154,15 @@ soundBtn.setAttribute('aria-pressed', String(settings.voice));
 soundBtn.addEventListener('click', () => { const on = !settings.voice; setSound(on); if (on) speak('So klingt die Stimme.'); ui.toast(on ? 'Ton an' : 'Ton aus', 1200); });
 setVoice.addEventListener('change', () => { setSound(setVoice.checked); if (settings.voice) speak('So klingt die Stimme.'); });
 setRecite.addEventListener('change', () => { settings.recite = setRecite.checked; saveSettings(); });
+// Grafik: Akku sparen / Automatisch / Schön – wirkt nach dem Neuladen
+{
+  const gBtns = [...document.querySelectorAll('#setGfx button')];
+  const cur = ['save', 'nice'].includes(settings.gfx) ? settings.gfx : 'auto';
+  gBtns.forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.g === cur)));
+  gBtns.forEach((b) => b.addEventListener('click', () => { if (b.dataset.g === cur) return; settings.gfx = b.dataset.g; saveSettings(); engine.perf.resetAuto(); ui.toast('Grafik wird umgestellt …', 1200); setTimeout(() => location.reload(), 700); }));
+  const note = document.getElementById('setGfxNote'); if (note) note.textContent = engine.perf.low ? 'Gerade aktiv: Akku sparen (30 Bilder/s, weniger Details).' : 'Gerade aktiv: volle Grafik.';
+}
+engine.onLow = () => ui.toast('Dein Gerät ist ausgelastet – Akku-Sparmodus ist jetzt an (änderbar in den Einstellungen).', 4200);
 const rateBtns = [...document.querySelectorAll('#setRate button')];
 const markRate = () => rateBtns.forEach((b) => b.setAttribute('aria-pressed', String(Math.abs(+b.dataset.r - settings.rate) < 0.01)));
 rateBtns.forEach((b) => b.addEventListener('click', () => { settings.rate = +b.dataset.r; saveSettings(); markRate(); speak('So klingt die Stimme.'); }));
