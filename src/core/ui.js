@@ -1,6 +1,15 @@
 import { TEXT, TALBIYAH, RABBANA, SAFA_AYAH, ARAFAT_DHIKR, ENDING } from '../content/hajj.js';
 import { speak, hasAudio, playAudio, settings } from './i18n.js';
 
+// Symbole für kleine runde Knöpfe (z. B. beim Fahren): klar, ohne Text
+const svg = (d) => `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
+const ICONS = {
+  auto: svg('<path d="M12 3l7 17-7-3.6L5 20z" fill="currentColor" fill-opacity=".25"/>'),                      // Navigationspfeil: automatisch fahren
+  self: svg('<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2"/><path d="M3.5 10.5l6.6 1M20.5 10.5l-6.6 1M12 14v7"/>'), // Lenkrad: selbst fahren
+  exit: svg('<path d="M13 4H6v16h7"/><path d="M10 12h11M17.5 8.5L21 12l-3.5 3.5"/>'),                              // Tür mit Pfeil: aussteigen
+  give: svg('<circle cx="7.5" cy="14.5" r="3.5"/><path d="M11 14.5h10M18 14.5v3M15 14.5v2"/><path d="M19 8.5A7 7 0 0 0 7 6"/><path d="M7 3v3h3"/>'), // Schlüssel zurück
+};
+
 // Aufnahmen zu den arabischen Texten (public/assets/audio/<name>.mp3; ohne Datei kein Abspielknopf)
 const AUDIO = new Map([[TALBIYAH, 'talbiyah'], [RABBANA, 'rabbana'], [SAFA_AYAH, 'safa'], [ARAFAT_DHIKR, 'arafat_dhikr'], [ENDING, 'ending']]);
 const later = (fn) => setTimeout(fn, 40); // nach der Übersetzung (MutationObserver)
@@ -101,8 +110,13 @@ export function createUI() {
       for (const it of items) {
         const b = document.createElement('button');
         b.type = 'button';
-        b.textContent = it.label;
-        if (it.kind) b.className = it.kind;
+        if (it.icon && ICONS[it.icon]) { // kleiner runder Symbol-Knopf ohne Text (Name als Tooltip/Vorlesen)
+          b.innerHTML = ICONS[it.icon]; b.setAttribute('aria-label', it.label.replace(/^\P{L}+/u, '')); b.title = b.getAttribute('aria-label');
+          b.className = 'ico' + (it.kind ? ' ' + it.kind : '');
+        } else {
+          b.textContent = it.label;
+          if (it.kind) b.className = it.kind;
+        }
         b.addEventListener('click', it.onClick);
         el.actions.appendChild(b);
       }

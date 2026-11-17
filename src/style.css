@@ -481,3 +481,8 @@ body.driving #counter { visibility: hidden; }
 /* Helikopter: Hoch/Runter immer rechts, auch wenn „Lenken mit rechtem Daumen“ gewählt ist (links liegt der Joystick) */
 #driveCtl.air.swap .dc-r { left: auto; right: var(--sr); align-items: flex-end; }
 #driveCtl.air.swap .dc-l { right: auto; left: var(--sl); align-items: flex-start; }
+
+/* Kleine runde Symbol-Knöpfe in der Knopfzeile (Fahren: automatisch/selbst, aussteigen, zurückgeben) */
+#panel #actions button.ico { flex: none; width: 40px; height: 40px; padding: 0; border-radius: 50%; display: inline-grid; place-items: center; color: #1d5642; background: var(--panel); border: 1.5px solid rgba(169,124,44,.75); box-shadow: 0 2px 10px rgba(0,0,0,.3); }
+#panel #actions button.ico.primary { color: #f5efe0; background: var(--green); border-color: #e6c46e; }
+#panel #actions button.ico svg { display: block; }
