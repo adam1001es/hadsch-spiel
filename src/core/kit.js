@@ -162,7 +162,7 @@ export function duaFacing(ctx, flow, { label = 'Halten: Dua', sec = 6, tx, tz, t
       const a = angleTo(player, tx, tz);
       ui.goal(Math.abs(a) < 0.3 ? 'Qibla ✓' : text, -a);
       if (input.holding) {
-        input.yaw -= a * Math.min(1, dt * 4); // Kamera und Figur drehen sich weich zur Qibla
+        input.yaw += a * Math.min(1, dt * 4); // Kamera und Figur drehen sich weich zur Qibla (Vorzeichen: viewYaw → Ziel)
         t += dt; player.freeze(true); player.heading = player.viewYaw; player.fig.pose('dua'); onTick?.(t / sec, dt);
         if (t >= sec) { done = true; ui.hold(null); player.freeze(false); player.fig.pose('stand'); ui.goal(null); ui.holdPct(null); return; }
       } else {
