@@ -28,9 +28,16 @@ function unlock() {
   try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch { /* egal */ }
   const c = ctx(); if (!c) return;
   try { const b = c.createBuffer(1, 1, 22050), src = c.createBufferSource(); src.buffer = b; src.connect(c.destination); src.start(0); } catch { /* egal */ }
-  if (!keepAlive) { try { keepAlive = new Audio(SILENT); keepAlive.loop = true; keepAlive.setAttribute('playsinline', ''); keepAlive.volume = 0.01; keepAlive.play().catch(() => { keepAlive = null; }); } catch { keepAlive = null; } }
+  // Endlos-<audio> nur noch für alte iPhones ohne audioSession (vor iOS 17): sonst erscheint ständig der Musik-Player
+  // auf dem Sperrbildschirm und eigene Musik wird unterbrochen
+  if (!keepAlive && !navigator.audioSession) { try { keepAlive = new Audio(SILENT); keepAlive.loop = true; keepAlive.setAttribute('playsinline', ''); keepAlive.volume = 0.01; keepAlive.play().catch(() => { keepAlive = null; }); } catch { keepAlive = null; } }
   if (c.state === 'running') for (const ev of EVENTS) removeEventListener(ev, unlock, true);
 }
+// Spiel im Hintergrund / Handy gesperrt: Ton ganz anhalten (spart Akku, kein „läuft noch“ auf dem Sperrbildschirm)
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) { keepAlive?.pause(); if (ac && ac.state === 'running') ac.suspend().catch(() => {}); }
+  else { if (ac) ac.resume().catch(() => {}); keepAlive?.play().catch(() => {}); }
+});
 const EVENTS = ['pointerdown', 'pointerup', 'touchend', 'click', 'keydown'];
 for (const ev of EVENTS) addEventListener(ev, unlock, true);
 export const unlockSfx = () => unlock();
