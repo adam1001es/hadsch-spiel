@@ -62,10 +62,17 @@ export function create(ctx, st) {
 
   // Pilger: viele sitzend, einige stehend in Dua
   const N = engine.isMobile ? 700 : 1300;
-  const crowd = createCrowd(world, N, { ihram: true });
+  // Lagerplätze getrennt: Streifen von 24 m, jeder dritte für Frauen; zwischen den Streifen 3 m frei (≈ 3–4 Personen)
+  const CELL = 24, womenCell = (x) => (((Math.floor(x / CELL) % 3) + 3) % 3) === 1;
+  const PX = new Float32Array(N), PZ = new Float32Array(N), F = new Uint8Array(N);
+  for (let i = 0; i < N; i++) {
+    let x, z; do { x = (Math.random() - 0.5) * 380; z = -170 + Math.random() * 260; } while (Math.abs(x) < 5 || Math.hypot(x - HILL.x, z - HILL.z) < 25 || Math.abs(x - Math.round(x / CELL) * CELL) < 1.5);
+    PX[i] = x; PZ[i] = z; F[i] = womenCell(x) ? 1 : 0;
+  }
+  const crowd = createCrowd(world, N, { ihram: true, gender: (i) => !F[i] });
   const standing = []; // stehende Pilger: heben ab und zu die Hände zur Dua
   for (let i = 0; i < N; i++) {
-    let x, z; do { x = (Math.random() - 0.5) * 380; z = -170 + Math.random() * 260; } while (Math.abs(x) < 5 || Math.hypot(x - HILL.x, z - HILL.z) < 25);
+    const x = PX[i], z = PZ[i];
     const sit = Math.random() < 0.6, ry = Math.PI / 2 + (Math.random() - 0.5) * 0.6;
     crowd.set(i, x, h(x, z), z, ry, sit ? 0.62 : 1);
     if (!sit) standing.push([i, x, z, ry, Math.random() * 30]);

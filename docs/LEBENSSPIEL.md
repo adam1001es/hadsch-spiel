@@ -250,3 +250,10 @@ Spielstand (Geld, Hasanat, Besitz, Position) in `localStorage` (`hp-life`), mit 
 - `engine.perf.low` = Sparmodus (schwaches Gerät, Einstellung „Akku sparen“ oder dauerhaft < 22 FPS): 30 FPS, Auflösung 1, kein Antialiasing,
   Schattenkarte 1024. `engine.isMobile` ist im Sparmodus ebenfalls `true` → neue Bereiche bitte Mengen/Details daran ausrichten.
 - Handy allgemein: Auflösung max. 1,5, harte Schatten (PCF), max. 60 FPS.
+
+## Männer und Frauen beim Beten/Sitzen/Schlafen (Wunsch des Nutzers)
+- Nie nebeneinander, mind. 3–4 Personen Abstand. Gehen (Tawaf, Sa'i, Straße) ist ausgenommen.
+- Reihen/Plätze: `separateSlots(slots, n, (i) => crowd.male(i))` aus `world/crowd.js` (Männer vorne, Frauen hinten, Lücke dazwischen).
+  Slot-Liste etwa doppelt so lang wie die Personenzahl anlegen. Feste Lager: `createCrowd(world, n, { gender: (i) => … })`.
+- Umgesetzt: Mekka-Platz (Gemeinschaftsgebet), Haram (Gebetskreise: Männer innen), Prophetenmoschee (Sitzen und Reihen), Rastplatz, Miqat,
+  Arafat (Lagerstreifen), Muzdalifa (Blöcke im Schachbrett).

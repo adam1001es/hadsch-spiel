@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { createCrowd } from '../world/crowd.js';
+import { createCrowd, separateSlots } from '../world/crowd.js';
 import { createPlayer } from '../core/player.js';
 import { sign } from '../world/props.js';
 import { PRAYER_UI as U } from '../content/life.js';
@@ -71,8 +71,11 @@ export function create(ctx) {
   const N = mobile ? 90 : 160, crowd = createCrowd(world, N, { ihram: false, men: 0.7 });
   const free = (x, z) => !cols.some(([cx, cz]) => Math.abs(cx - x) < 0.9 && Math.abs(cz - z) < 0.9);
   const home = [], rows = [];
-  while (home.length < N) { const x = -HX + 3 + Math.random() * (HX * 2 - 6), z = -HZ + 3 + Math.random() * (HZ * 2 - 8); if (free(x, z)) home.push({ x, z, ry: Math.PI * (Math.random() < 0.7 ? 0 : 1) + (Math.random() - 0.5) }); }
-  for (let z = HZ - 3; rows.length < N; z -= 1.2) for (let x = -HX + 2; x < HX - 2 && rows.length < N; x += 0.85) if (free(x, z) && !(x > RW.x0 - 1 && x < RW.x1 + 1 && z > RW.z1 - 3)) rows.push({ x, z });
+  // Sitzen/Beten verteilt: Männer im vorderen Teil, Frauen im hinteren Teil der Moschee, dazwischen ein freier Streifen
+  const ZW = -HZ * 0.35;
+  while (home.length < N) { const m = crowd.male(home.length), x = -HX + 3 + Math.random() * (HX * 2 - 6), z = m ? ZW + 2.5 + Math.random() * (HZ - 5 - ZW) : -HZ + 3 + Math.random() * (ZW - 2.5 + HZ - 3); if (free(x, z)) home.push({ x, z, ry: Math.PI * (Math.random() < 0.7 ? 0 : 1) + (Math.random() - 0.5) }); }
+  for (let z = HZ - 3; rows.length < N * 2 && z > -HZ + 2; z -= 1.2) for (let x = -HX + 2; x < HX - 2 && rows.length < N * 2; x += 0.85) if (free(x, z) && !(x > RW.x0 - 1 && x < RW.x1 + 1 && z > RW.z1 - 3)) rows.push({ x, z });
+  const seat = separateSlots(rows, N, (i) => crowd.male(i)).map((s, i) => s || home[i]); // Gemeinschaftsgebet: Männer vorne, Frauen hinten
   const P = home.map((h) => ({ ...h })), mode = Array.from({ length: N }, () => (Math.random() < 0.45 ? 'pray' : 'stand'));
 
   const colliders = [{ type: 'rect', x0: -HX + 0.6, x1: HX - 0.6, z0: -HZ + 0.6, z1: HZ - 0.6 }, ...cols.map(([x, z]) => ({ type: 'circle', x, z, r: 0.5 })), { type: 'box', x: -31, z: 33.6, hw: 0.7, hd: 1.8 }];
@@ -106,7 +109,7 @@ export function create(ctx) {
       if (jm !== wasJ) { wasJ = jm; if (jm) ui.toast('Alle stellen sich in Reihen zur Qibla auf.', 3500); }
       const k = Math.min(1, dt * 1.2), cyc = (performance.now() / 1000) % 8 / 8;
       for (let i = 0; i < N; i++) {
-        const t = jm ? rows[i] : home[i], p = P[i];
+        const t = jm ? seat[i] : home[i], p = P[i];
         p.x += (t.x - p.x) * k; p.z += (t.z - p.z) * k;
         const there = Math.hypot(t.x - p.x, t.z - p.z) < 0.4;
         const ry = jm ? 0 : home[i].ry;

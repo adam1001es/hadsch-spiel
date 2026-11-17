@@ -36,12 +36,14 @@ export function create(ctx, st) {
     || BASINS.some((q) => Math.hypot((x - q.x) / (q.rx + 2.5 + m), (z - q.z) / (q.rz + 2.5 + m)) < 1)
     || (z < -128 + m && Math.abs(x - MASHAR.x) < 40);
   const rugs = [], ll = [];
+  // Blöcke abwechselnd für Männer und Frauen (getrennt durch die 8 m breiten Wege) – beim Schlafen nicht nebeneinander
   for (let bx = -118; bx + BW < 118; bx += BW + ROAD) for (let bz = -130; bz + BD < 118; bz += BD + ROAD) {
     ll.push([bx - ROAD / 2, 0, bz - ROAD / 2, Math.PI / 4]);
+    const fem = (Math.round((bx + 118) / (BW + ROAD)) + Math.round((bz + 130) / (BD + ROAD))) % 2 === 1; // Schachbrett: Nachbarblöcke haben das andere Geschlecht
     for (let r = 0; r < ROWS; r++) for (let k = 0; k < PER; k++) {
       const x = bx + RW / 2 + r * (RW + GAPX), z = bz + RD / 2 + k * (RD + GAPZ);
       if (Math.hypot(x, z) > 160 || clearAt(x, z, 0)) continue;
-      rugs.push([x, z, Math.PI / 2]); // lange Seite entlang x, Kissen nach +x (Osten)
+      rugs.push([x, z, Math.PI / 2, fem]); // lange Seite entlang x, Kissen nach +x (Osten); fem = Frauenblock
     }
   }
   lamps(world, ll, glow);
@@ -50,14 +52,15 @@ export function create(ctx, st) {
   // Warmes Laternenlicht nahe dem Spieler
   const warm = new THREE.PointLight(0xffc27a, 40, 34, 1.5); warm.position.set(3, 8.5, 8); world.add(warm);
   // eigener Schlafplatz: freier Teppich nahe dem Start
-  let fi = 0; rugs.forEach((r, i) => { if (Math.hypot(r[0] - 8, r[1] + 14) < Math.hypot(rugs[fi][0] - 8, rugs[fi][1] + 14)) fi = i; });
+  const meF = ctx.profile?.gender === 'f';
+  let fi = rugs.findIndex((r) => r[3] === meF); rugs.forEach((r, i) => { if (r[3] === meF && Math.hypot(r[0] - 8, r[1] + 14) < Math.hypot(rugs[fi][0] - 8, rugs[fi][1] + 14)) fi = i; }); // im eigenen Block
   const free = { x: rugs[fi][0], z: rugs[fi][1] };
   carpets(world, rugs);
   // Pilger auf den Teppichen: schlafen (Kopf auf dem Kissen), sitzen oder beten Richtung Qibla (Westen)
   // belegte Teppiche: in der Nähe des Starts fast alle, weiter weg nur jeder zweite bis dritte
   const spots = rugs.filter((r, i) => i !== fi && (Math.hypot(r[0], r[1]) < 45 || (i * 7) % 5 < 2)).sort((a, b) => Math.hypot(a[0], a[1]) - Math.hypot(b[0], b[1]));
   const N = Math.min(spots.length, engine.isMobile ? 260 : 380);
-  const crowd = createCrowd(world, N, { ihram: true });
+  const crowd = createCrowd(world, N, { ihram: true, gender: (i) => !spots[i][3] });
   for (let i = 0; i < N; i++) {
     const [x, z] = spots[i], kind = (i * 37) % 10;
     if (kind < 5) crowd.set(i, x + 0.9, 0.24, z, -Math.PI / 2, 1, Math.PI / 2);          // liegt, Kopf am Kissen (Osten)

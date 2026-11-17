@@ -6,7 +6,7 @@ import { heightFn, buildTerrain } from '../world/terrain.js';
 import { sign, lamps, palms, bus, mosque } from '../world/props.js';
 import { pbr } from '../world/assets.js';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
-import { createCrowd } from '../world/crowd.js';
+import { createCrowd, separateSlots } from '../world/crowd.js';
 import { createAgents } from '../world/agents.js';
 import { createLife } from '../world/life.js';
 import { createPlayer } from '../core/player.js';
@@ -281,14 +281,15 @@ export function create(ctx, { from, where = 'mecca' } = {}) {
   prayer.update(0);
   // Gemeinschaftsgebet: Menschen stellen sich in Reihen auf (Mekka: Bögen um die Kaaba auf dem Platz), in Medina gehen sie zur Moschee
   const slots = [];
-  if (!medina) { for (let r = 212; r < 258 && slots.length < N; r += 1.4) for (let a = -Math.PI / 2 - 0.5; a < -Math.PI / 2 + 0.5; a += 0.9 / r) { const sx = Math.cos(a) * r, sz = -Math.sin(a) * r; if (sx > PZ.x0 + 3 && sx < PZ.x1 - 3 && sz > PZ.z0 + 4 && sz < PZ.z1 - 3) slots.push({ x: sx, z: sz }); } }
+  if (!medina) { for (let r = 212; r < 290 && slots.length < N * 2; r += 1.4) for (let a = -Math.PI / 2 - 0.5; a < -Math.PI / 2 + 0.5 && slots.length < N * 2; a += 0.9 / r) { const sx = Math.cos(a) * r, sz = -Math.sin(a) * r; if (sx > PZ.x0 + 3 && sx < PZ.x1 - 3 && sz > PZ.z0 + 4 && sz < PZ.z1 - 3) slots.push({ x: sx, z: sz }); } }
   let wasJamaah = false; // auch wer mitten in die Gebetszeit kommt, sieht die Reihen
   function gather() {
     const left = prayer.gathering + 2; // Sekunden bis zum Ende des Gemeinschaftsgebets
     const list = agents.list.map((a, i) => ({ a, i })).filter(({ a }) => (medina ? a.z < RZ : a.z < RZ)).slice(0, Math.floor(N * 0.75));
+    const seat = separateSlots(slots, list.length, (k) => crowd.male(list[k].i)); // Männer vorne, Frauen hinten, Abstand dazwischen
     list.forEach(({ a }, k) => {
       let p;
-      if (!medina && slots[k]) { const sl = slots[k]; p = { x: sl.x, z: sl.z, wait: left, act: 'pray', face: Math.atan2(-sl.x, -sl.z) }; }
+      if (!medina && seat[k]) { const sl = seat[k]; p = { x: sl.x, z: sl.z, wait: left, act: 'pray', face: Math.atan2(-sl.x, -sl.z) }; }
       else p = { x: L.gate[0] + rr(-25, 25), z: L.gate[1] + rr(2, 8), wait: left, act: 'stand', face: Math.PI };
       if (Math.hypot(a.x - p.x, a.z - p.z) > 30) { a.x = p.x; a.z = p.z; } // weit weg (außer Sicht): gleich in der Reihe
       const from = { x: a.x, z: a.z };

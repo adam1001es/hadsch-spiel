@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { buildKaaba, KAABA } from '../world/kaaba.js';
 import { buildHaram, matafRadius } from '../world/haram.js';
-import { createCrowd } from '../world/crowd.js';
+import { createCrowd, separateSlots } from '../world/crowd.js';
 import { createPlayer } from '../core/player.js';
 import { createLife } from '../world/life.js';
 import { createTowers, abrajAlBait, cityNight } from '../world/cityscape.js';
@@ -28,7 +28,9 @@ export function create(ctx) {
   const TH = new Float32Array(N).map(() => Math.random() * Math.PI * 2);
   const R = new Float32Array(N).map((_, i) => 9 + Math.random() * (matafRadius(Math.cos(TH[i]), -Math.sin(TH[i])) - 14));
   const SP = new Float32Array(N).map(() => 0.9 + Math.random() * 0.4);
-  const slot = []; for (let r = 8.5; slot.length < N; r += 1.15) { const n = Math.floor((2 * Math.PI * r) / 0.85); for (let k = 0; k < n && slot.length < N; k++) { const a = (k / n) * Math.PI * 2; slot.push({ r, a }); } }
+  const ring = []; for (let r = 8.5; ring.length < N * 2; r += 1.15) { const n = Math.floor((2 * Math.PI * r) / 0.85); for (let k = 0; k < n && ring.length < N * 2; k++) { const a = (k / n) * Math.PI * 2; ring.push({ r, a, x: Math.cos(a) * r, z: -Math.sin(a) * r }); } }
+  // Gebetskreise: Männer innen, Frauen außen, dazwischen ein paar Plätze frei
+  const slot = separateSlots(ring, N, (i) => crowd.male(i)).map((s) => s || ring[ring.length - 1]);
   const pos = Array.from({ length: N }, (_, i) => ({ x: R[i] * Math.cos(TH[i]), z: -R[i] * Math.sin(TH[i]), ry: 0 }));
 
   // Kollision wie im Tawaf: Kaaba, Hijr-Mauer, Maqam, Mataf-Rand

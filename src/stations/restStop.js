@@ -3,7 +3,7 @@ import { REST as T, PRAYER_UI as U } from '../content/life.js';
 import { heightFn, buildTerrain } from '../world/terrain.js';
 import { pbr } from '../world/assets.js';
 import { bus, sign, palms, lamps } from '../world/props.js';
-import { createCrowd } from '../world/crowd.js';
+import { createCrowd, separateSlots } from '../world/crowd.js';
 import { createAgents } from '../world/agents.js';
 import { createLife } from '../world/life.js';
 import { createPlayer } from '../core/player.js';
@@ -80,7 +80,9 @@ export function create(ctx, { from = 'mecca', to = 'medina' } = {}) {
   const toCourt = () => [{ x: rr(-3, 3), z: -70 }, { x: rr(-3, 3), z: -28 }], toPark = () => [{ x: rr(-3, 3), z: -28 }, { x: rr(-3, 3), z: -74 }];
   const yard = { x0: -40, x1: 40, z0: -22, z1: 1 }; // freier Hof vor der Moschee (ohne Gebäude und Podest)
   const agents = createAgents(crowd, N, (i) => (i % 2 ? [inR(park), ...toCourt(), { ...inR(yard), wait: rr(4, 12), act: 'stand' }, ...toPark()] : [inR(yard), { ...inR(yard), wait: rr(3, 8), act: 'stand' }, ...toPark(), inR(park), ...toCourt()]), { speed: 1.1 });
-  const slots = []; for (let z = 1.5; slots.length < N; z -= 1.3) for (let x = -14; x <= 14 && slots.length < N; x += 0.9) slots.push({ x, z }); // Reihen vor dem Podest
+  const slots = []; for (let z = 1.5; slots.length < N * 2; z -= 1.3) for (let x = -14; x <= 14 && slots.length < N * 2; x += 0.9) slots.push({ x, z }); // Reihen vor dem Podest
+  const seat = separateSlots(slots, N, (i) => crowd.male(i)); // Männer vorne, Frauen hinten mit Abstand
+  for (let i = 0; i < N; i++) seat[i] ||= { x: rr(-14, 14), z: -16 }; // kein Platz frei: wartet hinten
 
   // Orte mit Randleuchten
   const qibla = (x, z) => ({ x, z: z + 1000 }); // Mekka liegt im Süden
@@ -117,7 +119,7 @@ export function create(ctx, { from = 'mecca', to = 'medina' } = {}) {
       if (wuduAct) { wuduAct.update(dt); if (sky && ctx.input.holding) sfx.waterKeep(); if (wuduAct.done) { if (wuduAct.progress >= 1) ui.toast(T.wuduDone, 2500); wuduAct = null; interact.enabled = true; } }
       // Gemeinschaftsgebet: Reisende stellen sich in Reihen vor dem Eingang auf
       const g = prayer.gathering > 0;
-      if (g && !wasG) agents.list.forEach((a, i) => { const sl = slots[i]; if (Math.hypot(a.x - sl.x, a.z - sl.z) > 40) { a.x = sl.x; a.z = sl.z; } a.pts = [...(a.z < -24 ? [{ x: rr(-3, 3), z: -70 }, { x: rr(-3, 3), z: -28 }] : []), { x: sl.x, z: sl.z, wait: prayer.gathering + 2, act: 'pray', face: 0 }, ...toPark(), inR(park)]; a.k = 0; a.wait = 0; a.act = null; });
+      if (g && !wasG) agents.list.forEach((a, i) => { const sl = seat[i]; if (Math.hypot(a.x - sl.x, a.z - sl.z) > 40) { a.x = sl.x; a.z = sl.z; } a.pts = [...(a.z < -24 ? [{ x: rr(-3, 3), z: -70 }, { x: rr(-3, 3), z: -28 }] : []), { x: sl.x, z: sl.z, wait: prayer.gathering + 2, act: 'pray', face: 0 }, ...toPark(), inR(park)]; a.k = 0; a.wait = 0; a.act = null; });
       wasG = g;
       agents.update(dt);
       traffic.update(dt);

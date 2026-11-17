@@ -71,7 +71,7 @@ function blobTexture() {
   g.fillStyle = gr; g.fillRect(0, 0, 64, 64);
   blobTex = new THREE.CanvasTexture(c); return blobTex;
 }
-export function createCrowd(world, n, { men = 0.6, ihram = true, idtiba = false } = {}) {
+export function createCrowd(world, n, { men = 0.6, ihram = true, idtiba = false, gender = null } = {}) {
   const P = {
     dress: () => dressGeo(8), izar: () => izarGeo(8), torso: () => torsoGeo(7, 0, false), rida: () => ridaGeo(9, 0, idtiba), arms: () => armsGeo(4),
     head: () => headGeo(7), hair: () => hairGeo(7), beard: () => beardGeo(6), face: () => faceGeo(6),
@@ -92,13 +92,15 @@ export function createCrowd(world, n, { men = 0.6, ihram = true, idtiba = false 
   };
 
   // 1. Personen erzeugen: einfache Figur (für die Ferne) + Modellteile (für die Nähe), gleiche Farben
+  const isMale = new Uint8Array(n);
   const people = new Array(n), model = new Array(n), scale = new Float32Array(n), use = {};
   const sh = new Float32Array(n).fill(1), sw = new Float32Array(n).fill(1); // Höhe, Breite (Statur)
   const ges = new Float32Array(n); // Geste (Wurf −1…0, Dua −3…−2), siehe walk.js
   const mk = new Float32Array(n).fill(1); // Ausgleich Modell ↔ einfache Figur (Junge: einfache Figur kindgroß, Modell schon klein)
   const tint = (hex, v = 0.06) => { const c = new THREE.Color(hex); return c.multiplyScalar(1 - v / 2 + Math.random() * v); };
   for (let i = 0; i < n; i++) {
-    const R = pickRegion(), male = Math.random() < men;
+    const R = pickRegion(), male = gender ? !!gender(i) : Math.random() < men; // gender(i): Station legt fest (getrennte Plätze)
+    isMale[i] = male ? 1 : 0;
     const skin = pick(R.skin), old = Math.random() < 0.18;
     const hair = old ? pick([0x8f8a84, 0xb8b2aa, 0xd8d4ce]) : pick(R.hair);
     const list = [];
@@ -234,6 +236,7 @@ export function createCrowd(world, n, { men = 0.6, ihram = true, idtiba = false 
   const api = {
     // Geste für Person i (wirkt beim nächsten set): 0 = keine, −1…0 = Wurf (rechter Arm), −3…−2 = Dua (beide Hände)
     gesture(i, v) { ges[i] = v; },
+    male(i) { return isMale[i] === 1; },
     n,
     // Position (x, y, z), Drehung ry, Höhe sy (z. B. 0.62 = sitzend), Neigung rx (z. B. π/2 = liegend)
     set(i, x, y, z, ry = 0, sy = 1, rx = 0) {
@@ -298,4 +301,20 @@ export function createPilgrim(world, bodyColor = 0xf3f1ea) {
   const crowd = createCrowd(world, 1, { men: 1, ihram: bodyColor === 0xf3f1ea });
   crowd.set(0, 0, 0, 0); crowd.commit();
   return { group: new THREE.Group(), setColor() {} };
+}
+
+// Gebet, Sitzen, Schlafen: Männer und Frauen nicht nebeneinander (Gehen im Tawaf/Sa'i ist davon ausgenommen).
+// Männer nehmen die vorderen Plätze der Liste, Frauen die hinteren; dazwischen bleiben mind. `gap` Meter frei (≈ 3–4 Personen).
+// slots: [{x, z, …}] von vorne nach hinten. Ergebnis: Platz je Person (undefined = kein Platz frei, steht abseits).
+export function separateSlots(slots, n, isMale, gap = 2.8) {
+  const out = new Array(n), used = [], g2 = gap * gap;
+  let k = 0;
+  for (let i = 0; i < n; i++) if (isMale(i) && k < slots.length) { out[i] = slots[k++]; used.push(out[i]); }
+  let j = slots.length - 1;
+  for (let i = 0; i < n; i++) {
+    if (isMale(i)) continue;
+    while (j >= k && used.some((u) => (u.x - slots[j].x) ** 2 + (u.z - slots[j].z) ** 2 < g2)) j--;
+    if (j >= k) out[i] = slots[j--];
+  }
+  return out;
 }
