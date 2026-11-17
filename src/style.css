@@ -489,3 +489,7 @@ body.driving #counter { visibility: hidden; }
 
 /* Querformat am Handy: Ziel/km oben neben dem Titel statt mitten im Bild */
 @media (max-height: 520px) and (orientation: landscape) { #tripHud { top: calc(env(safe-area-inset-top, 0px) + 10px); left: 50%; } }
+
+/* Zusammen spielen: wie viele spielen gerade insgesamt (und wo) */
+.multi-all { margin: 6px 0 8px; font-size: 14px; }
+.multi-all .multi-where { margin: 4px 0 0; padding-left: 18px; font-size: 13px; color: var(--muted); }

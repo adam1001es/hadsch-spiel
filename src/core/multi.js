@@ -21,6 +21,10 @@ export function createMulti(ctx) {
   const myId = Math.random().toString(36).slice(2, 10);
   let client = null, connected = false, code = '', sub = '', loc = null;
   let states = {}; const seen = {};
+  // Wer spielt gerade insgesamt (egal wo, auch in privaten Räumen)? Kleines Lebenszeichen alle 10 s, nur Ort, kein Name
+  const ALL = ROOT + 'da/', alive = {}; let aliveT = -1e9;
+  const announce = () => { if (client && connected) { aliveT = performance.now(); client.publish(ALL + myId, JSON.stringify({ s: ctx.stationIndex ?? 'start' }), { qos: 0 }); } };
+  setInterval(announce, 10000); // eigener Takt, unabhängig vom Bildaufbau
   const figs = new Map();
   let sendT = 0, listT = 0, onChange = () => {};
   const load = async () => (await import('mqtt')).default;
@@ -38,7 +42,8 @@ export function createMulti(ctx) {
     return { ...s, x: +p.pos.x.toFixed(2), y: +p.pos.y.toFixed(2), z: +p.pos.z.toFixed(2), h: +p.fig.root.rotation.y.toFixed(2), p: p.fig.poseName || 'stand',
       c: p.fig.cloth.color.getHex(), k: p.fig.skinM.color.getHex(), f: ctx.profile?.gender === 'f' ? 1 : 0, ...(ctx.vehicle ? { v: ctx.vehicle } : {}) }; // v = Fahrzeug, in dem man sitzt
   }
-  const status = () => ({ online: settings.online !== false, connected, code, me: initial(), others: Object.entries(states).map(([id, s]) => ({ id, col: colorOf(id), ...s })) });
+  const totals = () => { const now = Date.now(), by = {}; let n = 0; for (const [id, a] of Object.entries(alive)) { if (now - a.t > 25000) { delete alive[id]; continue; } n++; by[a.s] = (by[a.s] || 0) + 1; } return { n, by }; };
+  const status = () => ({ online: settings.online !== false, connected, code, me: initial(), total: connected ? totals() : { n: 0, by: {} }, others: Object.entries(states).map(([id, s]) => ({ id, col: colorOf(id), ...s })) });
   const changed = () => onChange(status());
 
   function clearOthers() { states = {}; for (const k of Object.keys(seen)) delete seen[k]; for (const f of figs.values()) f.world.remove(f.fig.root); figs.clear(); }
@@ -54,10 +59,17 @@ export function createMulti(ctx) {
     if (client) return;
     let mqtt; try { mqtt = await load(); } catch { return; }
     if (client) return;
-    client = mqtt.connect(BROKER, { clientId: 'h3d_' + myId, clean: true, connectTimeout: 10000, reconnectPeriod: 4000, keepalive: 30 });
-    client.on('connect', () => { connected = true; sub = ''; resubscribe(); changed(); });
+    client = mqtt.connect(BROKER, { clientId: 'h3d_' + myId, clean: true, connectTimeout: 10000, reconnectPeriod: 4000, keepalive: 30, will: { topic: ALL + myId, payload: '', qos: 0, retain: false } });
+    client.on('connect', () => { connected = true; sub = ''; aliveT = -1e9; client.subscribe(ALL + '+'); announce(); resubscribe(); changed(); });
     client.on('message', (topic, buf) => {
       const id = topic.slice(topic.lastIndexOf('/') + 1); if (id === myId) return;
+      if (topic === ALL + id) {
+        if (!buf.length) { delete alive[id]; return; }
+        const fresh = !alive[id];
+        try { alive[id] = { s: JSON.parse(buf.toString()).s ?? 'start', t: Date.now() }; } catch { return; }
+        if (fresh && performance.now() - aliveT > 2000) announce(); // Neuer Spieler: gleich zurückmelden, damit er sofort mitzählt
+        return;
+      }
       if (topic === evSub().slice(0, -1) + id) { // Ereignis eines Mitspielers am selben Ort
         try { const ev = JSON.parse(buf.toString()); const fs = listeners.get(ev.t); if (fs) for (const f of fs) f(ev.d, { id, ...(states[id] || {}) }); } catch { /* ungültig */ }
         return;
@@ -70,7 +82,7 @@ export function createMulti(ctx) {
     client.on('offline', () => { connected = false; changed(); });
   }
   function disconnect() {
-    try { if (client && sub) client.publish(sub.slice(0, -1) + myId, ''); client?.end(true); } catch { /* egal */ }
+    try { if (client && connected) client.publish(ALL + myId, ''); if (client && sub) client.publish(sub.slice(0, -1) + myId, ''); client?.end(true); } catch { /* egal */ }
     client = null; connected = false; sub = ''; clearOthers(); changed();
   }
 

@@ -180,14 +180,17 @@ setBox.addEventListener('click', (e) => { if (e.target === setBox) setBox.hidden
 // ---------- Zusammen spielen ----------
 {
   const $ = (id) => document.getElementById(id);
-  const where = (s) => (s === 'kaaba' ? 'in der Kaaba' : s === 'city-mecca' ? 'in den Straßen von Mekka' : s === 'city-medina' ? 'in den Straßen von Medina' : s === 'drive' ? 'im Bus' : s === 'balloon' ? 'im Heißluftballon' : s >= content.STATIONS.length ? 'bei der Urkunde' : typeof s === 'number' ? `Station ${s + 1}: ${content.STATIONS[s].title}` : 'am Start');
+  const where = (s) => (s === 'kaaba' ? 'in der Kaaba' : s === 'city-mecca' ? 'in den Straßen von Mekka' : s === 'city-medina' ? 'in den Straßen von Medina' : s === 'drive' ? 'im Bus' : s === 'balloon' ? 'im Heißluftballon' : s === 'bauhof' ? 'im Sandstein-Bauhof' : s === 'haram' ? 'in der Haram' : s === 'nabawi' ? 'in der Prophetenmoschee' : s === 'road' ? 'auf der Fahrt Mekka–Medina' : s === 'rest' ? 'am Rastplatz' : s >= content.STATIONS.length ? 'bei der Urkunde' : typeof s === 'number' ? `Station ${s + 1}: ${content.STATIONS[s].title}` : 'am Start');
   const render = (st) => {
     $('multiOnline').checked = st.online;
     $('multiOff').hidden = !!st.code; $('multiOn').hidden = !st.code; $('multiShow').textContent = st.code || '----';
+    const all = st.total.n + 1; // alle, die gerade spielen (inkl. dir)
     $('multiStat').textContent = !st.online ? 'Aus – du spielst allein.' : !st.connected ? 'Verbinde …' : (st.code ? `Privater Raum ${st.code}` : 'Online') + ` · hier bei dir: ${st.others.length}`;
+    $('multiAll').hidden = !(st.online && st.connected);
+    $('multiAll').innerHTML = `<b>Gerade spielen insgesamt: ${all}</b>` + (st.total.n ? `<ul class="multi-where">${Object.entries(st.total.by).sort((a, b) => b[1] - a[1]).map(([s, k]) => `<li>${where(isNaN(+s) ? s : +s)}: ${k}</li>`).join('')}</ul>` : '<span class="small"> – nur du</span>');
     $('multiList').innerHTML = st.online ? st.others.map((o) => `<li><i style="background:${o.col}">${o.i || '•'}</i> ${where(o.s)}</li>`).join('') : '';
-    const n = st.online && st.connected ? st.others.length : 0;
-    $('multiBtn').classList.toggle('on', n > 0);
+    const n = st.online && st.connected ? st.total.n : 0; // Zahl am Knopf: andere Spieler im ganzen Spiel
+    $('multiBtn').classList.toggle('on', st.others.length > 0);
     $('multiCount').hidden = !n; $('multiCount').textContent = String(n);
   };
   multi.onChange = render; render(multi.status());
