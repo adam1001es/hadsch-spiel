@@ -19,7 +19,7 @@ export const LANGS = [
   { code: 'prs', name: 'دری (افغانستان)', rtl: true, voice: ['fa-AF', 'prs', 'fa-IR', 'fa'] },
 ];
 
-import { audioCtx, audioOut } from './sfx.js';
+import { audioCtx, audioOut, mediaStart, mediaEnd } from './sfx.js';
 const KEY = 'hp-settings';
 const DEF = { lang: '', voice: true, rate: 1, recite: true, v: 3 };
 export const settings = (() => {
@@ -134,7 +134,8 @@ function playUrl(url, rate = 1, onEnd) {
     if (!buf) return null;
     const src = c.createBufferSource(); src.buffer = buf; src.playbackRate.value = rate;
     const g = c.createGain(); g.gain.value = 0.9; src.connect(g).connect(audioOut());
-    src.onended = () => { if (clip === src) clip = null; onEnd && onEnd(); }; src.start(); return src;
+    mediaStart(); // nur solange gesprochen/rezitiert wird: „Wiedergabe“ (hörbar auch im Lautlos-Modus)
+    src.onended = () => { mediaEnd(); if (clip === src) clip = null; onEnd && onEnd(); }; src.start(); return src;
   });
 }
 // key = deutscher Quelltext (z. B. „Waschhaus“); gespielt wird die Aufnahme in der gewählten Sprache

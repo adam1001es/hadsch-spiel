@@ -23,9 +23,15 @@ export const audioOut = () => (ctx(), master);
 // iPhone: Ton erst nach einer Berührung erlaubt, und im Lautlos-Modus ist Web Audio stumm.
 // Darum bei jeder Berührung (bis es läuft): Kontext fortsetzen, einen stillen Ton spielen,
 // die Audio-Sitzung auf „Wiedergabe“ stellen (Safari 17+) und ein stilles, endloses <audio> starten (ältere iOS).
+// iPhone (iOS 17+): Audio-Sitzung „playback“ macht das Spiel zum Musik-Player (Sperrbildschirm, Dynamic Island).
+// Darum nur während Ansagen/Rezitationen „playback“ (auch im Lautlos-Modus hörbar), sonst „ambient“.
+let mediaN = 0, offT = 0;
+function setType(t) { try { if (navigator.audioSession && navigator.audioSession.type !== t) navigator.audioSession.type = t; } catch { /* egal */ } }
+export function mediaStart() { mediaN++; clearTimeout(offT); setType('playback'); }
+export function mediaEnd() { mediaN = Math.max(0, mediaN - 1); clearTimeout(offT); if (!mediaN) offT = setTimeout(() => setType('ambient'), 1200); }
 const SILENT = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=';
 function unlock() {
-  try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch { /* egal */ }
+  if (!mediaN) setType('ambient'); // Grundzustand: kein Musik-Player auf dem iPhone (Geräusche folgen dem Lautlos-Schalter)
   const c = ctx(); if (!c) return;
   try { const b = c.createBuffer(1, 1, 22050), src = c.createBufferSource(); src.buffer = b; src.connect(c.destination); src.start(0); } catch { /* egal */ }
   // Endlos-<audio> nur noch für alte iPhones ohne audioSession (vor iOS 17): sonst erscheint ständig der Musik-Player
