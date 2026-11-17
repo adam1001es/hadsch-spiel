@@ -352,13 +352,14 @@ export function createBorrow(ctx, opts) {
     player.pos.set(D.x, D.y, D.z); player.heading = D.h;
     // Kamera hinter dem Fahrzeug (wischen = umschauen, kehrt langsam zurück)
     const look = input.yaw - yaw0; yaw0 += look * Math.min(1, dt * 0.8);
-    D.camH = D.camH == null ? D.h : D.camH + Math.atan2(Math.sin(D.h - D.camH), Math.cos(D.h - D.camH)) * Math.min(1, dt * 4.5); // Kamera schwenkt weich nach
-    const ang = D.camH + Math.PI + look, d0 = S.cam[0] * 0.72 * ds.view, hh = S.air ? S.cam[1] : 1.1 + S.cam[1] * 0.3 * ds.view, dist = d0 * (1 + Math.min(0.25, Math.abs(D.v) / 220)); // flacher Blick: Straße und Horizont sichtbar, Fahrzeug größer
+    const mvH = D.h + (D.slip || 0) * 0.85; // beim Driften der Fahrtrichtung folgen, nicht der Fahrzeugnase
+    D.camH = D.camH == null ? mvH : D.camH + Math.atan2(Math.sin(mvH - D.camH), Math.cos(mvH - D.camH)) * Math.min(1, dt * 6); // Kamera schwenkt weich nach
+    const ang = D.camH + Math.PI + look, d0 = S.cam[0] * 0.72 * ds.view, hh = S.air ? S.cam[1] : 1.1 + S.cam[1] * 0.3 * ds.view, dist = d0 * (1 + Math.min(0.25, Math.abs(D.v) / 220)) * (innerWidth > innerHeight ? (S.len < 2.5 ? 0.62 : 0.8) : S.len < 2.5 ? 0.85 : 1); // Querformat und Zweiräder: näher dran (größer) // flacher Blick: Straße und Horizont sichtbar, Fahrzeug größer
     const wp = tmp.set(D.x + Math.sin(ang) * dist, D.y + hh + input.pitch * 4, D.z + Math.cos(ang) * dist);
     const fovWant = 62 + Math.min(16, Math.abs(D.v) / 6) + (turbo && Math.abs(D.v) > 5 ? 4 : 0); // Tempogefühl if (Math.abs(cam.fov - fovWant) > 0.05) { cam.fov += (fovWant - cam.fov) * Math.min(1, dt * 3); cam.updateProjectionMatrix(); }
-    wp.y = Math.max(wp.y, ground(wp.x, wp.z) + 1);
+    for (const t of [1, 0.75, 0.5, 0.25]) wp.y = Math.max(wp.y, ground(D.x + (wp.x - D.x) * t, D.z + (wp.z - D.z) * t) + 1.2 + (1 - t) * 0.3); // nicht in Hängen/Dünen zwischen Kamera und Fahrzeug stecken
     const k = first ? 1 : 1 - Math.exp(-dt * 6); first = false;
-    camPos.lerp(wp, k); camLook.lerp(new THREE.Vector3(D.x + fx * 4, D.y + (S.air ? 1.1 : 1.6), D.z + fz * 4), k); // Fahrer immer in der Bildmitte; die Kamera steht hoch genug, um die Straße davor zu sehen
+    camPos.lerp(wp, k); camLook.lerp(new THREE.Vector3(D.x + fx * 1.2, D.y + (S.air ? 1.1 : 1.3), D.z + fz * 1.2), k); // Fahrer immer in der Bildmitte; die Kamera steht hoch genug, um die Straße davor zu sehen
     cam.position.copy(camPos); cam.lookAt(camLook);
     speedEl.textContent = Math.round(Math.abs(D.v) * 3.6); unitEl.textContent = D.v < -0.3 ? 'km/h · R' : 'km/h';
     infoEl.textContent = S.air ? Math.round(D.y - gy) + ' m Höhe' : mode === 'auto' && autoPts ? '→ ' + autoName : turbo ? 'TURBO' : drift && Math.abs(D.slip) > 0.08 ? 'DRIFT' : '';
