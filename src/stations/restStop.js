@@ -10,7 +10,7 @@ import { createPlayer } from '../core/player.js';
 import { holdAction } from '../core/kit.js';
 import { oasisMosque } from '../world/oasis.js';
 import { walkable, createTraffic, cityNight } from '../world/cityscape.js';
-import { createInteract } from '../life/interact.js';
+import { createInteract, boxClosest } from '../life/interact.js';
 import { createPrayer } from '../life/prayer.js';
 import { showMinimap } from '../life/minimap.js';
 import { clock } from '../life/clock.js';
@@ -89,7 +89,7 @@ export function create(ctx, { from = 'mecca', to = 'medina' } = {}) {
   const prayer = createPrayer(ctx, { city: 'mecca', player, qibla });
   const interact = createInteract(ctx, player); prayer.interact = interact;
   let wuduAct = null;
-  interact.add({ obj: coach.group, color: 'blue', radius: 10, near: 3, push: 0.04, x: 0, z: -92.4, key: 'bus', label: T.go(to), run() { sfx.bus(); (ctx.borrowed?.kind && ctx.roadtrip ? ctx.roadtrip(from, to, { vehicle: ctx.borrowed.kind, at: 'rest' }) : ctx.drive?.(from, to, { resume: 0.52 })); } });
+  interact.add({ obj: coach.group, color: 'blue', radius: 10, near: 2.4, push: 0.04, x: 0, z: -92.4, closest: boxClosest(coach.group, 1.6, 6.2), key: 'bus', label: T.go(to), run() { sfx.bus(); (ctx.borrowed?.kind && ctx.roadtrip ? ctx.roadtrip(from, to, { vehicle: ctx.borrowed.kind, at: 'rest' }) : ctx.drive?.(from, to, { resume: 0.52 })); } });
   interact.add({ obj: wudu, color: 'gold', radius: 7, near: 2.6, x: -39.3, z: 6, key: 'wudu', label: T.wuduDo, run() {
     ui.info(`<p>${T.wudu}</p>`); ui.el.panel.classList.remove('collapsed'); interact.enabled = false; ui.prompt(null);
     player.heading = -Math.PI / 2;

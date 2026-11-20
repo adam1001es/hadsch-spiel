@@ -3,6 +3,7 @@ import { BORROW as T } from '../content/life.js';
 import { makeVehicle, specOf, SMALL_KINDS, CAR_KINDS } from './vehicles.js';
 import { resolve } from '../core/player.js';
 import { createFigure } from '../core/player.js';
+import { boxClosest } from './interact.js';
 import { peopleModels } from '../world/crowd.js';
 import * as sfx from '../core/sfx.js';
 
@@ -140,14 +141,14 @@ export function createBorrow(ctx, opts) {
     const P = { veh, x: s.x, z: s.z, h: s.ry, owner, home: { x: s.x, z: s.z, h: s.ry }, src: 'stand' };
     parked.push(P);
     const back = specOf(s.kind).len / 2 + 1.2; // Fragepunkt hinter dem Fahrzeug (eindeutig, auch wenn mehrere nebeneinander stehen)
-    interact.add({ obj: veh.root, color: 'blue', radius: 9, near: 2.4, x: s.x - Math.sin(s.ry) * back, z: s.z - Math.cos(s.ry) * back, key: 'stand-' + parked.length, label: () => (P.mine ? T.enter(veh.name) : T.ask), when: () => !drive && P.parked !== false, run: () => (P.mine ? enter(P) : ask(P)) });
+    interact.add({ obj: veh.root, color: 'blue', radius: 9, near: 2.2, closest: boxClosest(veh.root, veh.spec.wid / 2, veh.spec.len / 2), key: 'stand-' + parked.length, label: () => (P.mine ? T.enter(veh.name) : T.ask), when: () => !drive && P.parked !== false, run: () => (P.mine ? enter(P) : ask(P)) });
   }
   // ---------- Verleih: Fahrzeug ohne Fahrer (immer eins in der Nähe) ----------
   function addRental(kind, x, z, h) {
     const veh = makeVehicle(world, kind); veh.root.position.set(x, ground(x, z), z); veh.root.rotation.y = h;
     const P = { veh, x, z, h, owner: null, home: { x, z, h }, src: 'rent', mine: true, parked: true };
     parked.push(P);
-    P.ia = interact.add({ obj: veh.root, color: 'blue', radius: 10, near: Math.max(3, veh.spec.len / 2 + 1.4), pos: (o) => o.copy(veh.root.position), key: 'rent-' + kind + '-' + parked.length, label: T.rent(veh.name), when: () => !drive && P.parked && parked.includes(P), run: () => enter(P) });
+    P.ia = interact.add({ obj: veh.root, color: 'blue', radius: 10, near: 2.2, closest: boxClosest(veh.root, veh.spec.wid / 2, veh.spec.len / 2), key: 'rent-' + kind + '-' + parked.length, label: T.rent(veh.name), when: () => !drive && P.parked && parked.includes(P), run: () => enter(P) });
     return P;
   }
   const RENT = [...SMALL_KINDS, 'escooter', 'bicycle', 'motorbike', ...CAR_KINDS];
@@ -170,7 +171,7 @@ export function createBorrow(ctx, opts) {
   }
   // ---------- Verkehr: fahrende Fahrzeuge anhalten ----------
   if (traffic) for (const vh of traffic.vehicles) {
-    interact.add({ obj: vh.veh.root, color: 'blue', radius: 11, near: 4.5, push: 0.03, pos: (out) => out.copy(vh.veh.root.position), key: 'tr-' + vh.kind + vh.ln.z + Math.round(vh.x), label: T.hail, when: () => !drive && !vh.borrowed && !pending, run: () => hail(vh) });
+    interact.add({ obj: vh.veh.root, color: 'blue', radius: 11, near: 3, push: 0.03, closest: boxClosest(vh.veh.root, vh.veh.spec.wid / 2, vh.veh.spec.len / 2), key: 'tr-' + vh.kind + vh.ln.z + Math.round(vh.x), label: T.hail, when: () => !drive && !vh.borrowed && !pending, run: () => hail(vh) });
   }
 
   let drive = null, pending = null, mode = 'self', autoPts = null, autoName = '', lastKey = '';
@@ -374,7 +375,7 @@ export function createBorrow(ctx, opts) {
     const veh = makeVehicle(world, kind); veh.root.position.set(x, ground(x, z), z); veh.root.rotation.y = h;
     const P = { veh, x, z, h, owner: null, home: { x, z, h }, src: 'away', mine: true };
     parked.push(P);
-    interact.add({ obj: veh.root, color: 'blue', radius: 9, near: 3.6, pos: (o) => o.copy(veh.root.position), key: 'away', label: T.enter(veh.name), when: () => !drive && P.parked !== false && parked.includes(P), run: () => enter(P) });
+    interact.add({ obj: veh.root, color: 'blue', radius: 9, near: 2.2, closest: boxClosest(veh.root, veh.spec.wid / 2, veh.spec.len / 2), key: 'away', label: T.enter(veh.name), when: () => !drive && P.parked !== false && parked.includes(P), run: () => enter(P) });
     enter(P);
   }
 
@@ -399,7 +400,7 @@ export function createBorrow(ctx, opts) {
           traffic.take(vh); const P = { veh: vh.veh, x: R.position.x, z: R.position.z, h: R.rotation.y, owner: pv.owner, home: null, src: 'traffic', vh, mine: true };
           // Fahrer wartet am Straßenrand; eigenes Fahrzeug später wieder einsteigen
           parked.push(P);
-          interact.add({ obj: vh.veh.root, color: 'blue', radius: 9, near: 3.6, pos: (o) => o.copy(vh.veh.root.position), key: 'mine-' + parked.length, label: T.enter(vh.veh.name), when: () => !drive && P.parked !== false && parked.includes(P) && P.mine, run: () => enter(P) });
+          interact.add({ obj: vh.veh.root, color: 'blue', radius: 9, near: 2.2, closest: boxClosest(vh.veh.root, vh.veh.spec.wid / 2, vh.veh.spec.len / 2), key: 'mine-' + parked.length, label: T.enter(vh.veh.name), when: () => !drive && P.parked !== false && parked.includes(P) && P.mine, run: () => enter(P) });
           pending = null; enter(P);
         } else if (pv.t > 8) { traffic.hold(vh, false); pending = null; } // hält nicht an (z. B. Bus im Stau)
       }

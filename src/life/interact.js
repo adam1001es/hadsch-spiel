@@ -63,6 +63,18 @@ function attach(entry) {
 }
 
 // ctx.ui für den Knopf; player mit pos (Vector3). opts: { radius = 7, near = 2.6 }
+// Nächster Punkt auf dem Umriss eines Fahrzeugs (gedrehtes Rechteck, halbe Breite hw, halbe Länge hd entlang der Fahrzeugachse)
+// → das Einsteigen geht von jeder Seite, sobald man direkt daneben steht.
+export const boxClosest = (obj, hw, hd) => (px, pz, out) => {
+  const p = obj.position, h = obj.rotation.y, c = Math.cos(h), s = Math.sin(h);
+  const dx = px - p.x, dz = pz - p.z, lx = dx * c - dz * s, lz = dx * s + dz * c; // in Fahrzeug-Koordinaten
+  const cx = Math.max(-hw, Math.min(hw, lx)), cz = Math.max(-hd, Math.min(hd, lz));
+  return out.set(p.x + cx * c + cz * s, 0, p.z - cx * s + cz * c);
+};
+export const circleClosest = (obj, r) => (px, pz, out) => {
+  const p = obj.position, dx = px - p.x, dz = pz - p.z, d = Math.hypot(dx, dz) || 1, k = Math.min(1, r / d);
+  return out.set(p.x + dx * k, 0, p.z + dz * k);
+};
 export function createInteract(ctx, player, { radius: R0 = 7, near: N0 = 2.6 } = {}) {
   const ui = ctx.ui;
   const items = [];
@@ -81,6 +93,7 @@ export function createInteract(ctx, player, { radius: R0 = 7, near: N0 = 2.6 } =
     remove(e) { const i = items.indexOf(e); if (i < 0) return; items.splice(i, 1); for (const g of e.glows) g.removeFromParent(); e.mat.dispose(); if (active === e) { active = null; ui.prompt(null); } },
     // Aktionspunkt eines Eintrags (fest oder Objektmitte, z. B. für fahrende Busse)
     point(e) {
+      if (e.closest) return e.closest(player.pos.x, player.pos.z, v); // nächster Punkt am Umriss (Fahrzeug, Ballon …)
       if (e.pos) return e.pos(v); // bewegter Punkt (z. B. fahrendes Auto), günstig ohne Umriss-Berechnung
       if (e.x != null) return v.set(e.x, 0, e.z);
       box.makeEmpty(); for (const o of e.objs) box.expandByObject(o);

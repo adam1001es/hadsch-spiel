@@ -4,7 +4,7 @@ import { heightFn, buildTerrain } from '../world/terrain.js';
 import { palms, sign, bus } from '../world/props.js';
 import { createPlayer } from '../core/player.js';
 import { createLife } from '../world/life.js';
-import { createInteract } from '../life/interact.js';
+import { createInteract, boxClosest } from '../life/interact.js';
 import * as sfx from '../core/sfx.js';
 
 // Sandstein-Bauhof in der Wüste vor Mekka: freies Bauen mit Steinquadern (0,5 m) auf einem Raster.
@@ -271,7 +271,7 @@ export function create(ctx, { from } = {}) {
   // ---------- Leuchtende Dinge (Randleuchten) ----------
   const interact = createInteract(ctx, player);
   piles.forEach((p, i) => interact.add({ obj: p.g, color: 'gold', x: p.x + 1.1, z: p.z, radius: 5, near: 1.6, label: '🧱 ' + T.take(mats[i].name), key: 'pile' + i, run() { pick(i); } }));
-  interact.add({ obj: coach.group, color: 'blue', radius: 10, near: 2.8, push: 0.04, x: W - 8.3, z: 0, label: T.back(from === 'medina'), key: 'bus', run() { sfx.bus?.(); ctx.city?.('bauhof', from === 'medina' ? 'medina' : 'mecca'); } });
+  interact.add({ obj: coach.group, color: 'blue', radius: 10, near: 2.4, push: 0.04, x: W - 8.3, z: 0, closest: boxClosest(coach.group, 1.6, 6.2), label: T.back(from === 'medina'), key: 'bus', run() { sfx.bus?.(); ctx.city?.('bauhof', from === 'medina' ? 'medina' : 'mecca'); } });
   interact.add({ obj: board, color: 'gold', radius: 5, near: 2, label: '📜 Tafel lesen', key: 'board', run() { ui.info(`<p>${T.fact}</p>`); ui.el.panel.classList.remove('collapsed'); } });
   ctx.interact = interact;
   ctx.debug = { aim, blocks, target, reach, setBlock, key }; // für automatische Tests
