@@ -243,7 +243,7 @@ export function createBorrow(ctx, opts) {
     if (key === lastKey) return; lastKey = key;
     const list = [{ label: mode === 'self' ? T.auto : T.self, icon: mode === 'self' ? 'auto' : 'self', kind: 'primary', onClick: () => { mode = mode === 'self' ? 'auto' : 'self'; autoPts = null; lastKey = ''; } }];
     if (mode === 'auto' && !autoPts) for (const d of destinations) list.push({ label: '→ ' + d.label, onClick: () => setAuto(d) });
-    list.push({ label: T.exit, icon: 'exit', onClick: () => exit(false) }, { label: T.give, icon: 'give', onClick: () => exit(true) });
+    list.push({ label: T.exit, icon: 'exit', onClick: () => exit(false) }); // „Zurückgeben“-Knopf entfernt (Wunsch des Nutzers)
     ui.actions(list);
   }
 
