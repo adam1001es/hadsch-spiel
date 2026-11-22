@@ -266,7 +266,7 @@ export function create(ctx, { from, where = 'mecca' } = {}) {
     ...umbrellaPoles.map(([x, z]) => ({ type: 'circle', x, z, r: 0.5 })), ...mosqueCols,
     ...(medina ? [-150, 0, 150].map((x) => ({ type: 'circle', x, z: 110, r: 5 })) : []), // Minarette an der Südseite der Nabawi
   ];
-  const start = from === 'haram' || from === 'nabawi' ? { x: L.gate[0], z: L.gate[1] + 7, h: 0 } : from === 'bauhof' ? { x: L.bauhof[0], z: L.bauhof[1] + 4, h: Math.PI } : from === 'balloon' ? { x: BXb + 4, z: BZb + 8, h: Math.PI } : from === 'bus' ? { x: BUx - 2, z: BUz + 5, h: Math.PI } : { x: bx + 22, z: PZ.z1 - 14, h: Math.PI };
+  const start = from === 'haram' || from === 'nabawi' ? { x: L.gate[0], z: L.gate[1] + 7, h: 0 } : from === 'bauhof' ? { x: L.bauhof[0], z: L.bauhof[1] + 4, h: Math.PI } : from === 'balloon' ? { x: BXb + 4, z: BZb + 8, h: Math.PI } : from === 'bus' ? { x: BUx - 2, z: BUz + 5, h: Math.PI } : { x: medina ? -66 : -92, z: medina ? 487 : 521, h: Math.atan2(BXb - (medina ? -66 : -92), BZb - (medina ? 487 : 521)) }; // Start auf dem Südplatz bei Ballon, Taxi und Helikopter
   const player = createPlayer(ctx, { x: start.x, z: start.z, heading: start.h, color: ctx.profile?.gender === 'f' ? 0x2c3a4a : 0x34506a, speed: 2.2, fastSpeed: 4, colliders, ground: groundH, surface: 'stone' });
   const life = createLife(ctx, { kind: 'haram' });
   const interact = createInteract(ctx, player);
@@ -308,12 +308,12 @@ export function create(ctx, { from, where = 'mecca' } = {}) {
       : [{ t: 'circle', x: 0, z: 0, r: 200, c: '#ece8e0', label: 'Masjid al-Haram' }, { t: 'rect', x0: -6, x1: 6, z0: -5.25, z1: 5.25, c: '#111' }, { t: 'rect', x0: -40, x1: 170, z0: 263, z1: 413, c: '#d8ccb2', label: 'Abraj al-Bait' }],
     pois: [...SPOTS.filter((sp) => poiIcon[sp.key]).map((sp) => ({ x: sp.x, z: sp.z, icon: poiIcon[sp.key], label: poiName[sp.key] })),
       ...L.mosques.map((m) => ({ x: m.spot[0], z: m.spot[1], icon: '🕌', label: m.name })), { x: L.mats[0], z: L.mats[1], icon: '🧎', label: 'Gebetsplatz' },
-      { x: (medina ? 75 : 30) + 3, z: (medina ? 461 : 501) - 3, icon: '🚕', label: 'Taxi & Verleih' },
+      { x: (medina ? -40 : -72) + 3, z: (medina ? 461 : 501) - 3, icon: '🚕', label: 'Taxi & Verleih' },
       { x: 1190, z: RZ + 10, icon: '🛣️', label: medina ? 'Tunnel → Mekka' : 'Tunnel → Medina' }],
   });
 
   // ---------- Fahrzeuge ausleihen (Amanah): im Verkehr anhalten oder am Taxistand den Fahrer fragen ----------
-  const ST = medina ? [75, 461] : [30, 501];
+  const ST = medina ? [-40, 461] : [-72, 501]; // Taxistand beim Helikopter und Ballon auf dem Südplatz
   sign(world, ST[0] + 10, ST[1] - 3.5, 0, BORROW.stand, { w: 3, h: 1, y: 2.6 });
   const stands = [{ kind: medina ? 'suv' : 'sedan', x: ST[0], z: ST[1], ry: Math.PI }, { kind: 'sport', x: ST[0] + 4.2, z: ST[1], ry: Math.PI }, { kind: 'motorbike', x: ST[0] + 8, z: ST[1], ry: Math.PI }];
   for (const s of stands) player.colliders.push({ type: 'box', x: s.x, z: s.z, hw: s.kind === 'motorbike' ? 0.5 : 1, hd: s.kind === 'motorbike' ? 1.1 : 2.3 });
