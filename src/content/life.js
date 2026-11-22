@@ -137,7 +137,12 @@ export const REST = {
 export const BORROW = {
   hail: '✋ Anhalten & fragen',
   ask: '✋ Fahrer fragen',
-  askLine: (name) => `As-salāmu ʿalaikum! Darf ich dein${name === 'Motorrad' ? ' Motorrad' : name === 'Bus' ? 'en Bus' : ' Auto'} ausleihen?`,
+  // richtiger Artikel je Fahrzeug: „deinen Helikopter“, „dein Motorrad“, „deine Limousine“ …
+  askLine: (name) => {
+    const m = { Helikopter: 'deinen Helikopter', Bus: 'deinen Bus', SUV: 'deinen SUV', Minivan: 'deinen Minivan', Kleinwagen: 'deinen Kleinwagen', Pickup: 'deinen Pickup', Sportwagen: 'deinen Sportwagen', Geländewagen: 'deinen Geländewagen', Kombi: 'deinen Kombi',
+      'E-Scooter': 'deinen E-Scooter', Limousine: 'deine Limousine', Motorrad: 'dein Motorrad', Geländemotorrad: 'dein Geländemotorrad', Fahrrad: 'dein Fahrrad', 'E-Bike': 'dein E-Bike', Coupé: 'dein Coupé', Schrägheck: 'dein Auto' };
+    return `As-salāmu ʿalaikum! Darf ich ${m[name] || 'dein Fahrzeug'} ausleihen?`;
+  },
   yesLine: 'Wa ʿalaikumu s-salām! Gern – es ist eine Amanah, bring es gut zurück!',
   enter: (name) => `🔑 Einsteigen (${name})`,
   self: '🕹️ Selbst fahren', auto: '🧭 Automatisch',
