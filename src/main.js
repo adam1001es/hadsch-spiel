@@ -14,6 +14,11 @@ import { initI18n, LANGS, settings, saveSettings, lang, unlockVoice, voiceAvaila
 initI18n();
 import { unlockSfx } from './core/sfx.js';
 addEventListener('pointerdown', () => { unlockVoice(); unlockSfx(); }, { once: true, capture: true });
+// Kein Zoomen im Spiel: Pinch (iPhone/iPad), Doppeltippen/Doppelklick, Strg+Mausrad bzw. Zwei-Finger-Zoom am Trackpad
+for (const ev of ['gesturestart', 'gesturechange', 'gestureend']) document.addEventListener(ev, (e) => e.preventDefault(), { passive: false });
+document.addEventListener('touchmove', (e) => { if (e.touches.length > 1 || (e.scale && e.scale !== 1)) e.preventDefault(); }, { passive: false });
+document.addEventListener('dblclick', (e) => e.preventDefault(), { passive: false });
+addEventListener('wheel', (e) => { if (e.ctrlKey) e.preventDefault(); }, { passive: false });
 addEventListener('keydown', () => { unlockVoice(); unlockSfx(); }, { once: true, capture: true });
 const peopleReady = preloadPeople(); // 3D-Pilgerinnen im Hintergrund laden
 
