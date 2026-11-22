@@ -374,7 +374,7 @@ export function create(ctx, { from, where = 'mecca' } = {}) {
   let hwBusy = from === 'car';
   if (from === 'car' && ctx.borrowed) borrow.arriveWith(ctx.borrowed.kind, HW1 - 14, HWZ + 4, -Math.PI / 2); // kommt aus dem Tunnel
 
-  ui.el.panel.classList.remove('collapsed');
+  if (!ctx.cityIntroSeen) { ctx.cityIntroSeen = true; ui.el.panel.classList.remove('collapsed'); } else ui.el.panel.classList.add('collapsed'); // Willkommenstext nur beim ersten Mal offen
   ui.info(`<p>${medina ? T.introMedina : T.intro}</p><p class="small">🗺️ Karte oben rechts antippen. ${U.note}</p>`);
   ui.actions([{ label: T.cert, onClick: () => ctx.backToEnding?.() }]);
 

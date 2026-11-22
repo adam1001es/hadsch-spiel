@@ -56,7 +56,8 @@ export function createUI() {
   };
   // Infokarte antippen: auf-/zuklappen (nicht beim Tippen auf Knöpfe)
   el.panel.addEventListener('click', (e) => {
-    if (e.target.closest('#actions button')) return;
+    // Knöpfe nie als „Karte antippen“ werten – auch nicht, wenn der Knopf beim Klick schon ersetzt wurde (z. B. Aussteigen)
+    if (e.target.closest('#actions button') || e.target.closest('button') || !e.target.isConnected) return;
     el.panel.classList.toggle('collapsed'); el.panel.classList.remove('unread'); layout(); manualOpen = !el.panel.classList.contains('collapsed') ? performance.now() : 0;
   });
   // Automatisch zuklappen, sobald man sich bewegt (Joystick, Tasten, Halten) – die Karte soll die Figur nicht verdecken.
