@@ -6,6 +6,7 @@ import { peopleModels } from '../world/crowd.js';
 import { createLife } from '../world/life.js';
 import { buildHejaz, H, MED } from '../world/hejaz.js';
 import * as sfx from '../core/sfx.js';
+import { skinBalloon } from '../world/balloonSkin.js';
 
 // Unterhaltung nach dem Hadsch: Heißluftballon über Mekka oder Medina.
 // Der Spieler steht im Korb. Brenner halten = steigen, loslassen = langsam sinken, Joystick = lenken, wischen = Ansicht drehen.
@@ -122,7 +123,7 @@ export function create(ctx, { where = 'mecca' } = {}) {
   const MIN_ALT = 90; // über Minaretten und Dächern
   const balloon = new THREE.Group(); world.add(balloon);
   const pos = new THREE.Vector3(C[where].x + 220, 130, C[where].z + 220), vel = new THREE.Vector3();
-  balloonLoad ||= new GLTFLoader().loadAsync('./assets/models/balloon.glb').then((g) => g.scene).catch(() => null);
+  balloonLoad ||= new GLTFLoader().loadAsync('./assets/models/balloon.glb').then((g) => skinBalloon(g.scene)).catch(() => null);
   balloonLoad.then((sc) => { if (sc && balloon.parent) { const m = sc.clone(true); m.traverse((o) => { if (o.isMesh) o.castShadow = true; }); balloon.add(m); } });
   const fig = createFigure(balloon, { color: ctx.profile?.gender === 'f' ? 0x2c3a4a : 0x34506a, covered: ctx.profile?.gender === 'f', ring: false, models: peopleModels() });
   fig.root.position.set(0.15, 0.12, -0.75); fig.root.rotation.y = Math.PI / 4; // im Korb (Korb ca. 1,6 m, leicht versetzt)

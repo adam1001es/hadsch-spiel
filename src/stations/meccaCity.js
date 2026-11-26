@@ -23,6 +23,7 @@ import { tunnelPortal } from '../world/tunnel.js';
 import { createBorrow } from '../life/borrow.js';
 import { BORROW } from '../content/life.js';
 import * as sfx from '../core/sfx.js';
+import { skinBalloon } from '../world/balloonSkin.js';
 
 // Mekka und Medina nach dem Hadsch – angelehnt an den echten Stadtplan (vereinfachte Lerndarstellung).
 // Koordinaten wie in den Hadsch-Stationen: Mitte der Moschee bei (0, 0), Süden = +z.
@@ -198,7 +199,7 @@ export function create(ctx, { from, where = 'mecca' } = {}) {
   SPOTS.push({ obj: pigeons, color: 'gold', radius: 12, near: 4, push: 0.012, key: 'pigeons', x: PX, z: PZc + 9, label: T.pigeonsDo, run() { feed = 12; ui.info(`<p>${T.pigeonsInfo}</p>`); } });
   // Heißluftballon auf dem Platz südlich der Straße
   const [BXb, BZb] = L.balloon, balloon = new THREE.Group(); balloon.position.set(BXb, 0, BZb); world.add(balloon);
-  balloonLoad ||= new GLTFLoader().loadAsync('./assets/models/balloon.glb').then((g) => g.scene).catch(() => null);
+  balloonLoad ||= new GLTFLoader().loadAsync('./assets/models/balloon.glb').then((g) => skinBalloon(g.scene)).catch(() => null);
   balloonLoad.then((sc) => { if (sc && balloon.parent) { const m = sc.clone(true); m.traverse((o) => { if (o.isMesh) o.castShadow = true; }); balloon.add(m); } });
   SPOTS.push({ obj: balloon, color: 'blue', radius: 12, near: 2.4, push: 0.04, key: 'balloon', x: BXb + 2.5, z: BZb + 4, closest: circleClosest(balloon, 2.5), label: T.balloonDo, run() { ctx.balloon?.(where); } });
   // Bus in die andere Stadt (Haltestelle am Platz, längs der Straße)
