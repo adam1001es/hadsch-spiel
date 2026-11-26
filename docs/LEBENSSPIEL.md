@@ -274,3 +274,9 @@ Noch nicht: gemeinsam über die Autobahn in die andere Stadt (Mitfahrer steigen 
 ### Helikopter-Akrobatik und Ballon
 Helikopter bis 340 km/h, schnelleres Steigen/Sinken, Schräglage in Kurven; Knöpfe LOOPING / ROLLE / DREHUNG (Tastatur F, Q/E, R), Looping ab 22 m Höhe.
 Ballon: ▲ Steigen / ▼ Sinken (Leertaste/C) schnell, sonst schweben; Joystick in jede Richtung bis ~170 km/h.
+
+### Fallschirm
+`src/life/parachute.js` (`createParachute`, `makeCanopy` in islamlernen.at-Farben): aus dem Helikopter (Fahrer und Mitfahrer, ab 25 m Höhe, „🪂 Abspringen“;
+der leere Helikopter sinkt langsam zu Boden) und aus dem Ballon (über der Stadt → `ctx.paraStart`, man fällt in den Straßen von Mekka/Medina).
+Freier Fall → „Schirm öffnen“ (automatisch bei 70 m) → gleiten (Joystick: lenken, vor = schneller, zurück = bremsen) → Landung. Über noLand-Orten
+hält der Schirm die Höhe. Mitspieler sehen den Schirm (Zustand `pc`).

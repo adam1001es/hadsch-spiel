@@ -5,6 +5,7 @@ import { resolve } from '../core/player.js';
 import { createFigure } from '../core/player.js';
 import { boxClosest } from './interact.js';
 import { peopleModels } from '../world/crowd.js';
+import { createParachute } from './parachute.js';
 import * as sfx from '../core/sfx.js';
 
 // Amanah-Ausleihe (Lebensspiel): Fahrzeuge im Verkehr anhalten oder am Taxistand den Fahrer fragen, einsteigen
@@ -165,7 +166,7 @@ export function createBorrow(ctx, opts) {
   const RENT = [...SMALL_KINDS, 'escooter', 'bicycle', 'motorbike', ...CAR_KINDS];
   let spawnT = 0;
   function keepNearby(dt) {
-    if ((spawnT -= dt) > 0 || drive || pending) return; spawnT = 2;
+    if ((spawnT -= dt) > 0 || drive || pending || para?.active || pax) return; spawnT = 2;
     const px = player.pos.x, pz = player.pos.z;
     // weit entfernte Verleih-Fahrzeuge wegräumen
     for (const P of parked.slice()) if (P.src === 'rent' && P !== drive?.P && Math.hypot(P.x - px, P.z - pz) > 160) { P.veh.root.removeFromParent(); if (P.ia) interact.remove(P.ia); parked.splice(parked.indexOf(P), 1); }
@@ -253,10 +254,12 @@ export function createBorrow(ctx, opts) {
     autoPts = drive.spec.air ? [{ x: dest.x, z: dest.z }] : route({ x: drive.x, z: drive.z }, dest); // Helikopter fliegt direkt
   }
   function actions() {
-    const key = mode + (autoPts ? 'a' : '') + crew.join() + [...asks].join();
+    const canJump = drive.spec.air && drive.y > ground(drive.x, drive.z) + 25;
+    const key = mode + (autoPts ? 'a' : '') + crew.join() + [...asks].join() + (canJump ? 'j' : '');
     if (key === lastKey) return; lastKey = key;
     const list = [{ label: mode === 'self' ? T.auto : T.self, icon: mode === 'self' ? 'auto' : 'self', kind: 'primary', onClick: () => { mode = mode === 'self' ? 'auto' : 'self'; autoPts = null; lastKey = ''; } }];
     if (mode === 'auto' && !autoPts) for (const d of destinations) list.push({ label: '→ ' + d.label, onClick: () => setAuto(d) });
+    if (canJump) list.push({ label: '🪂 Abspringen', onClick: () => jumpOut() });
     for (const id of crew) list.push({ label: (asks.has(id) ? '🙋 ' : '🔁 ') + 'Steuer an ' + letter(id) + ' geben', kind: asks.has(id) ? 'primary' : undefined, onClick: () => handOver(id) });
     list.push({ label: T.exit, icon: 'exit', onClick: () => exit(false) }); // „Zurückgeben“-Knopf entfernt (Wunsch des Nutzers)
     ui.actions(list);
@@ -400,6 +403,29 @@ export function createBorrow(ctx, opts) {
     actions();
   }
 
+  // ---------- Fallschirm: aus dem Helikopter abspringen (der leere Helikopter sinkt langsam zu Boden) ----------
+  const para = createParachute(ctx, { player, ground, colliders, noLand, onLand: () => ui.actions(opts.baseActions || []) });
+  const sinking = []; // leere Helikopter, die landen
+  function jumpOut() {
+    if (!drive || !drive.spec.air) return;
+    const D = drive, P = D.P;
+    if (crew.length) multi?.send?.('ride', { a: 'out', to: '*', jump: 1 }); // Mitfahrer springen mit
+    crew.length = 0; crewSeat.clear(); asks.clear();
+    drive = null; player.ride = null; ctx.vehicle = null; ctx.myVehicle = null; ctx.vehPose = null; D.stunt = null;
+    setup.hidden = true; engine.setViewShift?.(null); pad.hidden = true; for (const k of Object.keys(ctl)) ctl[k] = 0; steerOff(); document.body.classList.remove('driving'); ui.el.stick.classList.remove('off');
+    cam.fov = 62; cam.updateProjectionMatrix();
+    P.x = D.x; P.z = D.z; P.h = D.h; sinking.push({ P, y: D.y });
+    const R = P.veh.root; R.rotation.set(0, D.h, 0);
+    para.start(D.x + Math.cos(D.h) * 2, D.y - 1, D.z - Math.sin(D.h) * 2, D.h, Math.sin(D.h) * D.v * 0.5, Math.cos(D.h) * D.v * 0.5);
+  }
+  function sinkUpdate(dt) {
+    for (let i = sinking.length - 1; i >= 0; i--) {
+      const o = sinking[i], R = o.P.veh.root, gy = ground(o.P.x, o.P.z);
+      o.y = Math.max(gy, o.y - 6 * dt); R.position.set(o.P.x, o.y, o.P.z); o.P.veh.rotor = o.y > gy ? 0.8 : Math.max(0, o.P.veh.rotor - dt * 0.4); o.P.veh.roll(0, dt);
+      if (o.y <= gy && o.P.veh.rotor <= 0) { o.P.parked = true; sinking.splice(i, 1); }
+    }
+  }
+
   // ---------- Gemeinsam fahren (Mehrspieler): mitfahren, passiv sitzen und umschauen, Steuer übergeben ----------
   // Ereignis „ride“: join (darf ich mit?) → ok { seat } / full; leave; out (Fahrer steigt aus); ask (ich möchte fahren);
   // take (Steuer übernehmen: Fahrzeug, Lage, Tempo, Mitfahrer). Mitfahrer senden r = Fahrer-Kennung, si = Sitz.
@@ -436,17 +462,27 @@ export function createBorrow(ctx, opts) {
     pax = { d, si, wait: 0 }; ctx.ride = { d, si };
     player.ride = paxRide; player.freeze(true); first = true; interact.enabled = false; ui.prompt(null);
     ui.el.stick.classList.add('off'); ui.el.panel.classList.add('collapsed');
+    pax.ak = ''; paxActions();
+  }
+  function paxActions() {
+    const f = multi?.vehOf(pax.d), high = f && f.veh.spec.air && f.y > ground(f.x, f.z) + 25, k = high ? 'h' : 'g';
+    if (pax.ak === k) return; pax.ak = k;
     ui.actions([
       { label: '🙋 Ich möchte steuern', kind: 'primary', onClick: () => { multi?.send('ride', { a: 'ask', to: pax?.d }); ui.toast('Anfrage gesendet – ' + letter(pax?.d) + ' kann dir das Steuer geben', 2600); } },
-      { label: T.exit, icon: 'exit', onClick: () => leavePax(false) },
+      high ? { label: '🪂 Abspringen', onClick: () => leavePax(false) } : { label: T.exit, icon: 'exit', onClick: () => leavePax(false) },
     ]);
   }
   function leavePax(force = false, silent = false) {
     if (!pax) return;
-    const f = multi?.vehOf(pax.d);
-    if (!force && f && f.veh.spec.air && f.y > ground(f.x, f.z) + 0.6) { ui.toast(T.landFirst, 2200); return; }
+    const f = multi?.vehOf(pax.d), st0 = multi?.stateOf(pax.d);
+    const high = f && f.veh.spec.air && f.y > ground(f.x, f.z) + 25;
+    if (!force && f && f.veh.spec.air && f.y > ground(f.x, f.z) + 0.6 && !high) { ui.toast(T.landFirst, 2200); return; }
     if (!silent) multi?.send('ride', { a: 'leave', to: pax.d });
     pax = null; ctx.ride = null; player.ride = null; player.freeze(false); player.fig.pose('stand'); interact.enabled = true; ui.el.stick.classList.remove('off');
+    if (!silent && high) { // aus dem fliegenden Helikopter: mit dem Fallschirm abspringen
+      para.start(f.x - Math.cos(f.h) * 2, f.y - 1, f.z + Math.sin(f.h) * 2, f.h, Math.sin(f.h) * (st0?.u || 0) * 0.5, Math.cos(f.h) * (st0?.u || 0) * 0.5);
+      return;
+    }
     if (!silent) {
       const h = f ? f.h : player.heading, side = (f ? f.veh.spec.wid / 2 : 1) + 0.9, x = (f ? f.x : player.pos.x) - Math.cos(h) * side, z = (f ? f.z : player.pos.z) + Math.sin(h) * side;
       const q = { x, z }; resolve(q, 0.4, colliders); player.teleport(q.x, q.z, h); player.fig.root.rotation.set(0, h, 0);
@@ -456,7 +492,7 @@ export function createBorrow(ctx, opts) {
   function paxRide(dt) {
     const f = multi?.vehOf(pax.d), st = multi?.stateOf(pax.d);
     if (!f || !st?.v) { pax.wait += dt; if (pax.wait > 4) { leavePax(true); ui.toast('Die Fahrt ist zu Ende', 2000); } return; }
-    pax.wait = 0;
+    pax.wait = 0; paxActions();
     const veh = f.veh; veh.seat(tmp, pax.si);
     player.fig.pose(veh.spec.pose === 'ride' ? 'ride' : 'drive'); player.fig.root.position.copy(tmp); player.fig.root.quaternion.copy(veh.root.quaternion); player.fig.update(dt, 0);
     player.pos.set(f.x, f.y, f.z); player.heading = f.h;
@@ -480,7 +516,7 @@ export function createBorrow(ctx, opts) {
     } else if (d.a === 'ok') { if (!drive) { if (pax) { pax.d = from.id; pax.si = d.seat; ctx.ride = { d: from.id, si: d.seat }; } else { enterPax(from.id, d.seat); ui.toast('Du fährst bei ' + who + ' mit – wische zum Umschauen', 2600); } } }
     else if (d.a === 'full') ui.toast('Kein Platz mehr frei', 2000);
     else if (d.a === 'leave') { const i = crew.indexOf(from.id); if (i >= 0) { crew.splice(i, 1); crewSeat.delete(from.id); asks.delete(from.id); lastKey = ''; ui.toast(who + ' ist ausgestiegen', 1800); } }
-    else if (d.a === 'out') { if (pax && pax.d === from.id) leavePax(true); }
+    else if (d.a === 'out') { if (pax && pax.d === from.id) { leavePax(true); if (d.jump && !para.active) ui.toast(who + ' ist abgesprungen', 2000); } }
     else if (d.a === 'ask') { if (drive && crew.includes(from.id)) { asks.add(from.id); lastKey = ''; ui.toast(who + ' möchte ' + (drive.spec.air ? 'fliegen' : 'fahren') + ' – unten „Steuer an ' + who + ' geben“', 3200); } }
     else if (d.a === 'take') { if (pax && pax.d === from.id) takeOver(d, from); }
   });
@@ -543,12 +579,12 @@ export function createBorrow(ctx, opts) {
           pending = null; enter(P);
         } else if (pv.t > 8) { traffic.hold(vh, false); pending = null; } // hält nicht an (z. B. Bus im Stau)
       }
-      keepNearby(dt); rideUpdate(dt);
+      keepNearby(dt); rideUpdate(dt); sinkUpdate(dt);
       for (const d of drivers) d.update?.(dt, 0);
       for (const P of parked) P.owner?.update?.(dt, 0);
       talk.update();
     },
-    get passenger() { return pax; }, handOver, enterPax, leavePax, enter, stunt,
-    dispose() { offRide?.(); ctx.crew = null; ctx.ride = null; ctx.myVehicle = null; ctx.vehPose = null; engine.setViewShift?.(null); talk.clear(); pad.remove(); setup.remove(); document.body.classList.remove('driving'); window.removeEventListener('keydown', kd); window.removeEventListener('keyup', ku); if (drive) { player.ride = null; ctx.vehicle = null; } },
+    get passenger() { return pax; }, handOver, enterPax, leavePax, enter, stunt, jumpOut, parachute: para,
+    dispose() { para.dispose(); offRide?.(); ctx.crew = null; ctx.ride = null; ctx.myVehicle = null; ctx.vehPose = null; engine.setViewShift?.(null); talk.clear(); pad.remove(); setup.remove(); document.body.classList.remove('driving'); window.removeEventListener('keydown', kd); window.removeEventListener('keyup', ku); if (drive) { player.ride = null; ctx.vehicle = null; } },
   };
 }

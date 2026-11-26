@@ -9,6 +9,7 @@ import { createFigure } from './player.js';
 import { peopleModels } from '../world/crowd.js';
 import { settings, saveSettings } from './i18n.js';
 import { makeVehicle } from '../life/vehicles.js';
+import { makeCanopy } from '../life/parachute.js';
 const seatV = new THREE.Vector3();
 
 const RATE = 0.25, SHOW = 14; // Senden 4× pro Sekunde; höchstens 14 Mitspieler gleichzeitig zeigen (die nächsten)
@@ -43,7 +44,7 @@ export function createMulti(ctx) {
       c: p.fig.cloth.color.getHex(), k: p.fig.skinM.color.getHex(), f: ctx.profile?.gender === 'f' ? 1 : 0,
       // v = Fahrzeug, das man fährt (mit Lage: vp/vr Neigung, u Tempo, lv bunte Lackierung, ps Mitfahrer)
       ...(ctx.vehicle ? { v: ctx.vehicle, vp: +(ctx.vehPose?.vp || 0).toFixed(2), vr: +(ctx.vehPose?.vr || 0).toFixed(2), u: +(ctx.vehPose?.u || 0).toFixed(1), lv: ctx.vehPose?.lv ? 1 : 0, ps: ctx.crew || [] } : {}),
-      ...(ctx.ride ? { r: ctx.ride.d, si: ctx.ride.si } : {}) }; // r = Fahrer, bei dem man mitfährt, si = Sitz
+      ...(ctx.ride ? { r: ctx.ride.d, si: ctx.ride.si } : {}), ...(ctx.para ? { pc: ctx.para.phase === 'glide' ? 2 : 1 } : {}) }; // pc = Fallschirm (1 freier Fall, 2 Schirm offen) // r = Fahrer, bei dem man mitfährt, si = Sitz
   }
   const totals = () => { const now = Date.now(), by = {}; let n = 0; for (const [id, a] of Object.entries(alive)) { if (now - a.t > 25000) { delete alive[id]; continue; } n++; by[a.s] = (by[a.s] || 0) + 1; } return { n, by }; };
   const status = () => ({ online: settings.online !== false, connected, code, me: initial(), total: connected ? totals() : { n: 0, by: {} }, others: Object.entries(states).map(([id, s]) => ({ id, col: colorOf(id), ...s })) });
@@ -163,7 +164,10 @@ export function createMulti(ctx) {
           const veh = s.r === myId ? ctx.myVehicle : figs.get(s.r)?.veh;
           if (veh) { f.fig.pose(veh.spec.pose === 'ride' ? 'ride' : 'drive'); f.fig.root.position.copy(veh.seat(seatV, s.si || 1)); f.fig.root.quaternion.copy(veh.root.quaternion); f.fig.update(dt, 0); f.fig.root.visible = true; continue; }
         }
-        f.fig.root.rotation.set(0, f.h, 0);
+        f.fig.root.rotation.set(s.pc === 1 ? -1.2 : 0, f.h, 0);
+        // Fallschirm der Mitspieler zeigen
+        if (s.pc === 2 && !f.can) { f.can = makeCanopy(); f.fig.root.add(f.can); } else if (s.pc !== 2 && f.can) { f.can.removeFromParent(); f.can = null; }
+        if (s.pc) { f.fig.root.position.set(f.x, f.y, f.z); f.fig.update(dt, 0); continue; }
         f.fig.pose(v > 0.3 ? 'walk' : s.p === 'walk' ? 'stand' : s.p);
         f.fig.root.position.set(f.x, s.y ?? me.y, f.z); f.fig.root.rotation.y = f.h;
         f.fig.update(dt, v / 1.6);

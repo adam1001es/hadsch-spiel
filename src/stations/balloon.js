@@ -140,7 +140,15 @@ export function create(ctx, { where = 'mecca' } = {}) {
     ui.actions(trip ? [{ label: T.stop, onClick: () => { trip = null; setActions(); } }] : [
       { label: other === 'medina' ? T.toMedina : T.toMecca, onClick: () => { trip = other; ui.toast(T.flying, 2500); ui.el.panel.classList.add('collapsed'); setActions(); } },
       { label: T.land, kind: 'primary', onClick: () => ctx.city?.('balloon', here) },
+      { label: '🪂 Abspringen', onClick: () => jump() },
     ]);
+  }
+  // Fallschirmsprung: über der Stadt abspringen → man fällt in den Straßen von Mekka/Medina (gleiche Lage zur Moschee)
+  function jump() {
+    const c = C[here], dx = pos.x - c.x, dz = pos.z - c.z;
+    if (Math.hypot(dx, dz) > 900) { ui.toast('Zum Abspringen über die Stadt fliegen', 2200); return; }
+    ctx.paraStart = { x: dx, z: dz, y: Math.min(320, pos.y - Math.max(0, h(pos.x, pos.z))), h: input.yaw + Math.PI };
+    ctx.city?.('balloon', here);
   }
   // Steuerung: ▲ Brenner (schnell steigen), ▼ Ventil (schnell sinken), Joystick = in jede Richtung, Tastatur Leertaste/C
   const bc = document.createElement('div'); bc.id = 'balloonCtl';

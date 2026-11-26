@@ -35,7 +35,7 @@ function draw(c) {
     for (const a of [0, Math.PI / 4]) { g.save(); g.translate(sx, by + bh / 2); g.rotate(a); const r = fs * 0.2; g.fillRect(-r * 0.7, -r * 0.7, r * 1.4, r * 1.4); g.restore(); }
   }
 }
-function liveryTexture() {
+export function liveryTexture() {
   if (tex) return tex;
   const c = document.createElement('canvas'); c.width = 2048; c.height = 512; draw(c);
   tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 8;

@@ -378,6 +378,13 @@ export function create(ctx, { from, where = 'mecca' } = {}) {
   if (!ctx.cityIntroSeen) { ctx.cityIntroSeen = true; ui.el.panel.classList.remove('collapsed'); } else ui.el.panel.classList.add('collapsed'); // Willkommenstext nur beim ersten Mal offen
   ui.info(`<p>${medina ? T.introMedina : T.intro}</p><p class="small">🗺️ Karte oben rechts antippen. ${U.note}</p>`);
   ui.actions([{ label: T.cert, onClick: () => ctx.backToEnding?.() }]);
+  // aus dem Heißluftballon abgesprungen: Fallschirm über der Stadt (innerhalb der Stadtgrenzen)
+  if (ctx.paraStart) {
+    const ps = ctx.paraStart; ctx.paraStart = null; const B = L.bounds;
+    const x = Math.max(B.x0 + 30, Math.min(B.x1 - 30, ps.x)), z = Math.max(B.z0 + 30, Math.min(B.z1 - 30, ps.z));
+    ui.el.panel.classList.add('collapsed');
+    borrow.parachute.start(x, groundH(x, z) + Math.max(40, ps.y), z, ps.h);
+  }
 
   return {
     update(dt) {
