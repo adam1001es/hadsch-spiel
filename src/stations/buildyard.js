@@ -285,7 +285,7 @@ export function create(ctx, { from } = {}) {
     ...piles.map((p) => ({ type: 'box', x: p.x, z: p.z, hw: 0.55, hd: 0.55 })),
     wall,
   ];
-  player = createPlayer(ctx, { x: W + 4, z: -2, heading: Math.PI / 2, color: ctx.profile?.gender === 'f' ? 0x2c3a4a : 0xf6f4ee, speed: 3, fastSpeed: 6, colliders, ground, surface: 'sand' });
+  player = createPlayer(ctx, { x: W + 4, z: -2, heading: Math.PI / 2, color: ctx.profile?.gender === 'f' ? 0x2c3a4a : 0x34506a, speed: 3, fastSpeed: 6, colliders, ground, surface: 'sand' });
   const life = createLife(ctx, { kind: 'desert' });
 
   // ---------- Werkzeug: Baukasten, Bauen/Abbauen, Springen, Fliegen ----------
