@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { BORROW as T } from '../content/life.js';
-import { makeVehicle, specOf, SMALL_KINDS, CAR_KINDS } from './vehicles.js';
+import { makeVehicle, specOf, seatsOf, SMALL_KINDS, CAR_KINDS } from './vehicles.js';
 import { resolve } from '../core/player.js';
 import { createFigure } from '../core/player.js';
 import { boxClosest } from './interact.js';
@@ -63,6 +63,7 @@ export function createBorrow(ctx, opts) {
     + '<div class="dc-wheel" aria-label="Lenken: Daumen nach links oder rechts schieben"><i class="a l">‹</i><i class="knob"></i><i class="a r">›</i></div></div>'
     + '<div class="dc-r"><div class="dc-top"><button data-k="ag" class="ag" aria-label="Auto-Gas an oder aus"></button><button data-k="n" class="nitro" aria-label="Nitro"><span>⚡</span><small>NITRO</small></button>'
     + '<button data-k="u" class="air" aria-label="Hoch">▲ HOCH</button><button data-k="d" class="air" aria-label="Runter">▼ RUNTER</button></div>'
+    + '<div class="dc-stunts"><button data-k="lp" class="air stunt" aria-label="Looping">⟲<small>LOOPING</small></button><button data-k="rl" class="air stunt" aria-label="Rolle">↻<small>ROLLE</small></button><button data-k="sp" class="air stunt" aria-label="Pirouette">🌀<small>DREHUNG</small></button></div>'
     + '<div class="dc-pedals"><button data-k="b" class="pedal brake" aria-label="Bremse, Drift und rückwärts"><span>BREMSE</span><small>Kurve = Drift</small></button>'
     + '<button data-k="g" class="pedal gas" aria-label="Gas"><span>GAS</span></button></div></div>';
   document.body.appendChild(pad);
@@ -111,8 +112,17 @@ export function createBorrow(ctx, opts) {
     const b = e.target.closest('button[data-k]'); if (!b) return; e.preventDefault(); const k = b.dataset.k;
     if (k === 'ag') { if (on) { autoGas = !autoGas; try { localStorage.setItem('hp-autogas', autoGas ? '1' : '0'); } catch { /* egal */ } showAG(); applyDS(); } return; }
     if (k === 'n') { if (on) fireNitro(); return; }
+    if (k === 'lp' || k === 'rl' || k === 'sp') { if (on) stunt(k); return; }
     ctl[k] = on ? 1 : 0; b.classList.toggle('on', on); if (on) { started = true; try { b.setPointerCapture(e.pointerId); } catch { /* egal */ } }
   };
+  // Helikopter-Akrobatik: Looping (Nase hoch, einmal rundherum), Rolle (um die Längsachse), Drehung (Pirouette auf der Stelle)
+  function stunt(type, dir) {
+    if (!drive || !drive.spec.air || drive.stunt) return;
+    const D = drive, gy = ground(D.x, D.z);
+    if (D.veh.rotor < 0.8 || D.y < gy + (type === 'lp' ? 22 : 10)) { ui.toast(type === 'lp' ? 'Für einen Looping höher fliegen (über 22 m)' : 'Erst abheben und etwas höher fliegen', 2000); return; }
+    D.stunt = { type, t: 0, dur: type === 'lp' ? 2.4 : type === 'rl' ? 1.3 : 1.6, dir: dir ?? (D.steer > 0.1 ? 1 : D.steer < -0.1 ? -1 : (Math.random() < 0.5 ? 1 : -1)), sp: Math.max(Math.abs(D.v), 24) };
+    sfx.bus?.(); started = true;
+  }
   function fireNitro() { if (nitroCool > 0 || !drive || drive.spec.air) return; nitroT = 4.5; nitroCool = 7; started = true; }
   pad.addEventListener('pointerdown', (e) => press(e, true));
   for (const ev of ['pointerup', 'pointercancel', 'lostpointercapture']) pad.addEventListener(ev, (e) => press(e, false));
@@ -123,6 +133,7 @@ export function createBorrow(ctx, opts) {
     if (e.code === 'Space') { if (drive.spec.air) ctl.u = v; else ctl.b = v; e.preventDefault(); }
     if (e.code === 'KeyC') ctl.d = v;
     if ((e.code === 'ShiftLeft' || e.code === 'ShiftRight') && on) fireNitro();
+    if (on && drive.spec.air) { if (e.code === 'KeyF') stunt('lp'); if (e.code === 'KeyQ') stunt('rl', 1); if (e.code === 'KeyE') stunt('rl', -1); if (e.code === 'KeyR') stunt('sp'); }
     if (on && /Key[WASD]|Arrow/.test(e.code)) started = true;
   };
   const kd = (e) => keys(e, true), ku = (e) => keys(e, false);
@@ -138,15 +149,15 @@ export function createBorrow(ctx, opts) {
     const veh = makeVehicle(world, s.kind, s.livery ? { livery: true } : {}); veh.root.position.set(s.x, 0, s.z); veh.root.rotation.y = s.ry;
     const side = specOf(s.kind).wid / 2 + 0.9, ox = Math.cos(s.ry) * side, oz = -Math.sin(s.ry) * side;
     const owner = mkDriver(s.x + ox, s.z + oz, s.ry + Math.PI / 2);
-    const P = { veh, x: s.x, z: s.z, h: s.ry, owner, home: { x: s.x, z: s.z, h: s.ry }, src: 'stand' };
+    const P = { veh, x: s.x, z: s.z, h: s.ry, owner, home: { x: s.x, z: s.z, h: s.ry }, src: 'stand', lv: !!s.livery };
     parked.push(P);
     const back = specOf(s.kind).len / 2 + 1.2; // Fragepunkt hinter dem Fahrzeug (eindeutig, auch wenn mehrere nebeneinander stehen)
-    interact.add({ obj: veh.root, color: 'blue', radius: 9, near: 2.2, closest: boxClosest(veh.root, veh.spec.wid / 2, veh.spec.len / 2), key: 'stand-' + parked.length, label: () => (P.mine ? T.enter(veh.name) : T.ask), when: () => !drive && P.parked !== false, run: () => (P.mine ? enter(P) : ask(P)) });
+    interact.add({ obj: veh.root, color: 'blue', radius: 9, near: 2.2, closest: boxClosest(veh.root, veh.spec.wid / 2, veh.spec.len / 2), key: 'stand-' + parked.length, label: () => (P.mine ? T.enter(veh.name) : T.ask), when: () => !drive && P.parked !== false && !P.hidden, run: () => (P.mine ? enter(P) : ask(P)) });
   }
   // ---------- Verleih: Fahrzeug ohne Fahrer (immer eins in der Nähe) ----------
-  function addRental(kind, x, z, h) {
-    const veh = makeVehicle(world, kind); veh.root.position.set(x, ground(x, z), z); veh.root.rotation.y = h;
-    const P = { veh, x, z, h, owner: null, home: { x, z, h }, src: 'rent', mine: true, parked: true };
+  function addRental(kind, x, z, h, { y = null, lv = false } = {}) {
+    const veh = makeVehicle(world, kind, lv ? { livery: true } : {}); veh.root.position.set(x, y ?? ground(x, z), z); veh.root.rotation.y = h;
+    const P = { veh, x, z, h, owner: null, home: { x, z, h }, src: 'rent', mine: true, parked: true, lv };
     parked.push(P);
     P.ia = interact.add({ obj: veh.root, color: 'blue', radius: 10, near: 2.2, closest: boxClosest(veh.root, veh.spec.wid / 2, veh.spec.len / 2), key: 'rent-' + kind + '-' + parked.length, label: T.rent(veh.name), when: () => !drive && P.parked && parked.includes(P), run: () => enter(P) });
     return P;
@@ -196,6 +207,7 @@ export function createBorrow(ctx, opts) {
     player.ride = ride; player.freeze(true); player.fig.pose(drive.spec.pose); first = true; yaw0 = input.yaw;
     mode = 'self'; autoPts = null; lastKey = '';
     ctx.vehicle = drive.veh.kind; // für Mitspieler (multi.js)
+    ctx.myVehicle = drive.veh; ctx.vehPose = { vp: 0, vr: 0, u: 0, lv: !!P.lv }; crew.length = 0; crewSeat.clear(); asks.clear();
     sfx.bus?.();
     ui.el.panel.classList.add('collapsed'); // beim Fahren nichts verdecken
     if (!seenInfo) { seenInfo = true; ui.info(`<p>${T.info}</p>`); } // einmal erklären (Karte bleibt zu, „i“ zeigt einen Punkt)
@@ -204,7 +216,9 @@ export function createBorrow(ctx, opts) {
     if (!drive) return;
     const D = drive, P = D.P;
     if (D.spec.air && D.y > ground(D.x, D.z) + 0.6) { ui.toast(T.landFirst, 2200); return; } // erst landen
-    drive = null; player.ride = null; player.freeze(false); player.fig.pose('stand'); ctx.vehicle = null;
+    drive = null; player.ride = null; player.freeze(false); player.fig.pose('stand'); ctx.vehicle = null; player.fig.root.rotation.set(0, D.h, 0);
+    if (crew.length) multi?.send?.('ride', { a: 'out', to: '*' }); // Mitfahrer steigen auch aus
+    crew.length = 0; crewSeat.clear(); asks.clear(); ctx.myVehicle = null; ctx.vehPose = null;
     setup.hidden = true; engine.setViewShift?.(null);
     pad.hidden = true; for (const k of Object.keys(ctl)) ctl[k] = 0; steerOff(); nitroT = 0; pad.querySelectorAll('button.on').forEach((b) => b.classList.remove('on')); cam.fov = 62; cam.updateProjectionMatrix(); document.body.classList.remove('driving'); ui.el.stick.classList.remove('off'); D.veh.rotor = 0;
     // neben dem Fahrzeug aussteigen (links)
@@ -239,10 +253,11 @@ export function createBorrow(ctx, opts) {
     autoPts = drive.spec.air ? [{ x: dest.x, z: dest.z }] : route({ x: drive.x, z: drive.z }, dest); // Helikopter fliegt direkt
   }
   function actions() {
-    const key = mode + (autoPts ? 'a' : '');
+    const key = mode + (autoPts ? 'a' : '') + crew.join() + [...asks].join();
     if (key === lastKey) return; lastKey = key;
     const list = [{ label: mode === 'self' ? T.auto : T.self, icon: mode === 'self' ? 'auto' : 'self', kind: 'primary', onClick: () => { mode = mode === 'self' ? 'auto' : 'self'; autoPts = null; lastKey = ''; } }];
     if (mode === 'auto' && !autoPts) for (const d of destinations) list.push({ label: '→ ' + d.label, onClick: () => setAuto(d) });
+    for (const id of crew) list.push({ label: (asks.has(id) ? '🙋 ' : '🔁 ') + 'Steuer an ' + letter(id) + ' geben', kind: asks.has(id) ? 'primary' : undefined, onClick: () => handOver(id) });
     list.push({ label: T.exit, icon: 'exit', onClick: () => exit(false) }); // „Zurückgeben“-Knopf entfernt (Wunsch des Nutzers)
     ui.actions(list);
   }
@@ -292,7 +307,7 @@ export function createBorrow(ctx, opts) {
     if (S.air) { // Helikopter: Rotor hochfahren, steigen/sinken, am Boden nicht vorwärts
       const onGround = D.y <= gy + 0.05;
       D.veh.rotor += ((lift > 0 || !onGround || Math.abs(throttle) > 0.1 ? 1 : 0.25) - D.veh.rotor) * Math.min(1, dt * 1.2);
-      D.vy += ((lift * 7) - D.vy) * Math.min(1, dt * 2.5);
+      D.vy += ((lift * 15) - D.vy) * Math.min(1, dt * 3.5); // schnell steigen und sinken
       if (D.veh.rotor < 0.7 && D.vy > 0) D.vy = 0;
       D.y += D.vy * dt;
       if (D.y < gy) { // Landung – aber nicht auf Kaaba/Prophetenmoschee/Moscheen
@@ -302,8 +317,20 @@ export function createBorrow(ctx, opts) {
       }
       const forbidden = noLand(D.x, D.z); if (forbidden && D.y < gy + 25) { D.y += (gy + 25 - D.y) * Math.min(1, dt * 1.5); if ((D.noLandT = (D.noLandT || 0) + dt) > 0.5) { ui.toast(forbidden, 2600); D.noLandT = -4; } }
       if (onGround && D.y <= gy + 0.05) throttle = 0;
-      D.v += ((throttle * vmax) - D.v) * Math.min(1, dt * 0.9);
-      D.h += D.steer * dt * 1.3; D.slip = 0;
+      D.v += ((throttle * vmax) - D.v) * Math.min(1, dt * 1.4);
+      D.h += D.steer * dt * 2.1; D.slip = 0; // wendig
+      // Akrobatik
+      D.sPitch = 0; D.sRoll = 0;
+      const st = D.stunt;
+      if (st) {
+        st.t += dt; const a = Math.min(1, st.t / st.dur), ang = a * Math.PI * 2;
+        if (st.type === 'lp') { // senkrechter Kreis: vorwärts/aufwärts nach Winkel
+          D.sPitch = -ang; D.v = st.sp * Math.cos(ang); D.y += st.sp * Math.sin(ang) * dt; D.vy = 0;
+        } else if (st.type === 'rl') { D.sRoll = st.dir * ang; D.y += Math.sin(a * Math.PI) * 4 * dt; }
+        else D.h += st.dir * (Math.PI * 2 / st.dur) * dt;
+        if (D.y < gy + 1) D.y = gy + 1;
+        if (a >= 1) { if (st.type === 'lp') D.v = st.sp; D.stunt = null; }
+      }
     } else { // Boden: Gas, Bremse, Rückwärts, Rollen, Lenken, Driften
       if (throttle > 0.05) D.v += (D.v < 0 ? 14 : acc * throttle * Math.max(0.1, 1 - (D.v / vmax) ** 2)) * dt; // Gas (oben heraus langsamer, wie Luftwiderstand) (aus dem Rückwärtsgang erst bremsen)
       else if (throttle < -0.05) D.v -= (D.v > 0.4 ? 16 : acc * 0.7 * -throttle * Math.max(0, 1 + D.v / (S.vmax * 0.35))) * dt; // Bremse, dann rückwärts
@@ -343,13 +370,16 @@ export function createBorrow(ctx, opts) {
     R.rotation.order = 'YXZ';
     // Neigung am Hang (vorne/hinten), in der Luft Nase leicht nach unten
     const pitchG = S.air ? 0 : Math.atan2(ground(D.x - fx * S.len * 0.4, D.z - fz * S.len * 0.4) - ground(D.x + fx * S.len * 0.4, D.z + fz * S.len * 0.4), S.len * 0.8);
-    D.pitch = (D.pitch || 0) + ((S.air ? D.v / S.vmax * 0.15 : D.air ? Math.max(-0.4, Math.min(0.4, -D.vy * 0.02)) : pitchG) - (D.pitch || 0)) * Math.min(1, dt * 8);
-    R.rotation.x = D.pitch;
-    R.rotation.z = S.air ? -D.steer * 0.15 : two ? -D.steer * 0.38 * sp2 : -D.steer * 0.04 * sp2; // Zweiräder legen sich in die Kurve
+    D.pitch = (D.pitch || 0) + ((S.air ? D.v / S.vmax * 0.38 - D.vy * 0.012 : D.air ? Math.max(-0.4, Math.min(0.4, -D.vy * 0.02)) : pitchG) - (D.pitch || 0)) * Math.min(1, dt * 8);
+    R.rotation.x = D.pitch + (D.sPitch || 0);
+    R.rotation.z = S.air ? -D.steer * (0.25 + 0.45 * Math.min(1, Math.abs(D.v) / 40)) + (D.sRoll || 0) : two ? -D.steer * 0.38 * sp2 : -D.steer * 0.04 * sp2; // Zweiräder legen sich in die Kurve
     R.updateMatrixWorld(true);
+    if (ctx.vehPose) { ctx.vehPose.vp = R.rotation.x; ctx.vehPose.vr = R.rotation.z; ctx.vehPose.u = D.v; }
     D.veh.roll(D.v, dt, D.steer);
     // Figur sitzt im Fahrzeug
-    D.veh.seat(tmp); player.fig.root.position.copy(tmp); player.fig.root.rotation.y = D.h; player.fig.update(dt, 0);
+    D.veh.seat(tmp); player.fig.root.position.copy(tmp);
+    if (S.air) player.fig.root.quaternion.copy(R.quaternion); else { player.fig.root.rotation.set(0, D.h, 0); }
+    player.fig.update(dt, 0);
     player.pos.set(D.x, D.y, D.z); player.heading = D.h;
     // Kamera hinter dem Fahrzeug (wischen = umschauen, kehrt langsam zurück)
     const look = input.yaw - yaw0; yaw0 += look * Math.min(1, dt * 0.8);
@@ -368,6 +398,115 @@ export function createBorrow(ctx, opts) {
     nitroBtn.classList.toggle('cool', nitroCool > 0 && nitroT <= 0); nitroBtn.style.setProperty('--cd', String(nitroT > 0 ? 1 : 1 - nitroCool / 7));
     if (!started && !S.air && autoGas) infoEl.textContent = 'Lenken oder Bremse = los';
     actions();
+  }
+
+  // ---------- Gemeinsam fahren (Mehrspieler): mitfahren, passiv sitzen und umschauen, Steuer übergeben ----------
+  // Ereignis „ride“: join (darf ich mit?) → ok { seat } / full; leave; out (Fahrer steigt aus); ask (ich möchte fahren);
+  // take (Steuer übernehmen: Fahrzeug, Lage, Tempo, Mitfahrer). Mitfahrer senden r = Fahrer-Kennung, si = Sitz.
+  const multi = ctx.multi, myId = multi?.myId;
+  const crew = [], crewSeat = new Map(), asks = new Set(), missT = new Map(); ctx.crew = crew;
+  let pax = null, joinCand = null;
+  const letter = (id) => multi?.stateOf?.(id)?.i || 'Mitspieler';
+  const freeSeat = (kind) => { for (let i = 1; i < seatsOf(kind); i++) if (![...crewSeat.values()].includes(i)) return i; return 0; };
+  function handOver(id) {
+    if (!drive || !multi) return;
+    const D = drive, P = D.P, others = crew.filter((c) => c !== id).concat(myId);
+    multi.send('ride', { a: 'take', to: id, k: D.veh.kind, lv: P.lv ? 1 : 0, x: D.x, y: D.y, z: D.z, h: D.h, v: D.v, vy: D.vy, rotor: D.veh.rotor, crew: others });
+    // eigenes Fahrzeug abgeben (der neue Fahrer übernimmt es) und selbst Mitfahrer werden
+    crew.length = 0; crewSeat.clear(); asks.clear();
+    drive = null; player.ride = null; ctx.vehicle = null; ctx.myVehicle = null; ctx.vehPose = null;
+    setup.hidden = true; engine.setViewShift?.(null); pad.hidden = true; for (const k of Object.keys(ctl)) ctl[k] = 0; steerOff(); document.body.classList.remove('driving'); ui.el.stick.classList.remove('off');
+    // eigenes Fahrzeug bleibt in der eigenen Welt (geparkt: am Taxistand bzw. am Boden unter der Übergabestelle)
+    P.parked = true; D.veh.rotor = 0;
+    if (P.src === 'stand') { P.x = P.home.x; P.z = P.home.z; P.h = P.home.h; } else { P.x = D.x; P.z = D.z; P.h = D.h; }
+    P.veh.root.position.set(P.x, P.src === 'stand' ? 0 : ground(P.x, P.z), P.z); P.veh.root.rotation.set(0, P.h, 0);
+    enterPax(id, others.indexOf(myId) + 1);
+    ui.toast('Steuer übergeben an ' + letter(id), 2200);
+  }
+  function takeOver(d, from) { // ich werde Fahrer
+    leavePax(true, true);
+    const P = addRental(d.k, d.x, d.z, d.h, { y: d.y, lv: !!d.lv });
+    enter(P);
+    Object.assign(drive, { y: d.y, v: d.v || 0, vy: d.vy || 0 }); drive.veh.rotor = d.rotor || 0; started = true;
+    for (const id of d.crew || []) { const seat = freeSeat(d.k); if (!seat) break; crew.push(id); crewSeat.set(id, seat); multi.send('ride', { a: 'ok', to: id, seat }); }
+    ui.toast('Du ' + (drive.spec.air ? 'fliegst' : 'fährst') + ' jetzt!', 2200);
+  }
+  function enterPax(d, si) {
+    if (drive) return;
+    pax = { d, si, wait: 0 }; ctx.ride = { d, si };
+    player.ride = paxRide; player.freeze(true); first = true; interact.enabled = false; ui.prompt(null);
+    ui.el.stick.classList.add('off'); ui.el.panel.classList.add('collapsed');
+    ui.actions([
+      { label: '🙋 Ich möchte steuern', kind: 'primary', onClick: () => { multi?.send('ride', { a: 'ask', to: pax?.d }); ui.toast('Anfrage gesendet – ' + letter(pax?.d) + ' kann dir das Steuer geben', 2600); } },
+      { label: T.exit, icon: 'exit', onClick: () => leavePax(false) },
+    ]);
+  }
+  function leavePax(force = false, silent = false) {
+    if (!pax) return;
+    const f = multi?.vehOf(pax.d);
+    if (!force && f && f.veh.spec.air && f.y > ground(f.x, f.z) + 0.6) { ui.toast(T.landFirst, 2200); return; }
+    if (!silent) multi?.send('ride', { a: 'leave', to: pax.d });
+    pax = null; ctx.ride = null; player.ride = null; player.freeze(false); player.fig.pose('stand'); interact.enabled = true; ui.el.stick.classList.remove('off');
+    if (!silent) {
+      const h = f ? f.h : player.heading, side = (f ? f.veh.spec.wid / 2 : 1) + 0.9, x = (f ? f.x : player.pos.x) - Math.cos(h) * side, z = (f ? f.z : player.pos.z) + Math.sin(h) * side;
+      const q = { x, z }; resolve(q, 0.4, colliders); player.teleport(q.x, q.z, h); player.fig.root.rotation.set(0, h, 0);
+      ui.actions(opts.baseActions || []);
+    }
+  }
+  function paxRide(dt) {
+    const f = multi?.vehOf(pax.d), st = multi?.stateOf(pax.d);
+    if (!f || !st?.v) { pax.wait += dt; if (pax.wait > 4) { leavePax(true); ui.toast('Die Fahrt ist zu Ende', 2000); } return; }
+    pax.wait = 0;
+    const veh = f.veh; veh.seat(tmp, pax.si);
+    player.fig.pose(veh.spec.pose === 'ride' ? 'ride' : 'drive'); player.fig.root.position.copy(tmp); player.fig.root.quaternion.copy(veh.root.quaternion); player.fig.update(dt, 0);
+    player.pos.set(f.x, f.y, f.z); player.heading = f.h;
+    // Kamera: frei um das Fahrzeug schwenken (wischen), Abstand wie beim Fahren
+    const S = veh.spec, dist = S.cam[0] * 0.72 * ds.view, hh = S.air ? S.cam[1] : 1.1 + S.cam[1] * 0.3 * ds.view, a = input.yaw;
+    const wp = tmp.set(f.x + Math.sin(a) * dist, f.y + hh + input.pitch * 6, f.z + Math.cos(a) * dist);
+    for (const t of [1, 0.5]) wp.y = Math.max(wp.y, ground(f.x + (wp.x - f.x) * t, f.z + (wp.z - f.z) * t) + 1.2);
+    const k = first ? 1 : 1 - Math.exp(-dt * 7); first = false;
+    camPos.lerp(wp, k); camLook.lerp(new THREE.Vector3(f.x, f.y + 1.2, f.z), k);
+    cam.position.copy(camPos); cam.lookAt(camLook);
+  }
+  const offRide = multi?.on?.('ride', (d, from) => {
+    if (!d || (d.to !== myId && d.to !== '*')) return;
+    const who = from.i || letter(from.id);
+    if (d.a === 'join') {
+      if (!drive) return;
+      if (crew.includes(from.id)) { multi.send('ride', { a: 'ok', to: from.id, seat: crewSeat.get(from.id) }); return; }
+      const seat = freeSeat(drive.veh.kind);
+      if (!seat) { multi.send('ride', { a: 'full', to: from.id }); return; }
+      crew.push(from.id); crewSeat.set(from.id, seat); multi.send('ride', { a: 'ok', to: from.id, seat }); ui.toast(who + ' fährt mit 👥', 2200); lastKey = '';
+    } else if (d.a === 'ok') { if (!drive) { if (pax) { pax.d = from.id; pax.si = d.seat; ctx.ride = { d: from.id, si: d.seat }; } else { enterPax(from.id, d.seat); ui.toast('Du fährst bei ' + who + ' mit – wische zum Umschauen', 2600); } } }
+    else if (d.a === 'full') ui.toast('Kein Platz mehr frei', 2000);
+    else if (d.a === 'leave') { const i = crew.indexOf(from.id); if (i >= 0) { crew.splice(i, 1); crewSeat.delete(from.id); asks.delete(from.id); lastKey = ''; ui.toast(who + ' ist ausgestiegen', 1800); } }
+    else if (d.a === 'out') { if (pax && pax.d === from.id) leavePax(true); }
+    else if (d.a === 'ask') { if (drive && crew.includes(from.id)) { asks.add(from.id); lastKey = ''; ui.toast(who + ' möchte ' + (drive.spec.air ? 'fliegen' : 'fahren') + ' – unten „Steuer an ' + who + ' geben“', 3200); } }
+    else if (d.a === 'take') { if (pax && pax.d === from.id) takeOver(d, from); }
+  });
+  // „Mitfahren“: leuchtet am Fahrzeug eines Mitspielers, wenn ein Platz frei ist
+  if (multi) interact.add({ objs: [], color: 'blue', radius: 9, near: 8, key: 'ride-join', pos: (v) => (joinCand ? v.set(joinCand.f.x, 0, joinCand.f.z) : v.set(1e9, 0, 1e9)), when: () => !!joinCand && !drive && !pax,
+    label: () => '👥 Mitfahren bei ' + (joinCand?.o.i || 'Mitspieler'), run: () => { if (!joinCand) return; multi.send('ride', { a: 'join', to: joinCand.o.id }); ui.toast('Frage zum Mitfahren …', 1500); } });
+  function rideUpdate(dt) {
+    if (!multi?.status) return;
+    joinCand = null;
+    if (!drive && !pax) {
+      let bd = 1e9;
+      for (const o of multi.status().others) {
+        if (!o.v || o.r) continue; const f = multi.vehOf(o.id); if (!f) continue;
+        if ((o.ps?.length || 0) >= seatsOf(o.v) - 1) continue;
+        const d = Math.hypot(f.x - player.pos.x, f.z - player.pos.z); if (d < f.veh.spec.len / 2 + 3 && d < bd && Math.abs(f.y - player.pos.y) < 3) { bd = d; joinCand = { o, f }; }
+      }
+    }
+    // Doppelte vermeiden: steht das Fahrzeug eines Mitspielers auf dem Platz eines eigenen geparkten Fahrzeugs, das eigene ausblenden
+    const remote = multi.status().others.filter((o) => o.v && !o.r).map((o) => multi.vehOf(o.id)).filter(Boolean);
+    for (const P of parked) {
+      if (P.parked === false) { P.veh.root.visible = true; continue; }
+      const R = P.veh.root.position, hide = remote.some((f) => f.veh.kind === P.veh.kind && Math.hypot(f.x - R.x, f.z - R.z) < Math.max(3, P.veh.spec.len * 0.6));
+      if (P.veh.root.visible === hide) { P.veh.root.visible = !hide; P.hidden = hide; }
+    }
+    // Mitfahrer, die nicht mehr da sind oder woanders sitzen, aus der Liste nehmen
+    if (drive) for (const id of crew.slice()) { const st = multi.stateOf(id); if (st && st.r === myId) { missT.delete(id); continue; } const t = (missT.get(id) || 0) + dt; missT.set(id, t); if (t > 4) { crew.splice(crew.indexOf(id), 1); crewSeat.delete(id); asks.delete(id); missT.delete(id); lastKey = ''; } }
   }
 
   // mitgebrachtes Fahrzeug aus der anderen Stadt (nach der Autobahnfahrt): gleich drinsitzen
@@ -404,11 +543,12 @@ export function createBorrow(ctx, opts) {
           pending = null; enter(P);
         } else if (pv.t > 8) { traffic.hold(vh, false); pending = null; } // hält nicht an (z. B. Bus im Stau)
       }
-      keepNearby(dt);
+      keepNearby(dt); rideUpdate(dt);
       for (const d of drivers) d.update?.(dt, 0);
       for (const P of parked) P.owner?.update?.(dt, 0);
       talk.update();
     },
-    dispose() { engine.setViewShift?.(null); talk.clear(); pad.remove(); setup.remove(); document.body.classList.remove('driving'); window.removeEventListener('keydown', kd); window.removeEventListener('keyup', ku); if (drive) { player.ride = null; ctx.vehicle = null; } },
+    get passenger() { return pax; }, handOver, enterPax, leavePax, enter, stunt,
+    dispose() { offRide?.(); ctx.crew = null; ctx.ride = null; ctx.myVehicle = null; ctx.vehPose = null; engine.setViewShift?.(null); talk.clear(); pad.remove(); setup.remove(); document.body.classList.remove('driving'); window.removeEventListener('keydown', kd); window.removeEventListener('keyup', ku); if (drive) { player.ride = null; ctx.vehicle = null; } },
   };
 }

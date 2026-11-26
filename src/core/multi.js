@@ -40,7 +40,10 @@ export function createMulti(ctx) {
     if (ctx.stationIndex === 'balloon' || ctx.stationIndex === 'drive') return s; // nur „wo bin ich“
     const p = ctx.player; if (!p || ctx.stationIndex == null) return s;
     return { ...s, x: +p.pos.x.toFixed(2), y: +p.pos.y.toFixed(2), z: +p.pos.z.toFixed(2), h: +p.fig.root.rotation.y.toFixed(2), p: p.fig.poseName || 'stand',
-      c: p.fig.cloth.color.getHex(), k: p.fig.skinM.color.getHex(), f: ctx.profile?.gender === 'f' ? 1 : 0, ...(ctx.vehicle ? { v: ctx.vehicle } : {}) }; // v = Fahrzeug, in dem man sitzt
+      c: p.fig.cloth.color.getHex(), k: p.fig.skinM.color.getHex(), f: ctx.profile?.gender === 'f' ? 1 : 0,
+      // v = Fahrzeug, das man fährt (mit Lage: vp/vr Neigung, u Tempo, lv bunte Lackierung, ps Mitfahrer)
+      ...(ctx.vehicle ? { v: ctx.vehicle, vp: +(ctx.vehPose?.vp || 0).toFixed(2), vr: +(ctx.vehPose?.vr || 0).toFixed(2), u: +(ctx.vehPose?.u || 0).toFixed(1), lv: ctx.vehPose?.lv ? 1 : 0, ps: ctx.crew || [] } : {}),
+      ...(ctx.ride ? { r: ctx.ride.d, si: ctx.ride.si } : {}) }; // r = Fahrer, bei dem man mitfährt, si = Sitz
   }
   const totals = () => { const now = Date.now(), by = {}; let n = 0; for (const [id, a] of Object.entries(alive)) { if (now - a.t > 25000) { delete alive[id]; continue; } n++; by[a.s] = (by[a.s] || 0) + 1; } return { n, by }; };
   const status = () => ({ online: settings.online !== false, connected, code, me: initial(), total: connected ? totals() : { n: 0, by: {} }, others: Object.entries(states).map(([id, s]) => ({ id, col: colorOf(id), ...s })) });
@@ -76,7 +79,7 @@ export function createMulti(ctx) {
       }
       if (topic.slice(0, topic.lastIndexOf('/') + 1) !== sub.slice(0, -1)) return;
       if (!buf.length) { delete states[id]; delete seen[id]; return; }
-      try { states[id] = JSON.parse(buf.toString()); seen[id] = Date.now(); } catch { /* ungültig */ }
+      try { states[id] = JSON.parse(buf.toString()); seen[id] = Date.now(); states[id].at = performance.now(); } catch { /* ungültig */ }
     });
     client.on('error', () => { /* verbindet selbst neu */ });
     client.on('offline', () => { connected = false; changed(); });
@@ -99,6 +102,9 @@ export function createMulti(ctx) {
 
   return {
     status, myId,
+    // geglättete Lage eines Mitspielers (für Mitfahrer): { x, y, z, h, veh } oder null
+    vehOf(id) { const f = figs.get(id); return f?.veh ? f : null; },
+    stateOf(id) { return states[id] || null; },
     get room() { return code; }, // privater Raum (leer = alle online)
     // Ereignis an alle anderen am selben Ort senden; false, wenn (noch) nicht verbunden
     send(t, d) { if (!client || !connected || !sub || ctx.stationIndex !== loc) return false; client.publish(evSub().slice(0, -1) + myId, JSON.stringify({ t, d }), { qos: 0 }); return true; },
@@ -119,7 +125,8 @@ export function createMulti(ctx) {
       const now = Date.now();
       for (const id of Object.keys(states)) if (now - (seen[id] || 0) > 8000) { delete states[id]; delete seen[id]; }
       listT += dt; if (listT > 1) { listT = 0; changed(); }
-      if (connected && sub && performance.now() - sendT > RATE * 1000) { sendT = performance.now(); client.publish(sub.slice(0, -1) + myId, JSON.stringify(myState()), { qos: 0 }); }
+      if (connected && sub && performance.now() - sendT > (ctx.vehicle || ctx.ride ? 0.12 : RATE) * 1000) { // im Fahrzeug öfter senden (flüssig für Mitfahrer)
+        sendT = performance.now(); client.publish(sub.slice(0, -1) + myId, JSON.stringify(myState()), { qos: 0 }); }
       // Mitspieler am selben Ort zeigen (die nächsten SHOW), weich nachgeführt
       const world = ctx.engine.world, me = ctx.player?.pos;
       const near = new Set(Object.entries(states).filter(([, s]) => s.s === ctx.stationIndex && s.x != null && me)
@@ -134,18 +141,29 @@ export function createMulti(ctx) {
           f = { fig, world, x: s.x, z: s.z, h: s.h, c: s.c }; figs.set(id, f);
         }
         if (f.c !== s.c) { f.fig.setColor(s.c); f.c = s.c; }
-        const k = Math.min(1, dt * 6), ox = f.x, oz = f.z;
-        f.x += (s.x - f.x) * k; f.z += (s.z - f.z) * k;
+        const k = Math.min(1, dt * (s.v ? 10 : 6)), ox = f.x, oz = f.z;
+        // Fahrzeuge: Position vorausberechnen (Tempo × Alter der Nachricht), damit Mitfahrer ruhig sitzen
+        const age = s.v && s.at ? Math.min(0.4, (performance.now() - s.at) / 1000) : 0, tx = s.x + Math.sin(s.h) * (s.u || 0) * age, tz = s.z + Math.cos(s.h) * (s.u || 0) * age;
+        f.x += (tx - f.x) * k; f.z += (tz - f.z) * k; f.y = f.y == null ? (s.y ?? 0) : f.y + ((s.y ?? 0) - f.y) * k;
         f.h += Math.atan2(Math.sin(s.h - f.h), Math.cos(s.h - f.h)) * k;
+        f.vp = (f.vp || 0) + Math.atan2(Math.sin((s.vp || 0) - (f.vp || 0)), Math.cos((s.vp || 0) - (f.vp || 0))) * k;
+        f.vr = (f.vr || 0) + Math.atan2(Math.sin((s.vr || 0) - (f.vr || 0)), Math.cos((s.vr || 0) - (f.vr || 0))) * k;
         const v = Math.hypot(f.x - ox, f.z - oz) / Math.max(dt, 1e-3);
         // Mitspieler im Fahrzeug: Fahrzeug an seiner Position, Figur sitzt im Sitz
-        if (s.v && (!f.veh || f.veh.kind !== s.v)) { f.veh?.root.removeFromParent(); f.veh = makeVehicle(world, s.v); }
+        if (s.v && (!f.veh || f.veh.kind !== s.v || f.lv !== !!s.lv)) { f.veh?.root.removeFromParent(); f.veh = makeVehicle(world, s.v, { livery: s.v === 'helicopter' || !!s.lv }); f.lv = !!s.lv; }
         if (!s.v && f.veh) { f.veh.root.removeFromParent(); f.veh = null; }
         if (f.veh) {
-          const R = f.veh.root; R.position.set(f.x, 0, f.z); R.rotation.y = f.h; R.updateMatrixWorld(true); f.veh.roll(v, dt);
-          f.fig.pose(s.p || 'drive'); f.fig.root.position.copy(f.veh.seat(seatV)); f.fig.root.rotation.y = f.h; f.fig.update(dt, 0);
+          const R = f.veh.root; R.position.set(f.x, f.y, f.z); R.rotation.order = 'YXZ'; R.rotation.set(f.vp, f.h, f.vr); R.updateMatrixWorld(true);
+          f.veh.rotor = f.veh.spec.air ? (f.y > 0.3 || (s.u || 0) > 0.5 ? 1 : 0.4) : 0; f.veh.roll(s.u ?? v, dt);
+          f.fig.pose(s.p || 'drive'); f.fig.root.position.copy(f.veh.seat(seatV)); f.fig.root.quaternion.copy(R.quaternion); f.fig.update(dt, 0);
           continue;
         }
+        // Mitfahrer: sitzt im Fahrzeug seines Fahrers (bei mir: in meinem Fahrzeug)
+        if (s.r) {
+          const veh = s.r === myId ? ctx.myVehicle : figs.get(s.r)?.veh;
+          if (veh) { f.fig.pose(veh.spec.pose === 'ride' ? 'ride' : 'drive'); f.fig.root.position.copy(veh.seat(seatV, s.si || 1)); f.fig.root.quaternion.copy(veh.root.quaternion); f.fig.update(dt, 0); f.fig.root.visible = true; continue; }
+        }
+        f.fig.root.rotation.set(0, f.h, 0);
         f.fig.pose(v > 0.3 ? 'walk' : s.p === 'walk' ? 'stand' : s.p);
         f.fig.root.position.set(f.x, s.y ?? me.y, f.z); f.fig.root.rotation.y = f.h;
         f.fig.update(dt, v / 1.6);

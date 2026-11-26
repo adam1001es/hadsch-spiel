@@ -261,3 +261,16 @@ Spielstand (Geld, Hasanat, Besitz, Position) in `localStorage` (`hp-life`), mit 
   Slot-Liste etwa doppelt so lang wie die Personenzahl anlegen. Feste Lager: `createCrowd(world, n, { gender: (i) => … })`.
 - Umgesetzt: Mekka-Platz (Gemeinschaftsgebet), Haram (Gebetskreise: Männer innen), Prophetenmoschee (Sitzen und Reihen), Rastplatz, Miqat,
   Arafat (Lagerstreifen), Muzdalifa (Blöcke im Schachbrett).
+
+
+### Gemeinsam fahren und fliegen (Mehrspieler)
+`src/life/borrow.js` + `src/core/multi.js`: Steht man neben dem Fahrzeug eines Mitspielers, leuchtet „👥 Mitfahren bei X“ (freie Plätze: `seatsOf` in
+`vehicles.js`: Autos/Helikopter 4, Sportwagen/Coupé/Motorräder 2, Fahrrad/Scooter 1). Mitfahrer sitzen passiv (Sitz `veh.seat(out, i)`), Kamera frei
+schwenkbar (wischen), „🙋 Ich möchte steuern“ fragt den Fahrer; der Fahrer sieht „Steuer an X geben“ und übergibt Fahrzeug, Lage und Tempo (auch in der Luft).
+Ereignis `ride`: join/ok/full/leave/out/ask/take. Zustand: Fahrer `v, vp, vr, u, lv, ps`, Mitfahrer `r, si`; im Fahrzeug 8× pro Sekunde senden,
+Position wird vorausberechnet. Eigene geparkte Fahrzeuge werden ausgeblendet, wenn dort das gleiche Fahrzeug eines Mitspielers steht.
+Noch nicht: gemeinsam über die Autobahn in die andere Stadt (Mitfahrer steigen dann aus).
+
+### Helikopter-Akrobatik und Ballon
+Helikopter bis 340 km/h, schnelleres Steigen/Sinken, Schräglage in Kurven; Knöpfe LOOPING / ROLLE / DREHUNG (Tastatur F, Q/E, R), Looping ab 22 m Höhe.
+Ballon: ▲ Steigen / ▼ Sinken (Leertaste/C) schnell, sonst schweben; Joystick in jede Richtung bis ~170 km/h.

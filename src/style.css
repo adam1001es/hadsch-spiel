@@ -543,3 +543,9 @@ body.driving #counter { visibility: hidden; }
 #balloonCtl small { font-size: 10px; margin-top: 3px; }
 #balloonCtl button.on { background: #e6c46e; color: #14251f; }
 @media (orientation: landscape) and (max-height: 500px) { #balloonCtl button { width: 58px; height: 58px; font-size: 21px; } #balloonCtl { gap: 6px; } }
+/* Helikopter-Akrobatik */
+#driveCtl .dc-stunts { display: flex; gap: 8px; }
+#driveCtl .air.stunt { width: 58px; height: 58px; border-radius: 50%; font-size: 20px; letter-spacing: 0; border-color: rgba(120,200,255,.9); }
+#driveCtl .air.stunt small { font-size: 7.5px; }
+@media (orientation: landscape) and (max-height: 500px) { #driveCtl .air.stunt { width: 48px; height: 48px; font-size: 17px; } }
+@media (orientation: landscape) and (max-height: 500px) { #driveCtl.air .dc-r { gap: 6px; } #driveCtl .air:not(.stunt) { height: 38px; } }

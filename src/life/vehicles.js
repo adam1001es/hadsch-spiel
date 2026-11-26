@@ -28,8 +28,10 @@ export const SPEC = {
   bicycle: { seat: [0, 0.14, -0.2], pose: 'ride', len: 1.8, wid: 0.6, wheelR: 0.34, vmax: 7, acc: 3, cam: [6, 2.6] },
   ebike: { seat: [0, 0.16, -0.25], pose: 'ride', len: 1.9, wid: 0.6, wheelR: 0.34, vmax: 12, acc: 4, cam: [6, 2.6] },
   dirt: { seat: [0, 0.16, -0.2], pose: 'ride', len: 2.1, wid: 0.8, wheelR: 0.35, vmax: 45, acc: 11, cam: [7, 2.8], offroad: true },
-  helicopter: { seat: [0.55, 0.45, 2.4], pose: 'drive', len: 11, wid: 3, wheelR: 1, vmax: 70, acc: 10, cam: [22, 8], air: true },
+  helicopter: { seat: [0.55, 0.45, 2.4], pose: 'drive', len: 11, wid: 3, wheelR: 1, vmax: 95, acc: 14, cam: [22, 8], air: true },
 };
+// Sitzplätze (Fahrer = 0): wie viele Leute passen hinein (gemeinsam fahren im Mehrspieler)
+export const seatsOf = (kind) => (['bicycle', 'escooter', 'ebike', 'bus'].includes(kind) ? 1 : kind === 'motorbike' || kind?.startsWith('dirtbike') || kind === 'sport' || kind === 'coupe' ? 2 : 4);
 export const specOf = (kind) => (kind?.startsWith('dirtbike') ? SPEC.dirt : SPEC[kind] || CAR);
 const FILE = (k) => (k === 'bus' ? 'bus.glb' : CAR_KINDS.includes(k) ? `cars/${k}.glb` : `vehicles/${k}.glb`);
 const cache = {};
@@ -138,6 +140,14 @@ export function makeVehicle(world, kind, { shadows = true, driver = false, liver
     for (const w of v.wheels) { w.obj.rotation.order = 'YXZ'; w.obj.rotation.x = v.spin; if (w.steer) w.obj.rotation.y = steer * 0.5; }
   };
   // Weltposition des Sitzes (für die Figur)
-  v.seat = (out = new THREE.Vector3()) => (v.seatPos ? out.copy(v.seatPos) : out.set(...spec.seat)).applyMatrix4(root.matrixWorld);
+  // Sitz i (0 = Fahrer, 1 = Beifahrer, 2/3 = hinten; Zweiräder: 1 = hinter dem Fahrer)
+  v.seat = (out = new THREE.Vector3(), i = 0) => {
+    if (v.seatPos) out.copy(v.seatPos); else out.set(...spec.seat);
+    if (i > 0) {
+      if (spec.pose === 'ride') out.set(out.x, out.y + 0.06, out.z - 0.5);
+      else { if (i % 2 === 1) out.x = -out.x; if (i >= 2) out.z -= kind === 'helicopter' ? 1.3 : 0.95; }
+    }
+    return out.applyMatrix4(root.matrixWorld);
+  };
   return v;
 }
