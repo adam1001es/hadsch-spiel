@@ -7,11 +7,11 @@ export const BUILDYARD = {
   go: '🧱 Zum Sandstein-Bauhof fahren',
   back: (medina) => `🚌 Mit dem Bus zurück nach ${medina ? 'Medina' : 'Mekka'}`,
   backShort: (medina) => `Zurück nach ${medina ? 'Medina' : 'Mekka'}`,
-  intro: 'Willkommen im Sandstein-Bauhof! Hier baust du frei: Häuser, Mauern, Brunnen, Türme. '
-    + '<b>Tippe</b> auf den Boden oder auf einen Stein, um daneben einen neuen Stein zu setzen (am Laptop: klicken). '
-    + 'Mit dem Knopf <b>⛏ Abbauen</b> nimmst du Steine wieder weg. Neues Material holst du dir an den leuchtenden Stapeln am Rand '
-    + '– oder tippe unten rechts auf das Material. Dein Bau wird automatisch gespeichert. Im Raum „Zusammen spielen“ baut ihr gemeinsam.',
-  keys: 'Tastatur: 1–6 Material wählen, R = Bauen/Abbauen umschalten.',
+  intro: 'Willkommen im Sandstein-Bauhof – einer riesigen Wüste zum Bauen, bis hinauf in die Berge! '
+    + '<b>Tippen</b> auf Boden oder Stein = Stein oder Gegenstand setzen (am Laptop: klicken). <b>⛏ Abbauen</b> nimmt Steine und Gegenstände weg. '
+    + 'Im <b>Baukasten</b> (Knopf unten rechts) gibt es Steine und fertige Dinge: Hocker, Tisch, Bett, Sofa, Gebetsteppich, Lagerfeuer, Bäume, Laternen … '
+    + '<b>Springen</b> und <b>Fliegen</b> mit den runden Knöpfen. Alle, die gerade im Bauhof sind, bauen <b>gemeinsam</b> und sehen die Bauten der anderen. Es wird automatisch gespeichert.',
+  keys: 'Tastatur: W/A/S/D gehen, Leertaste = springen (beim Fliegen: hoch), C = runter, V = Fliegen an/aus, I = Baukasten, 1–9 Steine, R = Bauen/Abbauen.',
   fact: '<b>Wusstest du?</b> In den alten Städten des Hedschas, etwa in der Altstadt von Dschidda, baute man mit Korallen- und Naturstein, Lehm und Holz. '
     + 'Hölzerne Erker vor den Fenstern (Rawashin) spendeten Schatten und ließen den Wind durch die Häuser ziehen.',
   build: '🧱 Bauen',
@@ -20,10 +20,21 @@ export const BUILDYARD = {
   taken: (n) => `${n} in der Hand`,
   far: 'Zu weit weg – geh näher heran.',
   full: 'Der Bauhof ist voll – baue erst etwas ab.',
-  synced: 'Gemeinsamer Bau geladen',
+  synced: 'Bauten der anderen geladen',
+  box: '🧰 Baukasten', boxTitle: 'Baukasten', blocks: 'Steine', items: 'Fertige Dinge',
+  jump: 'Springen', fly: 'Fliegen', flyOn: 'Fliegen: an – ▲/▼ zum Steigen und Sinken', flyOff: 'Fliegen: aus',
+  shared: (n) => `${n} ${n === 1 ? 'Mitspieler baut' : 'Mitspieler bauen'} mit`,
 };
 
 // Baustoffe (eigene, im Browser gezeichnete Texturen)
+// Fertige Gegenstände im Bauhof (eigene, einfache 3D-Formen)
+export const ITEMS = [
+  { id: 'teppich', name: 'Gebetsteppich', icon: '🧎' }, { id: 'hocker', name: 'Hocker', icon: '🪑' }, { id: 'tisch', name: 'Tisch', icon: '🍽️' },
+  { id: 'bank', name: 'Bank', icon: '🪵' }, { id: 'bett', name: 'Bett', icon: '🛏️' }, { id: 'sofa', name: 'Sofa', icon: '🛋️' },
+  { id: 'feuer', name: 'Lagerfeuer', icon: '🔥' }, { id: 'laterne', name: 'Laterne', icon: '🏮' }, { id: 'palme', name: 'Palme', icon: '🌴' },
+  { id: 'baum', name: 'Baum', icon: '🌳' }, { id: 'pflanze', name: 'Pflanze', icon: '🪴' }, { id: 'zelt', name: 'Zelt', icon: '⛺' },
+  { id: 'brunnen', name: 'Brunnen', icon: '⛲' }, { id: 'kiste', name: 'Kiste', icon: '📦' }, { id: 'kamel', name: 'Kamel', icon: '🐪' },
+];
 export const MATERIALS = [
   { id: 'sand', name: 'Sandstein' },
   { id: 'mud', name: 'Lehmziegel' },
@@ -31,6 +42,9 @@ export const MATERIALS = [
   { id: 'marble', name: 'Marmor' },
   { id: 'wood', name: 'Palmholz' },
   { id: 'tile', name: 'Fliese' },
+  { id: 'basalt', name: 'Basalt' },
+  { id: 'glass', name: 'Glas' },
+  { id: 'green', name: 'Hecke' },
 ];
 
 // Die Städte (Lebensspiel): Infotafeln an echten Orten – vereinfachte Lerndarstellung

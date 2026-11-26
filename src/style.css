@@ -354,6 +354,26 @@ body:has(#start:not([hidden])) #panel, body:has(#start:not([hidden])) #goal { di
 #buildbar .mode { padding: 10px 16px; }
 #buildbar.removing .mode { background: #e6c46e; color: #14251f; }
 #buildbar.removing .mat { opacity: .45; }
+#buildbar .mat i.emo { display: grid; place-items: center; font-size: 22px; font-style: normal; background: rgba(255,246,220,.15); }
+#buildbar .bb-move { display: flex; gap: 8px; align-items: center; }
+#buildbar .bb-move button { width: 58px; height: 58px; padding: 0; flex-direction: column; justify-content: center; gap: 0; font-size: 22px; line-height: 1; touch-action: none; user-select: none; -webkit-user-select: none; }
+#buildbar .bb-move small { font-size: 9.5px; margin-top: 2px; }
+#buildbar .bb-move .down { display: none; }
+#buildbar.flying .bb-move .down { display: flex; }
+#buildbar.flying .fly, #buildbar .bb-move button.on { background: #e6c46e; color: #14251f; }
+#invPop { position: fixed; inset: 0; z-index: 30; display: grid; place-items: center; padding: 12px var(--sr) 12px var(--sl); background: rgba(8,16,26,.55); }
+#invPop[hidden] { display: none; }
+#invPop .inv-card { width: min(560px, 100%); max-height: calc(100dvh - 24px); overflow: auto; background: rgba(20,37,31,.96); color: #f5efe0; border: 1.5px solid #e6c46e; border-radius: 18px; padding: 12px 14px 16px; box-shadow: 0 8px 30px rgba(0,0,0,.45); }
+#invPop .inv-head { display: flex; justify-content: space-between; align-items: center; font-size: 18px; }
+#invPop .inv-x { width: 40px; height: 40px; border-radius: 50%; background: transparent; color: #f5efe0; border: 1.5px solid #e6c46e; font-size: 16px; }
+#invPop h4 { margin: 10px 0 6px; font-size: 13px; letter-spacing: .04em; text-transform: uppercase; color: #e6c46e; }
+#invPop .inv-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(76px, 1fr)); gap: 8px; }
+#invPop .inv-grid button { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 4px; border-radius: 12px; background: rgba(255,246,220,.07); color: #f5efe0; border: 1px solid rgba(230,196,110,.45); font-size: 12px; }
+#invPop .inv-grid i { width: 42px; height: 42px; border-radius: 8px; background-size: cover; display: grid; place-items: center; font-style: normal; font-size: 28px; }
+@media (orientation: landscape) and (max-height: 500px) {
+  #buildbar { gap: 5px; } #buildbar .bb-move button { width: 48px; height: 48px; font-size: 18px; }
+  #buildbar button { padding: 5px 10px 5px 5px; font-size: 12px; } #buildbar .mat i { width: 28px; height: 28px; }
+}
 
 /* Karte (Lebensspiel): runder Kreis oben rechts unter dem Menüknopf, große Karte als Fenster */
 #minimap { position: fixed; z-index: 8; top: calc(env(safe-area-inset-top, 0px) + 66px); right: var(--sr); width: 96px; height: 96px; padding: 0; border-radius: 50%; border: 2.5px solid #e6c46e; background: #e8dbbd; box-shadow: 0 3px 14px rgba(0,0,0,.35); overflow: visible; }

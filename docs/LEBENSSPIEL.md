@@ -97,11 +97,15 @@ jeden Ort zu Fuß, mit Bus, Taxi, eigenem Auto oder Ballon; Schilder an der Stra
 Ein gemeinsames Fundament für alle Zonen: `interact.js` (Randleuchten), Geld/Hasanat (`hp-life`), Multiplayer (`multi.js`),
 dieselbe Spielfigur und Steuerung. Neue Zonen hängen sich als Ort in der Hejaz-Welt an, nicht als eigenes Spiel.
 
-**Sandstein-Bauhof (gebaut):** `src/stations/buildyard.js`, Texte in `src/content/life.js`. Raster 240×240 Zellen à 0,5 m (120 × 120 m), 48 Lagen (24 m), Speicherstand v2 (v1 wird in die Mitte übernommen);
-6 Baustoffe mit eigenen Canvas-Texturen (Sandstein, Lehmziegel, Korallenstein, Marmor, Palmholz, Fliese), ein InstancedMesh je Baustoff.
-Tippen/Klicken = Stein setzen bzw. abbauen (Voxel-Strahl, Reichweite 12 m), Stapel am Rand leuchten (Material nehmen), Figur steigt eine
-Stufe hoch, Mauern halten auf. Speichern: `hp-bauhof` bzw. `hp-bauhof-raum-<Code>`. Zusammen bauen nur im privaten Raum:
-`multi.send/on` (Ereignisse `b` = Stein, `bq`/`bs` = Bau anfragen/schicken); öffentlich baut jeder für sich (kein Kaputtmachen durch Fremde).
+**Sandstein-Bauhof (gebaut, v3):** `src/stations/buildyard.js`, Texte in `src/content/life.js` (`BUILDYARD`, `MATERIALS`, `ITEMS`).
+Riesige Welt: Gelände 2,6 × 2,6 km (flache Wüste bis r = 300 m, dahinter Hänge und Berge bis ~190 m), überall bebaubar (auch an Hängen,
+Strahl trifft das Geländenetz exakt). Zellen à 0,5 m, Schlüssel `key(gx, gy, gz)` (±2048 Zellen, bis 1900 nutzbar), max. 60 000 Steine, 600 Gegenstände.
+9 Baustoffe (Canvas-Texturen inkl. Basalt, Glas, Hecke), InstancedMesh je Baustoff wächst bei Bedarf. **Baukasten** (`#invPop`): Steine + fertige Dinge
+(Gebetsteppich, Hocker, Tisch, Bank, Bett, Sofa, Lagerfeuer, Laterne, Palme, Baum, Pflanze, Zelt, Brunnen, Kiste, Kamel), Gegenstände drehen sich zur Figur.
+Figur: Springen (Leertaste/Knopf), Fliegen/Schweben (V/Knopf, ▲/▼ bzw. Leertaste/C), steigt Stufen, fällt mit Schwerkraft. Tag/Nacht nach Spieluhr
+(Laternen/Feuer leuchten nachts). Speichern v3 `{v:3,b,p}` in `hp-bauhof` bzw. `hp-bauhof-raum-<Code>` (v1/v2 werden übernommen).
+**Gemeinsam bauen für alle im Bauhof** (öffentlich und im Raum): `b` = Stein, `p` = Gegenstand, `bq` = Bau anfragen, `bs` = Bau in Stücken (1500) schicken;
+fremde Bauten werden nur in freie Zellen übernommen und lokal gespeichert.
 Später: Häuser vermieten (Einkommen), Bauaufträge, Dach-/Treppenteile, Wegweiser an der Autobahn in der Hejaz-Welt.
 
 ### Modelle vom Nutzer (Sketchfab)
