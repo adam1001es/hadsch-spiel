@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { applyLivery } from '../world/livery.js';
 
 // Fahrzeuge des Lebensspiels (Amanah-Ausleihe): Autos (public/assets/models/cars, CC BY 4.0 Comrade1280),
 // Motorrad (vehicles/motorbike.glb, CC BY 4.0 Yakpower), Bus (bus.glb, CC BY 4.0 agungkuncoro13021986).
@@ -69,9 +70,20 @@ function findWheels(model) {
   return wheels;
 }
 
+// islamlernen.at-Lackierung (src/world/livery.js): Lackteil des Modells finden und im Fahrzeugraum bemalen
+function paintLivery(root, m, kind) {
+  const sp = root.position.clone(), sq = root.quaternion.clone(); root.position.set(0, 0, 0); root.quaternion.identity(); root.updateMatrixWorld(true);
+  const box = new THREE.Box3().setFromObject(m), inv = root.matrixWorld.clone().invert();
+  m.traverse((o) => {
+    const n = o.material?.name || '';
+    if (o.isMesh && (kind === 'helicopter' ? n === 'body' : /^body/i.test(n))) applyLivery(o, inv.clone().multiply(o.matrixWorld), box, kind === 'helicopter' ? 'blue' : 'red');
+  });
+  root.position.copy(sp); root.quaternion.copy(sq); root.updateMatrixWorld(true);
+}
+
 const isIn = (o, p) => { for (let q = o; q; q = q.parent) if (q === p) return true; return false; };
 
-export function makeVehicle(world, kind, { shadows = true, driver = false } = {}) {
+export function makeVehicle(world, kind, { shadows = true, driver = false, livery = kind === 'helicopter' } = {}) {
   const spec = specOf(kind);
   const root = new THREE.Group(); world.add(root);
   const v = { kind, spec, root, wheels: [], ready: false, spin: 0, name: VEHICLE_NAME[kind] || 'Auto', driver: null };
@@ -83,6 +95,7 @@ export function makeVehicle(world, kind, { shadows = true, driver = false } = {}
     const bb = new THREE.Box3().setFromObject(raw), cc = bb.getCenter(new THREE.Vector3());
     raw.position.set(-cc.x, -bb.min.y, -cc.z);
     m.traverse((o) => { if (o.isMesh) { o.castShadow = shadows; o.receiveShadow = true; } });
+    if (livery) paintLivery(root, m, kind);
     if (kind === 'motorbike') v.wheels = findWheels(m);
     else if (kind.startsWith('dirtbike')) { for (const n of ['wheel_f', 'wheel_r']) { const w = m.getObjectByName(n); if (w) v.wheels.push({ obj: w, steer: n === 'wheel_f' }); } }
     else if (kind === 'helicopter') {

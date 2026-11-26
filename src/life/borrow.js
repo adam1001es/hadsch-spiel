@@ -135,7 +135,7 @@ export function createBorrow(ctx, opts) {
   // ---------- Taxistand: geparkte Fahrzeuge mit Fahrer ----------
   const parked = []; // { veh, x, z, h, owner, home: {x,z}, src: 'stand'|'traffic'|'away', vh }
   for (const s of opts.stands || []) {
-    const veh = makeVehicle(world, s.kind); veh.root.position.set(s.x, 0, s.z); veh.root.rotation.y = s.ry;
+    const veh = makeVehicle(world, s.kind, s.livery ? { livery: true } : {}); veh.root.position.set(s.x, 0, s.z); veh.root.rotation.y = s.ry;
     const side = specOf(s.kind).wid / 2 + 0.9, ox = Math.cos(s.ry) * side, oz = -Math.sin(s.ry) * side;
     const owner = mkDriver(s.x + ox, s.z + oz, s.ry + Math.PI / 2);
     const P = { veh, x: s.x, z: s.z, h: s.ry, owner, home: { x: s.x, z: s.z, h: s.ry }, src: 'stand' };
