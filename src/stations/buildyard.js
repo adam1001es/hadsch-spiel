@@ -79,12 +79,19 @@ function itemMats() {
     g.fillStyle = '#1f2f4a'; g.beginPath(); g.moveTo(30, 200); g.lineTo(30, 70); g.quadraticCurveTo(64, 20, 98, 70); g.lineTo(98, 200); g.fill(); // Gebetsnische (Richtung)
     g.fillStyle = '#d9b56a'; g.beginPath(); g.moveTo(64, 90); g.lineTo(80, 130); g.lineTo(64, 170); g.lineTo(48, 130); g.fill();
     const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t; })();
+  const rows = (() => { const c = document.createElement('canvas'); c.width = 256; c.height = 256; const g = c.getContext('2d');
+    g.fillStyle = '#8c2b25'; g.fillRect(0, 0, 256, 256);
+    for (let i = 0; i < 4; i++) { const y = i * 64; g.fillStyle = '#6e1f1b'; g.fillRect(0, y, 256, 6); g.fillStyle = '#d9b56a'; g.fillRect(0, y + 6, 256, 3);
+      for (let j = 0; j < 4; j++) { const x = j * 64 + 32; g.fillStyle = '#a63a32'; g.beginPath(); g.moveTo(x - 20, y + 60); g.lineTo(x - 20, y + 26); g.quadraticCurveTo(x, y + 10, x + 20, y + 26); g.lineTo(x + 20, y + 60); g.fill(); } }
+    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t; })();
   IM = {
     wood: std(0x8a6240), dark: std(0x4e3826), white: std(0xf4f1ea, 0.9), green: std(0x2f6b45, 0.9), red: std(0x8a2a24, 0.9),
     leaf: std(0x4f7d33, 0.95), stone: std(0x9c9182, 0.95), fabric: std(0xe2d2a8, 0.95), pot: std(0xb5653a), sandy: std(0xc9a06a, 0.95),
     water: std(0x3f8fb0, 0.15, { metalness: 0.2 }), carpet: new THREE.MeshStandardMaterial({ map: carpet, roughness: 0.95 }),
     flame: new THREE.MeshStandardMaterial({ color: 0xffb347, emissive: 0xff7a1a, emissiveIntensity: 2, transparent: true, opacity: 0.92 }),
     lamp: new THREE.MeshStandardMaterial({ color: 0xfff1cf, emissive: 0xffc070, emissiveIntensity: 0.4 }),
+    gold: std(0xd4af37, 0.35, { metalness: 0.85 }), dome: std(0xf2eee4, 0.6), domeG: std(0x2f7a5a, 0.5), plaster: std(0xeee6d6, 0.85),
+    rows: new THREE.MeshStandardMaterial({ map: rows, roughness: 0.95 }), niche: std(0x1f3a5a, 0.7), glassW: std(0x6fa8c8, 0.15, { transparent: true, opacity: 0.55 }),
   };
   return IM;
 }
@@ -116,6 +123,64 @@ function buildItem(id) {
     box(0.6, 0.55, 1.5, M.sandy, 0, 1.25, 0); ball(0.32, M.sandy, 0, 1.6, 0.05, 1, 0.9, 1.2);
     cyl(0.12, 0.14, 0.75, M.sandy, 0, 1.55, 0.85, 8, 0.6); box(0.2, 0.22, 0.42, M.sandy, 0, 1.9, 1.12);
     for (const [x, z] of [[-0.2, -0.55], [0.2, -0.55], [-0.2, 0.55], [0.2, 0.55]]) cyl(0.06, 0.05, 1, M.sandy, x, 0.5, z, 6);
+  }
+  else if (id === 'kuppel' || id === 'kuppelk' || id === 'kuppelg') { // Kuppel auf Trommel mit goldener Halbmond-Spitze
+    const r = id === 'kuppelk' ? 0.9 : 1.6, m = id === 'kuppelg' ? M.domeG : M.dome;
+    cyl(r, r, r * 0.45, M.plaster, 0, r * 0.225, 0, 28);
+    const d = add(new THREE.SphereGeometry(r, 28, 14, 0, Math.PI * 2, 0, Math.PI / 2), m, 0, r * 0.45, 0); d.scale.y = 1.15;
+    cyl(0.04, 0.04, r * 0.45, M.gold, 0, r * 0.45 + r * 1.15 + r * 0.2, 0, 6); ball(0.08, M.gold, 0, r * 0.45 + r * 1.15 + 0.1, 0);
+    const cr = add(new THREE.TorusGeometry(0.16, 0.035, 6, 18, Math.PI * 1.4), M.gold, 0, r * 0.45 + r * 1.15 + r * 0.45 + 0.16, 0, 0, 0, Math.PI * 0.8);
+    cr.rotation.order = 'YXZ';
+  }
+  else if (id === 'minarett') { // schlanker Turm mit Balkon und Spitze
+    cyl(0.75, 0.85, 1.2, M.plaster, 0, 0.6, 0, 8); cyl(0.55, 0.6, 7, M.plaster, 0, 4.7, 0, 12);
+    cyl(0.9, 0.7, 0.3, M.plaster, 0, 8.3, 0, 12); for (let k = 0; k < 12; k++) { const a = k / 12 * Math.PI * 2; cyl(0.03, 0.03, 0.5, M.white, Math.cos(a) * 0.85, 8.7, Math.sin(a) * 0.85, 5); }
+    cyl(0.88, 0.88, 0.06, M.white, 0, 8.97, 0, 16); cyl(0.42, 0.45, 1.6, M.plaster, 0, 9.75, 0, 12);
+    add(new THREE.ConeGeometry(0.5, 1.5, 12), M.domeG, 0, 11.3, 0); cyl(0.03, 0.03, 0.5, M.gold, 0, 12.2, 0, 6);
+    add(new THREE.TorusGeometry(0.13, 0.03, 6, 18, Math.PI * 1.4), M.gold, 0, 12.55, 0, 0, 0, Math.PI * 0.8);
+    for (let k = 0; k < 4; k++) box(0.25, 0.7, 0.05, M.niche, Math.sin(k * Math.PI / 2) * 0.58, 4 + k * 1.3, Math.cos(k * Math.PI / 2) * 0.58, 0, k * Math.PI / 2);
+  }
+  else if (id === 'halbmond') { cyl(0.05, 0.05, 0.6, M.gold, 0, 0.3, 0, 6); ball(0.1, M.gold, 0, 0.62, 0); add(new THREE.TorusGeometry(0.2, 0.045, 6, 18, Math.PI * 1.4), M.gold, 0, 0.95, 0, 0, 0, Math.PI * 0.8); }
+  else if (id === 'bogen' || id === 'fenster') { // Spitzbogen: zwei Pfeiler und Bogen (Fenster: kleiner, mit Glas, auf halber Höhe)
+    const win = id === 'fenster', w = win ? 0.9 : 2, hp = win ? 1 : 2.2, y0 = win ? 0.9 : 0, t = 0.35, m = M.plaster;
+    box(0.3, hp, t, m, -w / 2 - 0.15, y0 + hp / 2, 0); box(0.3, hp, t, m, w / 2 + 0.15, y0 + hp / 2, 0);
+    const arch = add(new THREE.TorusGeometry(w / 2 + 0.15, 0.15, 6, 20, Math.PI), m, 0, y0 + hp, 0); arch.scale.z = t / 0.3;
+    box(w + 0.6, 0.3, t, m, 0, y0 + hp + w / 2 + 0.45, 0);
+    if (win) { const gl = add(new THREE.CircleGeometry(w / 2, 20, 0, Math.PI), M.glassW, 0, y0 + hp, 0); gl.castShadow = false; box(w, hp, 0.03, M.glassW, 0, y0 + hp / 2, 0).castShadow = false; box(w + 0.7, 0.1, 0.5, m, 0, y0 - 0.05, 0.05); }
+    else box(w + 0.6, 0.06, 0.45, M.gold, 0, y0 + hp + w / 2 + 0.6, 0);
+  }
+  else if (id === 'saeule') { cyl(0.32, 0.32, 0.25, M.plaster, 0, 0.125, 0, 8); cyl(0.2, 0.22, 2.6, M.white, 0, 1.55, 0, 16); cyl(0.3, 0.2, 0.3, M.gold, 0, 3, 0, 12); box(0.6, 0.12, 0.6, M.plaster, 0, 3.2, 0); }
+  else if (id === 'mihrab') { // Gebetsnische zeigt die Gebetsrichtung (Qibla)
+    box(2, 2.8, 0.25, M.plaster, 0, 1.4, -0.3); box(1.1, 1.8, 0.05, M.niche, 0, 0.9, -0.16);
+    const top = add(new THREE.CircleGeometry(0.55, 20, 0, Math.PI), M.niche, 0, 1.8, -0.155); top.castShadow = false;
+    const fr = add(new THREE.TorusGeometry(0.62, 0.07, 6, 20, Math.PI), M.gold, 0, 1.8, -0.13); fr.castShadow = false;
+    box(0.12, 1.8, 0.1, M.gold, -0.62, 0.9, -0.13); box(0.12, 1.8, 0.1, M.gold, 0.62, 0.9, -0.13);
+  }
+  else if (id === 'minbar') { // Kanzel mit Treppe und kleinem Dach
+    for (let k = 0; k < 6; k++) box(0.8, 0.25 * (k + 1), 0.35, M.wood, 0, 0.125 * (k + 1), 1.0 - k * 0.35);
+    for (const x of [-0.45, 0.45]) { box(0.08, 2.2, 2.3, M.dark, x, 1.1, 0.15); }
+    box(0.8, 0.08, 0.6, M.wood, 0, 1.6, -0.95); for (const [x, z] of [[-0.4, -1.2], [0.4, -1.2], [-0.4, -0.7], [0.4, -0.7]]) cyl(0.03, 0.03, 1.4, M.dark, x, 2.3, z, 6);
+    add(new THREE.ConeGeometry(0.55, 0.8, 4), M.wood, 0, 3.4, -0.95, 0, Math.PI / 4); box(0.9, 1.8, 0.08, M.wood, 0, 0.9, 1.25);
+  }
+  else if (id === 'reihen') box(2, 0.02, 2, M.rows, 0, 0.01, 0);
+  else if (id === 'rehal') { // gekreuztes Holzgestell
+    box(0.42, 0.02, 0.32, M.wood, 0, 0.32, 0.08, -0.6); box(0.42, 0.02, 0.32, M.wood, 0, 0.32, -0.08, 0.6);
+    box(0.42, 0.02, 0.36, M.dark, 0, 0.14, 0.08, 0.9); box(0.42, 0.02, 0.36, M.dark, 0, 0.14, -0.08, -0.9);
+  }
+  else if (id === 'leuchter') { // hängt an der Decke über der Zelle
+    cyl(0.015, 0.015, 1.2, M.gold, 0, 0.0, 0, 4);
+    add(new THREE.TorusGeometry(0.5, 0.03, 6, 24), M.gold, 0, -0.65, 0, Math.PI / 2);
+    for (let k = 0; k < 8; k++) { const a = k / 8 * Math.PI * 2; ball(0.07, M.lamp, Math.cos(a) * 0.5, -0.58, Math.sin(a) * 0.5); }
+    ball(0.16, M.lamp, 0, -0.75, 0); cyl(0.1, 0.02, 0.25, M.gold, 0, -0.95, 0, 8);
+    g.position.y = 0; g.userData.hang = 0.6;
+  }
+  else if (id === 'wudu') { // Waschplatz: Wand mit Wasserhähnen, Rinne und Hockern
+    box(2, 1.1, 0.25, M.plaster, 0, 0.55, -0.35); box(2, 0.12, 0.35, M.stone, 0, 0.06, -0.05); box(1.9, 0.03, 0.25, M.water, 0, 0.13, -0.05);
+    for (let k = -1; k <= 1; k++) { cyl(0.025, 0.025, 0.22, M.gold, k * 0.6, 0.85, -0.12, 6, Math.PI / 2); cyl(0.12, 0.12, 0.32, M.stone, k * 0.6, 0.16, 0.4, 10); }
+  }
+  else if (id === 'schuhe') {
+    for (let k = 0; k < 3; k++) box(1.4, 0.04, 0.35, M.wood, 0, 0.15 + k * 0.32, 0); for (const x of [-0.7, 0.7]) box(0.04, 1, 0.35, M.dark, x, 0.5, 0);
+    for (let k = 0; k < 5; k++) box(0.1, 0.07, 0.24, k % 2 ? M.dark : M.sandy, -0.5 + k * 0.25, 0.2 + (k % 3) * 0.32, 0);
   }
   g.userData.flames = flames;
   return g;
@@ -183,7 +248,7 @@ export function create(ctx, { from } = {}) {
     const old = props.get(k); if (old) { propsG.remove(old.obj); props.delete(k); }
     if (!t || !ITEM[t]) return;
     const o = buildItem(t), [gx, gy, gz] = unkey(k);
-    o.position.set((gx + 0.5) * S, gy * S, (gz + 0.5) * S); o.rotation.y = (r || 0) * Math.PI / 2; o.userData.pk = k;
+    o.position.set((gx + 0.5) * S, gy * S + (o.userData.hang ? S : 0), (gz + 0.5) * S); o.rotation.y = (r || 0) * Math.PI / 2; o.userData.pk = k;
     propsG.add(o); props.set(k, { t, r: r || 0, obj: o });
   }
 
@@ -300,7 +365,8 @@ export function create(ctx, { from } = {}) {
   const inv = document.createElement('div'); inv.id = 'invPop'; inv.hidden = true;
   inv.innerHTML = `<div class="inv-card"><div class="inv-head"><b>${T.boxTitle}</b><button type="button" class="inv-x" aria-label="Schließen">✕</button></div>
     <h4>${T.blocks}</h4><div class="inv-grid">${mats.map((m, i) => `<button type="button" data-b="${i}"><i style="background-image:url(${m.url})"></i><span>${m.name}</span></button>`).join('')}</div>
-    <h4>${T.items}</h4><div class="inv-grid">${ITEMS.map((it) => `<button type="button" data-it="${it.id}"><i class="emo">${it.icon}</i><span>${it.name}</span></button>`).join('')}</div></div>`;
+    <h4>${T.items}</h4><div class="inv-grid">${ITEMS.filter((it) => !it.cat).map((it) => `<button type="button" data-it="${it.id}"><i class="emo">${it.icon}</i><span>${it.name}</span></button>`).join('')}</div>
+    <h4>🕌 ${T.mosque}</h4><div class="inv-grid">${ITEMS.filter((it) => it.cat === 'moschee').map((it) => `<button type="button" data-it="${it.id}"><i class="emo">${it.icon}</i><span>${it.name}</span></button>`).join('')}</div></div>`;
   document.body.appendChild(inv);
   const curName = () => (cur.kind === 'block' ? mats[cur.i].name : ITEM[cur.id].name);
   const render = () => {
@@ -401,6 +467,21 @@ export function create(ctx, { from } = {}) {
   };
   canvas.addEventListener('pointermove', onMove);
 
+  // Kamera nicht in Mauern: vom Blickpunkt (Kopf der Figur) zur Kamera prüfen und vor dem ersten Stein anhalten (Innenräume)
+  const cv = new THREE.Vector3(), lv = new THREE.Vector3(), dv = new THREE.Vector3();
+  function camGuard() {
+    if (!blocks.size) return;
+    const cam = engine.camera; cv.copy(cam.position); cam.getWorldDirection(dv);
+    lv.set(player.pos.x, player.pos.y + 1.5, player.pos.z);
+    const len = cv.distanceTo(lv); if (len < 0.3) return;
+    // Punkt auf der Blicklinie der Kamera, der dem Kopf am nächsten liegt → von dort rückwärts zur Kamera
+    const tHead = Math.max(0, dv.dot(lv.sub(cv))); lv.copy(cv).addScaledVector(dv, tHead);
+    for (let t = 0.25; t < tHead; t += 0.12) {
+      const x = lv.x - dv.x * t, y = lv.y - dv.y * t, z = lv.z - dv.z * t;
+      if (filled(cell(x), cell(y), cell(z))) { cam.position.set(lv.x - dv.x * Math.max(0.2, t - 0.25), lv.y - dv.y * Math.max(0.2, t - 0.25), lv.z - dv.z * Math.max(0.2, t - 0.25)); return; }
+    }
+  }
+
   // ---------- Leuchtende Dinge ----------
   const interact = createInteract(ctx, player);
   piles.forEach((p, i) => interact.add({ obj: p.g, color: 'gold', x: p.x + 1.1, z: p.z, radius: 5, near: 1.6, label: '🧱 ' + T.take(mats[i].name), key: 'pile' + i, run() { pick({ kind: 'block', i }); } }));
@@ -435,6 +516,7 @@ export function create(ctx, { from } = {}) {
       clock.advance(dt); sky.state.artificial = 0.6; sky.setHour(clock.hour); // Tag und Nacht nach der Spieluhr
       st.dt = dt; st.done = false;
       player.update(dt);
+      camGuard();
       life.update(dt); interact.update(dt);
       if (ghostT < 1e8) { ghostT -= dt; if (ghostT <= 0) ghost.visible = false; }
       if (saveT > 0) { saveT -= dt; if (saveT <= 0) save(); }

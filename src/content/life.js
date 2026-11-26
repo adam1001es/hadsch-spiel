@@ -21,7 +21,7 @@ export const BUILDYARD = {
   far: 'Zu weit weg – geh näher heran.',
   full: 'Der Bauhof ist voll – baue erst etwas ab.',
   synced: 'Bauten der anderen geladen',
-  box: '🧰 Baukasten', boxTitle: 'Baukasten', blocks: 'Steine', items: 'Fertige Dinge',
+  box: '🧰 Baukasten', boxTitle: 'Baukasten', blocks: 'Steine', items: 'Fertige Dinge', mosque: 'Moschee bauen',
   jump: 'Springen', fly: 'Fliegen', flyOn: 'Fliegen: an – ▲/▼ zum Steigen und Sinken', flyOff: 'Fliegen: aus',
   shared: (n) => `${n} ${n === 1 ? 'Mitspieler baut' : 'Mitspieler bauen'} mit`,
 };
@@ -34,6 +34,15 @@ export const ITEMS = [
   { id: 'feuer', name: 'Lagerfeuer', icon: '🔥' }, { id: 'laterne', name: 'Laterne', icon: '🏮' }, { id: 'palme', name: 'Palme', icon: '🌴' },
   { id: 'baum', name: 'Baum', icon: '🌳' }, { id: 'pflanze', name: 'Pflanze', icon: '🪴' }, { id: 'zelt', name: 'Zelt', icon: '⛺' },
   { id: 'brunnen', name: 'Brunnen', icon: '⛲' }, { id: 'kiste', name: 'Kiste', icon: '📦' }, { id: 'kamel', name: 'Kamel', icon: '🐪' },
+  // Moschee-Bauteile (cat: 'moschee' → eigener Bereich im Baukasten)
+  { id: 'kuppel', name: 'Kuppel', icon: '🕌', cat: 'moschee' }, { id: 'kuppelk', name: 'Kleine Kuppel', icon: '⚪', cat: 'moschee' },
+  { id: 'kuppelg', name: 'Grüne Kuppel', icon: '🟢', cat: 'moschee' }, { id: 'minarett', name: 'Minarett', icon: '🗼', cat: 'moschee' },
+  { id: 'halbmond', name: 'Halbmond-Spitze', icon: '☪️', cat: 'moschee' }, { id: 'bogen', name: 'Torbogen', icon: '🚪', cat: 'moschee' },
+  { id: 'saeule', name: 'Säule', icon: '🏛️', cat: 'moschee' }, { id: 'mihrab', name: 'Mihrab (Gebetsnische)', icon: '🧭', cat: 'moschee' },
+  { id: 'minbar', name: 'Minbar (Kanzel)', icon: '🪜', cat: 'moschee' }, { id: 'reihen', name: 'Gebetsreihen (Teppich)', icon: '🟥', cat: 'moschee' },
+  { id: 'rehal', name: 'Koranständer', icon: '📖', cat: 'moschee' }, { id: 'leuchter', name: 'Moschee-Leuchter', icon: '🪔', cat: 'moschee' },
+  { id: 'wudu', name: 'Waschplatz (Wudu)', icon: '🚰', cat: 'moschee' }, { id: 'schuhe', name: 'Schuhregal', icon: '👞', cat: 'moschee' },
+  { id: 'fenster', name: 'Bogenfenster', icon: '🪟', cat: 'moschee' },
 ];
 export const MATERIALS = [
   { id: 'sand', name: 'Sandstein' },

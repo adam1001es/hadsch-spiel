@@ -101,7 +101,7 @@ dieselbe Spielfigur und Steuerung. Neue Zonen hängen sich als Ort in der Hejaz-
 Riesige Welt: Gelände 2,6 × 2,6 km (flache Wüste bis r = 300 m, dahinter Hänge und Berge bis ~190 m), überall bebaubar (auch an Hängen,
 Strahl trifft das Geländenetz exakt). Zellen à 0,5 m, Schlüssel `key(gx, gy, gz)` (±2048 Zellen, bis 1900 nutzbar), max. 60 000 Steine, 600 Gegenstände.
 9 Baustoffe (Canvas-Texturen inkl. Basalt, Glas, Hecke), InstancedMesh je Baustoff wächst bei Bedarf. **Baukasten** (`#invPop`): Steine + fertige Dinge
-(Gebetsteppich, Hocker, Tisch, Bank, Bett, Sofa, Lagerfeuer, Laterne, Palme, Baum, Pflanze, Zelt, Brunnen, Kiste, Kamel), Gegenstände drehen sich zur Figur.
+(Gebetsteppich, Hocker, Tisch, Bank, Bett, Sofa, Lagerfeuer, Laterne, Palme, Baum, Pflanze, Zelt, Brunnen, Kiste, Kamel) und Bereich **Moschee bauen** (Kuppeln, Minarett, Halbmond-Spitze, Torbogen, Bogenfenster, Säule, Mihrab, Minbar, Gebetsreihen, Koranständer, Leuchter hängt an der Decke, Waschplatz, Schuhregal); Gegenstände drehen sich zur Figur. Kamera stoppt vor Mauern (Innenräume).
 Figur: Springen (Leertaste/Knopf), Fliegen/Schweben (V/Knopf, ▲/▼ bzw. Leertaste/C), steigt Stufen, fällt mit Schwerkraft. Tag/Nacht nach Spieluhr
 (Laternen/Feuer leuchten nachts). Speichern v3 `{v:3,b,p}` in `hp-bauhof` bzw. `hp-bauhof-raum-<Code>` (v1/v2 werden übernommen).
 **Gemeinsam bauen für alle im Bauhof** (öffentlich und im Raum): `b` = Stein, `p` = Gegenstand, `bq` = Bau anfragen, `bs` = Bau in Stücken (1500) schicken;
