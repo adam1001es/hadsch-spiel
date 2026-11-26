@@ -295,7 +295,7 @@ export function create(ctx, { from } = {}) {
   // ---------- Umgebung am Eingang ----------
   const W = ENTRY;
   palms(world, [[W - 18, 0, -26, 1, 0.9], [W - 20, 0, 22, 2, 0.8], [W + 24, 0, 30, 3, 0.85], [W + 28, 0, -32, 1, 0.8], [W - 30, 0, 4, 2, 0.75]]);
-  const coach = bus(world, W - 12, 2, 0);
+  const coach = bus(world, W - 12, 2, 0, { livery: true });
   sign(world, W - 5, -7, Math.PI / 2, T.sign, { w: 3.2, h: 1.1, y: 2.6 });
   const hut = new THREE.Group(); hut.position.set(W - 6, 0, -16); world.add(hut);
   { const b = new THREE.Mesh(new THREE.BoxGeometry(3, 2.6, 3), mats[1].mat); b.position.y = 1.3; b.castShadow = b.receiveShadow = true; hut.add(b);

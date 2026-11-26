@@ -49,18 +49,20 @@ const MASK = {
   blue: 'float mb = smoothstep(0.18, 0.32, c.b - max(c.r, c.g * 0.7)); float sat = max(c.r, max(c.g, c.b)) - min(c.r, min(c.g, c.b));'
     + 'float mg = smoothstep(0.45, 0.52, c.g) * (1.0 - smoothstep(0.66, 0.74, c.g)) * (1.0 - smoothstep(0.06, 0.12, sat));'
     + 'float mk = max(mb, mg); float sh = mix(clamp(c.g / 0.56, 0.6, 1.15), clamp(c.b / 0.78, 0.55, 1.15), mb);',
+  // Bus: heller (weißer/hellgrauer) Lack, Fenster/Reifen (dunkel) und Lichter (farbig) bleiben
+  white: 'float sat = max(c.r, max(c.g, c.b)) - min(c.r, min(c.g, c.b)); float mk = smoothstep(0.2, 0.32, c.g) * (1.0 - smoothstep(0.08, 0.16, sat)); float sh = clamp(0.55 + c.g * 0.6, 0.6, 1.15);',
   red: 'float mk = smoothstep(0.08, 0.2, c.r - 1.8 * max(c.g, c.b)); float sh = clamp(pow(c.r / 0.85, 0.8), 0.35, 1.15);',
 };
 
 // mesh: Lackteil, toVeh: Matrix Mesh → Fahrzeugraum (Front +z, Boden y = 0), box: Größe des Fahrzeugs im Fahrzeugraum
-export function applyLivery(mesh, toVeh, box, paint) {
+export function applyLivery(mesh, toVeh, box, paint, { vOff = 0 } = {}) { // vOff: Schriftband höher/tiefer (Anteil der Höhe)
   const mat = mesh.material.clone();
-  const uniforms = { uLiv: { value: liveryTexture() }, uToVeh: { value: toVeh.clone() }, uMin: { value: box.min.clone() }, uSize: { value: box.getSize(new THREE.Vector3()) } };
+  const uniforms = { uLiv: { value: liveryTexture() }, uToVeh: { value: toVeh.clone() }, uMin: { value: box.min.clone() }, uSize: { value: box.getSize(new THREE.Vector3()) }, uVOff: { value: vOff } };
   mat.onBeforeCompile = (sh) => {
     Object.assign(sh.uniforms, uniforms);
     sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nuniform mat4 uToVeh; varying vec3 vVeh; varying vec3 vVehN;')
       .replace('#include <begin_vertex>', '#include <begin_vertex>\nvVeh = (uToVeh * vec4(position, 1.0)).xyz; vVehN = normalize(mat3(uToVeh) * normal);');
-    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform sampler2D uLiv; uniform vec3 uMin; uniform vec3 uSize; varying vec3 vVeh; varying vec3 vVehN;')
+    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform sampler2D uLiv; uniform vec3 uMin; uniform vec3 uSize; uniform float uVOff; varying vec3 vVeh; varying vec3 vVehN;')
       .replace('#include <map_fragment>', `#include <map_fragment>
       {
         vec3 c = diffuseColor.rgb; ${MASK[paint]}
@@ -68,7 +70,7 @@ export function applyLivery(mesh, toVeh, box, paint) {
         vec3 n = normalize(vVehN);
         // Seiten: Schrift von beiden Seiten lesbar (rechts von hinten nach vorn gespiegelt)
         float u = n.x > 0.0 ? 1.0 - q.z : q.z;
-        vec3 side = texture2D(uLiv, vec2(u, clamp(q.y, 0.0, 1.0))).rgb;
+        vec3 side = texture2D(uLiv, vec2(u, clamp(q.y + uVOff, 0.0, 1.0))).rgb;
         vec3 top = texture2D(uLiv, vec2(q.z, 0.86 + 0.1 * q.x)).rgb; // oben/vorne/hinten: nur Farbbahnen
         vec3 liv = mix(top, side, smoothstep(0.35, 0.6, abs(n.x)));
         diffuseColor.rgb = mix(c, liv * sh, mk);

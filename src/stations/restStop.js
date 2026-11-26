@@ -36,7 +36,7 @@ export function create(ctx, { from = 'mecca', to = 'medina' } = {}) {
   // Parkplatz-Markierungen
   { const white = new THREE.MeshBasicMaterial({ color: 0xeeeeea }); const im = new THREE.InstancedMesh(new THREE.PlaneGeometry(0.15, 5).rotateX(-Math.PI / 2), white, 16); for (let i = 0; i < 16; i++) { dm.position.set(-40 + i * 3.2 + (i > 7 ? 26 : 0), 0.04, -84); dm.updateMatrix(); im.setMatrixAt(i, dm.matrix); } world.add(im); }
   const traffic = createTraffic(world, { z0: -140, x0: -500, x1: 500, crossX: 3000, crossW: 10, mobile, taxis: 0.25, people: () => [player.pos] });
-  const coach = bus(world, 0, -96, Math.PI / 2);
+  const coach = bus(world, 0, -96, Math.PI / 2, { livery: true });
   sign(world, 9, -77, 0, ['استراحة', 'Rastplatz · Oasen-Moschee'], { w: 3.6, h: 1.1, y: 2.6 });
   palms(world, [[-38, 0, -80, 1, 0.8], [38, 0, -80, 2, 0.8], [-30, 0, -108, 3, 0.75], [30, 0, -108, 1, 0.75]]);
   // Laternen entlang der Allee, im Hof und am Parkplatz (leuchten nachts)

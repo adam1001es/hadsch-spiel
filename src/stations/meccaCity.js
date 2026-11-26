@@ -204,7 +204,7 @@ export function create(ctx, { from, where = 'mecca' } = {}) {
   SPOTS.push({ obj: balloon, color: 'blue', radius: 12, near: 2.4, push: 0.04, key: 'balloon', x: BXb + 2.5, z: BZb + 4, closest: circleClosest(balloon, 2.5), label: T.balloonDo, run() { ctx.balloon?.(where); } });
   // Bus in die andere Stadt (Haltestelle am Platz, längs der Straße)
   const other = medina ? 'mecca' : 'medina';
-  const [BUx, BUz] = L.bus, coach = bus(world, BUx, BUz, Math.PI / 2);
+  const [BUx, BUz] = L.bus, coach = bus(world, BUx, BUz, Math.PI / 2, { livery: true });
   SPOTS.push({ obj: coach.group, color: 'blue', radius: 10, near: 2.4, push: 0.04, key: 'bus', x: BUx, z: BUz + 2.6, closest: boxClosest(coach.group, 1.6, 6.2), label: medina ? T.busToMecca : T.busToMedina, run() { sfx.bus(); ctx.drive?.(where, other); } });
   sign(world, BUx - 8, BUz + 2.2, 0, ['موقف الحافلات', 'Bushaltestelle'], { w: 2.8, h: 0.9, y: 2.6 });
   // Wegweiser zu den Bereichen des Lebensspiels (erscheinen in der Welt, nicht im Startmenü)

@@ -3,6 +3,7 @@ import { pbr, texture } from './assets.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { toCreasedNormals } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
+import { applyLivery } from './livery.js';
 
 // Wiederverwendbare Bauteile für die Außen-Stationen. Viele gleiche Objekte → InstancedMesh.
 const dummy = new THREE.Object3D();
@@ -344,12 +345,17 @@ export function mosqueModel(world, { x = 0, z = 0, ry = 0, glow = null, variant 
 // Reisebus: 3D-Modell „indonesian bus Ecoline“ (agungkuncoro13021986, CC BY 4.0), vereinfacht. Länge 12,2 m entlang z, Front bei +z.
 // Wird einmal geladen und pro Station geklont. Gibt die Gruppe zurück; collider() liefert die Kollisionsbox.
 let busLoad = null;
-export function bus(world, x, z, ry = 0) {
+export function bus(world, x, z, ry = 0, { livery = false } = {}) { // livery: islamlernen.at-Farben (Lebensspiel)
   const grp = new THREE.Group(); grp.position.set(x, 0, z); grp.rotation.y = ry; world.add(grp);
   busLoad ||= new GLTFLoader().loadAsync('./assets/models/bus.glb').then((g) => g.scene).catch(() => null);
   busLoad.then((sc) => {
     if (!sc || !grp.parent) return;
-    const m = sc.clone(true); m.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } }); grp.add(m);
+    const m = sc.clone(true); m.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+    if (livery) { // Schriftband unter die Fenster (Busfenster sind groß und dunkel)
+      m.updateMatrixWorld(true); const box = new THREE.Box3().setFromObject(m);
+      m.traverse((o) => { if (o.isMesh) applyLivery(o, o.matrixWorld, box, 'white', { vOff: 0.15 }); });
+    }
+    grp.add(m);
   });
   return { group: grp, collider: { type: 'box', x, z, hw: 1.55, hd: 6.2, rot: ry } };
 }

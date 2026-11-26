@@ -25,7 +25,7 @@ export function create(ctx, { from = 'mecca', to = 'medina', resume = 0, vehicle
   ui.info(`<p>${T.driveInfo}</p>`);
   const land = buildHejaz(world, engine, { pilgrims: false });
   const veh = vehicle ? makeVehicle(world, vehicle) : null;
-  const coach = veh ? veh.root : bus(world, 0, 0).group;
+  const coach = veh ? veh.root : bus(world, 0, 0, 0, { livery: true }).group;
   // eigene Figur sitzt im ausgeliehenen Fahrzeug
   const fig = veh ? createFigure(world, { color: ctx.profile?.gender === 'f' ? 0x2c3a4a : 0x34506a, covered: ctx.profile?.gender === 'f', ring: false, models: peopleModels() }) : null;
   fig?.pose(specOf(vehicle).pose);
