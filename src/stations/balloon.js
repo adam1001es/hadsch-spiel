@@ -9,7 +9,7 @@ import * as sfx from '../core/sfx.js';
 import { skinBalloon } from '../world/balloonSkin.js';
 
 // Unterhaltung nach dem Hadsch: Heißluftballon über Mekka oder Medina.
-// Der Spieler steht im Korb. Brenner halten = steigen, loslassen = langsam sinken, Joystick = lenken, wischen = Ansicht drehen.
+// Der Spieler steht im Korb. ▲ halten = schnell steigen, ▼ = schnell sinken, sonst schweben; Joystick = in jede Richtung, wischen = Ansicht drehen.
 // Vogelperspektive: Kamera hinter und über dem Ballon; Stadt aus einfachen, instanzierten Häusern (wenig Last auf schwachen Geräten).
 let balloonLoad = null;
 const MAX_ALT = 340;
@@ -142,7 +142,16 @@ export function create(ctx, { where = 'mecca' } = {}) {
       { label: T.land, kind: 'primary', onClick: () => ctx.city?.('balloon', here) },
     ]);
   }
-  ui.hold(T.burner);
+  // Steuerung: ▲ Brenner (schnell steigen), ▼ Ventil (schnell sinken), Joystick = in jede Richtung, Tastatur Leertaste/C
+  const bc = document.createElement('div'); bc.id = 'balloonCtl';
+  bc.innerHTML = '<button type="button" data-k="u" aria-label="Steigen">▲<small>Steigen</small></button><button type="button" data-k="d" aria-label="Sinken">▼<small>Sinken</small></button>';
+  document.body.appendChild(bc);
+  const bk = { u: 0, d: 0 };
+  bc.addEventListener('pointerdown', (e) => { const b = e.target.closest('[data-k]'); if (!b) return; e.preventDefault(); bk[b.dataset.k] = 1; b.classList.add('on'); try { b.setPointerCapture(e.pointerId); } catch { /* egal */ } });
+  for (const ev of ['pointerup', 'pointercancel', 'lostpointercapture']) bc.addEventListener(ev, (e) => { const b = e.target.closest('[data-k]'); if (!b) return; bk[b.dataset.k] = 0; b.classList.remove('on'); });
+  const bKey = (e, v) => { if (e.code === 'Space') { bk.u = v; e.preventDefault(); } if (e.code === 'KeyC') bk.d = v; };
+  const bkd = (e) => bKey(e, 1), bku = (e) => bKey(e, 0);
+  window.addEventListener('keydown', bkd); window.addEventListener('keyup', bku);
   showPlace(where);
   const camPos = new THREE.Vector3(), look = new THREE.Vector3(); let first = true, t = 0;
   input.yaw = Math.atan2(pos.x - C[where].x, pos.z - C[where].z); input.pitch = 0.55; // Blick schräg nach unten auf die Moschee
@@ -165,14 +174,18 @@ export function create(ctx, { where = 'mecca' } = {}) {
         if (dd < 60) { const w = trip; trip = null; showPlace(w); ui.toast(C[w].name, 2500); }
         vel.x += (want.x - vel.x) * Math.min(1, dt * 0.6); vel.z += (want.z - vel.z) * Math.min(1, dt * 0.6);
       } else {
-        if (input.holding) { vel.y += (5 - vel.y) * Math.min(1, dt * 1.5); sfx.burnerKeep(); }
-        else vel.y += (-1.6 - vel.y) * Math.min(1, dt * 0.8);
-        flame.visible = input.holding; glow.intensity = input.holding ? 30 : 0;
+        // schnell hoch (Brenner) und runter (Ventil); ohne Knopf schweben (ganz leicht sinkend)
+        const upK = bk.u || input.holding ? 1 : 0, dnK = bk.d;
+        const wantY = upK ? 22 : dnK ? -20 : -0.6;
+        vel.y += (wantY - vel.y) * Math.min(1, dt * (upK || dnK ? 2.2 : 1.2));
+        if (upK) sfx.burnerKeep();
+        flame.visible = !!upK; glow.intensity = upK ? 30 : 0;
         // Lenken relativ zur Blickrichtung (sanft, wie ein Ballon im Wind)
         const mx = input.move.x, my = input.move.y;
         const fx = -Math.sin(yaw), fz = -Math.cos(yaw), rx = Math.cos(yaw), rz = -Math.sin(yaw);
-        want.set((rx * mx - fx * my) * 16, 0, (rz * mx - fz * my) * 16);
-        vel.x += (want.x + 1.2 - vel.x) * Math.min(1, dt * 0.9); vel.z += (want.z - vel.z) * Math.min(1, dt * 0.9); // +1,2 m/s leichter Wind
+        want.set((rx * mx - fx * my) * 48, 0, (rz * mx - fz * my) * 48); // bis ~170 km/h in jede Richtung
+        const ka = Math.min(1, dt * (Math.abs(mx) + Math.abs(my) > 0.1 ? 1.6 : 0.8));
+        vel.x += (want.x + 0.8 - vel.x) * ka; vel.z += (want.z - vel.z) * ka; // +0,8 m/s leichter Wind
       }
       flame.scale.setScalar(0.85 + Math.random() * 0.3);
       pos.addScaledVector(vel, dt);
@@ -193,6 +206,6 @@ export function create(ctx, { where = 'mecca' } = {}) {
       land.update(dt);
       life.update(dt);
     },
-    dispose() { ui.hold(null); ui.counter(''); delete ctx.balloonPos; },
+    dispose() { ui.hold(null); ui.counter(''); delete ctx.balloonPos; bc.remove(); window.removeEventListener('keydown', bkd); window.removeEventListener('keyup', bku); },
   };
 }

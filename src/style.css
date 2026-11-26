@@ -535,3 +535,11 @@ body.driving #counter { visibility: hidden; }
   #panel:not(.collapsed) .ar { font-size: 16px; }
 }
 #panel.collapsed.no-mission .panel-body::before { content: none !important; display: none !important; }
+
+/* Heißluftballon: Steigen/Sinken (rechts unten, groß für den Daumen) */
+#balloonCtl { position: fixed; z-index: 7; right: var(--sr); bottom: var(--sb); display: flex; flex-direction: column; gap: 10px; }
+#balloonCtl button { width: 72px; height: 72px; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 26px; line-height: 1;
+  background: rgba(20,37,31,.86); color: #f5efe0; border: 1.5px solid #e6c46e; box-shadow: 0 3px 12px rgba(0,0,0,.3); touch-action: none; user-select: none; -webkit-user-select: none; }
+#balloonCtl small { font-size: 10px; margin-top: 3px; }
+#balloonCtl button.on { background: #e6c46e; color: #14251f; }
+@media (orientation: landscape) and (max-height: 500px) { #balloonCtl button { width: 58px; height: 58px; font-size: 21px; } #balloonCtl { gap: 6px; } }

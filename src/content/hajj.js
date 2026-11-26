@@ -382,7 +382,7 @@ export const BALLOON = {
   title: 'Ballonflug',
   mecca: 'Über Mekka',
   medina: 'Über Medina',
-  intro: 'Zum Abschluss ein Flug mit dem Heißluftballon! Halte den Brenner-Knopf, um zu steigen. Lässt du los, sinkt der Ballon langsam. Mit dem Joystick (am Laptop W A S D) lenkst du, rechts wischen dreht die Ansicht.',
+  intro: 'Zum Abschluss ein Flug mit dem Heißluftballon! Halte ▲ (Brenner), um schnell zu steigen, und ▼ (Ventil), um schnell zu sinken – sonst schwebt der Ballon. Mit dem Joystick (am Laptop W A S D) fliegst du in jede Richtung, am Laptop Leertaste = steigen, C = sinken. Rechts wischen dreht die Ansicht.',
   burner: 'Halten: Brenner (steigen)',
   toMedina: 'Nach Medina fliegen',
   toMecca: 'Nach Mekka fliegen',
