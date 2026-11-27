@@ -544,3 +544,35 @@ body.driving #counter { visibility: hidden; }
 #balloonCtl button.on { background: #e6c46e; color: #14251f; }
 @media (orientation: landscape) and (max-height: 500px) { #balloonCtl button { width: 58px; height: 58px; font-size: 21px; } #balloonCtl { gap: 6px; } }
 @media (orientation: landscape) and (max-height: 500px) { #driveCtl.air .dc-r { gap: 6px; } #driveCtl .air { height: 38px; } }
+
+/* ===== Aufgeräumte Fahr-/Flugknöpfe (kleiner, an den Rändern) ===== */
+#driveCtl .dc-l, #driveCtl .dc-r { gap: 8px; }
+#driveCtl button { font-size: 12px; }
+#driveCtl .dc-wheel { width: min(40vw, 190px); height: 70px; border-radius: 35px; padding: 0 12px; }
+#driveCtl .dc-wheel .a { font-size: 34px; }
+#driveCtl .dc-wheel .knob { width: 46px; height: 46px; margin: -23px 0 0 -23px; }
+#driveCtl .pedal { width: 72px; border-radius: 16px 16px 12px 12px; }
+#driveCtl .brake, #driveCtl .gas { height: 84px; }
+#driveCtl .gas { width: 58px; }
+#driveCtl .pedal small { display: none; }
+#driveCtl .nitro { width: 50px; height: 50px; }
+#driveCtl .nitro span { font-size: 19px; } #driveCtl .nitro small { font-size: 7.5px; }
+#driveCtl .ag { width: 52px; height: 34px; border-radius: 10px; } #driveCtl .ag small { font-size: 7px; } #driveCtl .ag span { font-size: 11px; }
+#driveCtl .dc-speed { min-width: 84px; padding: 4px 9px 5px; border-radius: 11px; }
+#driveCtl .dc-speed b { font-size: 22px; } #driveCtl .dc-speed span { font-size: 10px; } #driveCtl .dc-speed em { font-size: 9px; min-height: 10px; }
+/* Helikopter: ▲/▼ als runde Knöpfe übereinander am rechten Rand, Tacho klein über dem Joystick */
+#driveCtl.air .dc-top { flex-direction: column; gap: 10px; }
+#driveCtl.air .air { width: 58px; height: 58px; border-radius: 50%; font-size: 0; letter-spacing: 0; }
+#driveCtl.air .air::before { font-size: 22px; line-height: 1; }
+#driveCtl.air .air[data-k="u"]::before { content: '▲'; } #driveCtl.air .air[data-k="d"]::before { content: '▼'; }
+#driveCtl.air .air::after { font: 700 8px Figtree, system-ui, sans-serif; letter-spacing: .06em; margin-top: 3px; opacity: .8; }
+#driveCtl.air .air[data-k="u"]::after { content: 'HOCH'; } #driveCtl.air .air[data-k="d"]::after { content: 'RUNTER'; }
+#driveCtl.air .dc-r { bottom: calc(var(--sb) + 18px); }
+#driveCtl.air .dc-l { bottom: calc(var(--sb) + 150px); }
+@media (orientation: landscape) and (max-height: 500px) {
+  #driveCtl.air .air { width: 50px; height: 50px; } #driveCtl.air .air::before { font-size: 18px; }
+  #driveCtl.air .dc-top { gap: 6px; } #driveCtl.air .dc-l { bottom: calc(var(--sb) + 120px); }
+  #driveCtl .brake, #driveCtl .gas { height: 72px; } #driveCtl .dc-wheel { height: 60px; }
+}
+/* Ballon: kleiner */
+#balloonCtl button { width: 58px; height: 58px; font-size: 21px; } #balloonCtl small { font-size: 8px; }
