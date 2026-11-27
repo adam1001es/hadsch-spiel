@@ -91,6 +91,58 @@ const FACADES = {
 };
 
 FACADES.tower = FACADES.glass; // frühere Glastürme: jetzt osmanischer Stil
+// ---------- weitere Fassaden für Abwechslung (jedes Gebäude bekommt per Zufall eine) ----------
+const balcony = (g, x, y, w, rail = '#6b4a2e') => { g.fillStyle = 'rgba(0,0,0,.18)'; g.fillRect(x, y + 10, w, 6); g.fillStyle = '#efe4cc'; g.fillRect(x - 4, y, w + 8, 10); g.strokeStyle = rail; g.lineWidth = 3; g.strokeRect(x, y - 26, w, 26); for (let xx = x + 8; xx < x + w; xx += 10) { g.beginPath(); g.moveTo(xx, y - 26); g.lineTo(xx, y); g.stroke(); } };
+Object.assign(FACADES, {
+  // Rosé-Stein, hohe Fenster mit Balkonen und Holzgeländer
+  rose: { bay: [3.2, 3.5], tex: () => canvasTex(256, 256, (g, w, h) => {
+    stoneBlocks(g, w, h, '#e8c6ad', 'rgba(140,90,60,.16)');
+    g.fillStyle = '#f6e6d4'; g.fillRect(60, 30, 136, 170); g.save(); g.beginPath(); g.rect(72, 42, 112, 150); g.clip(); glassGrad(g, 72, 42, 112, 150, '#5d6f78', '#2a353c'); g.restore();
+    g.fillStyle = '#7a4f2c'; g.fillRect(126, 42, 4, 150); balcony(g, 56, 212, 144);
+    g.fillStyle = '#c99a7a'; g.fillRect(0, 0, w, 10);
+  }) },
+  // Ocker mit Zwillingsbögen, grüne Fensterläden
+  ochre: { bay: [4, 3.4], tex: () => canvasTex(256, 224, (g, w, h) => {
+    stoneBlocks(g, w, h, '#dcb579', 'rgba(130,90,40,.18)');
+    for (const x of [44, 140]) { archPath(g, x, 46, 72, 140); g.fillStyle = '#f2e0b8'; g.fill(); archPath(g, x + 8, 56, 56, 128); g.save(); g.clip(); glassGrad(g, x + 8, 50, 56, 140, '#56707a', '#25313a'); g.restore();
+      g.fillStyle = '#3f7a55'; g.fillRect(x - 14, 92, 12, 92); g.fillRect(x + 74, 92, 12, 92); g.fillStyle = 'rgba(0,0,0,.25)'; for (let y = 96; y < 182; y += 8) { g.fillRect(x - 13, y, 10, 2); g.fillRect(x + 75, y, 10, 2); } }
+    g.fillStyle = '#b88e52'; g.fillRect(0, h - 18, w, 18); for (let x = 12; x < w; x += 24) star8(g, x, h - 9, 5, '#f2e0b8');
+  }) },
+  // weißer Stein mit blauen Iznik-Fliesenpaneelen zwischen den Fenstern (osmanisch)
+  iznik: { bay: [4.4, 3.6], tex: () => canvasTex(256, 224, (g, w, h) => {
+    stoneBlocks(g, w, h, '#f3ede2', 'rgba(130,120,100,.12)');
+    g.fillStyle = '#e3d8c4'; archPath(g, 74, 34, 108, 158); g.fill(); archPath(g, 84, 44, 88, 148); g.save(); g.clip(); glassGrad(g, 84, 40, 88, 150, '#5d6f78', '#28333a'); g.restore(); mashrabiya(g, 86, 120, 84, 70, '#5a3a22');
+    for (const x of [10, 202]) { g.fillStyle = '#2a5d9f'; g.fillRect(x, 50, 44, 120); g.fillStyle = '#f4efe3'; g.fillRect(x + 4, 54, 36, 112); g.fillStyle = '#2a5d9f'; for (let y = 64; y < 164; y += 24) { star8(g, x + 22, y, 9, '#2a5d9f'); g.fillStyle = '#c8452e'; g.beginPath(); g.arc(x + 22, y, 3, 0, 7); g.fill(); g.fillStyle = '#2a5d9f'; } }
+    tileBand(g, 0, h - 24, w, 18, '#2a5d9f');
+  }) },
+  // helle Moderne mit quadratischen Maschrabiyya-Paneelen und Goldlinien
+  modern: { bay: [3, 3.2], tex: () => canvasTex(256, 256, (g, w, h) => {
+    g.fillStyle = '#f1e9da'; g.fillRect(0, 0, w, h);
+    g.save(); g.beginPath(); g.rect(30, 34, 196, 150); g.clip(); glassGrad(g, 30, 34, 196, 150, '#6a7f8a', '#2b373e'); g.restore();
+    mashrabiya(g, 30, 34, 90, 150, '#b8955c'); g.fillStyle = '#c9a24e'; g.fillRect(0, 200, w, 6); g.fillRect(0, 0, 4, h);
+    g.fillStyle = '#e4d9c4'; g.fillRect(0, 206, w, h - 206);
+  }) },
+  // Terrakotta-Stein mit großen Spitzbögen über zwei Geschosse
+  terra: { bay: [4.8, 6.8], tex: () => canvasTex(256, 360, (g, w, h) => {
+    stoneBlocks(g, w, h, '#d4a07a', 'rgba(120,70,40,.18)');
+    archPath(g, 46, 40, 164, 300); g.fillStyle = '#ecd2b8'; g.fill(); archPath(g, 58, 54, 140, 286); g.save(); g.clip(); glassGrad(g, 58, 40, 140, 300, '#5a6c74', '#262f35'); g.restore();
+    g.fillStyle = '#ecd2b8'; g.fillRect(58, 186, 140, 10); mashrabiya(g, 62, 120, 132, 60, '#6b4426'); mashrabiya(g, 62, 266, 132, 70, '#6b4426');
+  }) },
+  // Medina-Varianten: weiß mit grünen Holzerkern bzw. hellgrau mit Rundbögen
+  medina2: { bay: [3.8, 3.4], tex: () => canvasTex(256, 240, (g, w, h) => {
+    stoneBlocks(g, w, h, '#f7f3ea', 'rgba(140,130,110,.12)');
+    g.fillStyle = '#2f6b4e'; g.fillRect(56, 36, 144, 170); mashrabiya(g, 66, 46, 124, 150, '#3f7a55'); g.fillStyle = '#e8dfcc'; g.fillRect(48, 206, 160, 12);
+    g.fillStyle = '#d9cdb5'; g.fillRect(0, h - 10, w, 10);
+  }) },
+  medina3: { bay: [3.2, 3.3], tex: () => canvasTex(256, 256, (g, w, h) => {
+    stoneBlocks(g, w, h, '#ebe6dc', 'rgba(130,120,100,.14)');
+    arabWindow(g, 76, 50, 104, 156, '#faf6ee', false, '#5d6e76', '#8a6a44'); balcony(g, 70, 222, 116, '#3f7a55');
+  }) },
+});
+const MECCA_STYLES = ['mecca', 'glass', 'rose', 'ochre', 'iznik', 'modern', 'terra'], MEDINA_STYLES = ['medina', 'medina2', 'medina3', 'iznik', 'modern'];
+// Läden im Erdgeschoss: drei Varianten (Spitzbogen, Rundbogen dunkel, Rechteck mit Markise)
+FACADES.podium2 = { bay: [5, 8], tex: () => canvasTex(256, 400, (g, w, h) => shopFront(g, w, h, '#cfa982', '#a8805a', false), { repeat: false }) };
+FACADES.podium3 = { bay: [7, 8], tex: () => canvasTex(256, 290, (g, w, h) => shopFront(g, w, h, '#e7dccb', '#7a5a3a', true), { repeat: false }) };
 
 // Material mit Fassade in Metern (Instanz-Skalierung aus der Matrix), Dach flach eingefärbt
 // Nacht (0…1) für alle Fassaden: Fenster leuchten unregelmäßig warm, Läden hell (von der Station aus der Spieluhr gesetzt)
@@ -131,8 +183,8 @@ function facadeMat(style, { roof = 0xcfc4ae, rough = 0.75 } = {}) {
 const WARM = [0xffffff, 0xfff1dc, 0xffe6cc, 0xf6e2c0, 0xffeedd, 0xf2dcc4].map((c) => new THREE.Color(c));
 const WHITE = [0xffffff, 0xfffaf0, 0xf8f3ea].map((c) => new THREE.Color(c));
 function tintOf(style, b, col) {
-  if (!['mecca', 'glass', 'tower', 'medina'].includes(style)) return col.setScalar(b.tint);
-  const k = Math.abs(Math.floor(b.x * 7.31 + b.z * 3.17)) % 6, pal = style === 'medina' ? WHITE : WARM;
+  if (!MECCA_STYLES.includes(style) && !MEDINA_STYLES.includes(style) && style !== 'tower') return col.setScalar(b.tint);
+  const k = Math.abs(Math.floor(b.x * 7.31 + b.z * 3.17)) % 6, pal = /medina|iznik|modern/.test(style) ? WHITE : WARM;
   return col.copy(pal[k % pal.length]).multiplyScalar(Math.min(1, 0.92 + (b.tint - 0.9) * 0.6));
 }
 export function createTowers(world, { podiumStyle = 'podium' } = {}) {
@@ -170,11 +222,14 @@ export function createTowers(world, { podiumStyle = 'podium' } = {}) {
     footprints: foot,
     add(x, z, w, d, h, { style = 'mecca', podium = 8, ry = 0, tint = 1, crown = true } = {}) {
       cur = { x, z, w, d, ry, h }; foot.push(cur);
-      if (podium) push(podiumStyle, x, 0, z, w, podium, d, ry, 1);
+      const hv0 = Math.abs(Math.sin(x * 4.1 + z * 9.7)) % 1; // fester Zufall je Ort
+      if (podium) push(podiumStyle === 'podium' ? ['podium', 'podium2', 'podium3'][Math.floor(hv0 * 3)] : podiumStyle, x, 0, z, w, podium, d, ry, 1);
+      // Abwechslung: Fassade je Gebäude aus der Stilfamilie wählen
+      if (style === 'medina') style = MEDINA_STYLES[Math.floor(hv0 * 7.3) % MEDINA_STYLES.length];
+      else if (style === 'mecca' || style === 'glass') style = MECCA_STYLES[Math.floor(hv0 * 11.7) % MECCA_STYLES.length];
       const inset = Math.min(4, Math.min(w, d) * 0.12), base = podium || 0;
       const bw = w - inset * 2, bd = d - inset * 2, hv = Math.abs(Math.sin(x * 12.9898 + z * 78.233)) % 1; // feste Variante je Ort
       // hohe Türme bekommen manchmal die moderne Glasfassade (Abwechslung im Stadtbild)
-      if (h > 110 && hv > 0.55 && style !== 'medina') style = 'tower';
       const glassy = style === 'glass' || style === 'tower';
       if (h > 100 && hv > 0.35) { // Rücksprung: oberer Teil schmaler (wie bei echten Hochhäusern)
         const hs = base + (h - base) * (0.5 + hv * 0.25), k = 0.62 + hv * 0.15;
