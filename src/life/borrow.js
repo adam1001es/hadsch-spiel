@@ -210,7 +210,7 @@ export function createBorrow(ctx, opts) {
 
   let drive = null, pending = null, mode = 'self', autoPts = null, autoName = '', lastKey = '';
   const cam = engine.camera, camPos = new THREE.Vector3(), camLook = new THREE.Vector3(), tmp = new THREE.Vector3();
-  let first = true, yaw0 = 0, seenInfo = false, seenStunt = false, seenWild = false;
+  let lastCd = '', first = true, yaw0 = 0, seenInfo = false, seenStunt = false, seenWild = false;
 
   function hail(vh) { // anhalten → Fahrer steigt aus → fragen → einsteigen
     traffic.hold(vh, true); pending = { vh, t: 0, step: 0 }; ui.prompt(null);
@@ -436,10 +436,10 @@ export function createBorrow(ctx, opts) {
     camPos.lerp(wp, k); camLook.lerp(new THREE.Vector3(D.x + fx * 1.2, D.y + 1.3, D.z + fz * 1.2), k);
     } // Fahrer immer in der Bildmitte; die Kamera steht hoch genug, um die Straße davor zu sehen
     cam.position.copy(camPos); cam.lookAt(camLook);
-    speedEl.textContent = Math.round(Math.abs(D.v) * 3.6); unitEl.textContent = D.v < -0.3 ? 'km/h · R' : 'km/h';
+    { const t = String(Math.round(Math.abs(D.v) * 3.6)); if (speedEl.textContent !== t) speedEl.textContent = t; } unitEl.textContent = D.v < -0.3 ? 'km/h · R' : 'km/h';
     infoEl.textContent = S.air ? Math.round(D.y - gy) + ' m Höhe' : mode === 'auto' && autoPts ? '→ ' + autoName : turbo ? 'TURBO' : drift && Math.abs(D.slip) > 0.08 ? 'DRIFT' : '';
     pad.classList.toggle('boost', turbo && Math.abs(D.v) > 3);
-    nitroBtn.classList.toggle('cool', nitroCool > 0 && nitroT <= 0); nitroBtn.style.setProperty('--cd', String(nitroT > 0 ? 1 : 1 - nitroCool / 7));
+    nitroBtn.classList.toggle('cool', nitroCool > 0 && nitroT <= 0); { const cd = (nitroT > 0 ? 1 : 1 - nitroCool / 7).toFixed(2); if (cd !== lastCd) { lastCd = cd; nitroBtn.style.setProperty('--cd', cd); } } // nur bei Änderung (sonst Neuzeichnen jedes Bild)
     if (!started && !S.air && autoGas) infoEl.textContent = 'Lenken oder Bremse = los';
     actions();
   }
@@ -625,6 +625,7 @@ export function createBorrow(ctx, opts) {
       for (const P of parked) P.owner?.update?.(dt, 0);
       talk.update();
     },
+    rent(kind, x, z, h, lv) { if (drive) return; const P = addRental(kind, x, z, h, { lv }); enter(P); }, // Probefahrt, eigenes Auto
     get flick() { return flick; }, get passenger() { return pax; }, handOver, enterPax, leavePax, enter, stunt, jumpOut, parachute: para,
     dispose() { para.dispose(); offRide?.(); ctx.crew = null; ctx.ride = null; ctx.myVehicle = null; ctx.vehPose = null; engine.setViewShift?.(null); talk.clear(); pad.remove(); setup.remove(); document.body.classList.remove('driving'); window.removeEventListener('keydown', kd); window.removeEventListener('keyup', ku); if (drive) { player.ride = null; ctx.vehicle = null; } },
   };

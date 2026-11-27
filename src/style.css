@@ -424,7 +424,7 @@ body:has(#start:not([hidden])) #panel, body:has(#start:not([hidden])) #goal { di
 #driveCtl .dc-r { right: var(--sr); align-items: flex-end; }
 #driveCtl button, #driveCtl .dc-wheel { pointer-events: auto; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent; color: #f7f1e1;
   background: linear-gradient(180deg, rgba(48,62,56,.8), rgba(14,24,20,.85)); border: 1.5px solid rgba(230,196,110,.7);
-  box-shadow: 0 6px 16px rgba(0,0,0,.38), inset 0 1px 0 rgba(255,255,255,.18), inset 0 -3px 0 rgba(0,0,0,.35); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); }
+  box-shadow: 0 6px 16px rgba(0,0,0,.38), inset 0 1px 0 rgba(255,255,255,.18), inset 0 -3px 0 rgba(0,0,0,.35); } /* kein backdrop-filter: flackert auf dem iPhone über dem 3D-Bild */
 #driveCtl button { padding: 0; margin: 0; font: 700 13px/1 Figtree, system-ui, sans-serif; letter-spacing: .08em; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; transition: transform .06s, background .1s; }
 #driveCtl button small { font-size: 9px; font-weight: 600; letter-spacing: .05em; opacity: .8; }
 #driveCtl button.on { transform: translateY(2px) scale(.97); box-shadow: 0 2px 8px rgba(0,0,0,.35), inset 0 2px 6px rgba(0,0,0,.45); }
@@ -597,3 +597,6 @@ body.driving #counter { visibility: hidden; }
 #jobPop .jb-list { display: grid; gap: 8px; }
 #jobPop .jb-list button { display: grid; grid-template-columns: 34px 1fr auto; gap: 8px; align-items: center; text-align: left; padding: 10px 12px; border-radius: 12px; border: 1px solid rgba(44,74,62,.35); background: #fff; color: #14251f; font: 500 13px Figtree, system-ui, sans-serif; }
 #jobPop .jb-list button span.i { font-size: 24px; } #jobPop .jb-list button b { display: block; font-size: 14px; } #jobPop .jb-list button em { font-style: normal; font-weight: 700; color: #2f7a4a; }
+
+#driveCtl, #driveCtl * { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+#driveCtl { transform: translateZ(0); }
