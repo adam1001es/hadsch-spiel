@@ -40,51 +40,64 @@ function shopFront(g, w, h, stone, dark, pointed) {
   g.restore();
   g.strokeStyle = dark; g.lineWidth = 6; open(); g.stroke();
 }
+// Gemeinsame Bausteine der arabisch-osmanischen Fassaden
+function stoneBlocks(g, w, h, base, line) { g.fillStyle = base; g.fillRect(0, 0, w, h); g.strokeStyle = line; g.lineWidth = 1; for (let y = 0; y < h; y += h / 6) { g.beginPath(); g.moveTo(0, y); g.lineTo(w, y); g.stroke(); const off = (y / (h / 6)) % 2 ? w / 4 : 0; for (let x = off; x < w; x += w / 2) { g.beginPath(); g.moveTo(x, y); g.lineTo(x, y + h / 6); g.stroke(); } } }
+function star8(g, x, y, r, fill) { g.fillStyle = fill; for (const a of [0, Math.PI / 4]) { g.save(); g.translate(x, y); g.rotate(a); g.fillRect(-r * 0.7, -r * 0.7, r * 1.4, r * 1.4); g.restore(); } }
+function mashrabiya(g, x, y, w, h, wood = '#7a4f2c') { g.fillStyle = wood; g.fillRect(x, y, w, h); g.fillStyle = 'rgba(30,18,8,.55)'; const s = Math.max(4, w / 7); for (let yy = y + 2; yy < y + h - 2; yy += s) for (let xx = x + 2 + ((yy / s) % 2) * s / 2; xx < x + w - 2; xx += s) { g.beginPath(); g.arc(xx + s / 4, yy + s / 3, s / 4, 0, 7); g.fill(); } g.strokeStyle = 'rgba(255,230,190,.25)'; g.lineWidth = 1; g.strokeRect(x + 0.5, y + 0.5, w - 1, h - 1); }
+function tileBand(g, x, y, w, h, c1 = '#2f8f9d', c2 = '#f4efe3') { g.fillStyle = c1; g.fillRect(x, y, w, h); for (let xx = x + h / 2; xx < x + w; xx += h) star8(g, xx, y + h / 2, h * 0.32, c2); }
+// Fenster mit Spitzbogen: helle Steinrahmung, oben Glas (nachts warm beleuchtet), unten hölzernes Gitter
+function arabWindow(g, x, y, w, h, frame, pointed = true, glassTop = '#4a5a63', wood) {
+  g.fillStyle = frame; archPath(g, x - 5, y - 4, w + 10, h + 4); g.fill();
+  if (pointed) archPath(g, x, y, w, h); else { g.beginPath(); g.moveTo(x, y + h); g.lineTo(x, y + w / 2); g.arc(x + w / 2, y + w / 2, w / 2, Math.PI, 0); g.lineTo(x + w, y + h); g.closePath(); }
+  g.save(); g.clip(); glassGrad(g, x, y - 10, w, h, glassTop, '#26323a'); g.restore();
+  mashrabiya(g, x + 2, y + h * 0.5, w - 4, h * 0.5, wood);
+}
 const FACADES = {
-  // Mekka: sandfarbener Naturstein, hohe Fenster mit Spitzbogen (wie die großen Hotels um die Haram)
-  mecca: { bay: [3.6, 3.4], tex: () => canvasTex(128, 128, (g, w, h) => {
-    g.fillStyle = '#dccdb0'; g.fillRect(0, 0, w, h);
-    g.fillStyle = 'rgba(120,95,60,.18)'; g.fillRect(0, h - 10, w, 10);
-    archPath(g, 26, 26, 76, 92); g.save(); g.clip(); glassGrad(g, 20, 10, 90, 110); g.restore();
-    g.fillStyle = '#cdbd9d'; g.fillRect(62, 30, 4, 90);
+  // Mekka: warmer Sandstein, Spitzbogenfenster mit Maschrabiyya, Gesims mit Sternfries
+  mecca: { bay: [3.6, 3.4], tex: () => canvasTex(256, 256, (g, w, h) => {
+    stoneBlocks(g, w, h, '#e3cfa8', 'rgba(150,115,70,.18)');
+    arabWindow(g, 70, 46, 116, 168, '#f0e2c4', true, '#5a6b74', '#7a4f2c');
+    g.fillStyle = '#cdb489'; g.fillRect(0, h - 26, w, 26); for (let x = 16; x < w; x += 32) star8(g, x, h - 13, 6, '#a8875a');
+    g.fillStyle = 'rgba(255,255,255,.18)'; g.fillRect(0, h - 28, w, 2);
   }) },
-  // moderne Glasfassade mit hellen Steinlisenen (Jabal-Omar-Türme)
-  glass: { bay: [3, 3.6], tex: () => canvasTex(128, 128, (g, w, h) => {
-    glassGrad(g, 0, 0, w, h, '#7d98a6', '#36505e');
-    g.fillStyle = '#e6dcc8'; g.fillRect(0, 0, 14, h); g.fillRect(0, h - 12, w, 12);
-    g.fillStyle = 'rgba(255,255,255,.12)'; g.fillRect(30, 0, 18, h);
+  // osmanisch-andalusisch (statt kühler Glastürme): Cremestein, Doppelbogenfenster, türkise Fliesenfelder
+  glass: { bay: [4.2, 3.6], tex: () => canvasTex(256, 224, (g, w, h) => {
+    stoneBlocks(g, w, h, '#efe2c8', 'rgba(150,120,80,.15)');
+    arabWindow(g, 40, 40, 74, 140, '#f8f0de', true, '#56707a', '#8a5a32'); arabWindow(g, 142, 40, 74, 140, '#f8f0de', true, '#56707a', '#8a5a32');
+    tileBand(g, 0, h - 30, w, 22); g.fillStyle = '#d9c39a'; g.fillRect(0, h - 8, w, 8);
+    star8(g, w / 2, 22, 9, '#2f8f9d');
   }) },
-  // moderne Hochhaus-Glasfassade: dunkles Glas, schmale goldene Pfosten, helle Brüstungsbänder
-  tower: { bay: [2.4, 3.6], tex: () => canvasTex(128, 192, (g, w, h) => {
-    glassGrad(g, 0, 0, w, h, '#6f8fa3', '#22343f');
-    g.fillStyle = 'rgba(255,255,255,.10)'; g.fillRect(18, 0, 26, h);
-    g.fillStyle = '#d9c08a'; g.fillRect(0, 0, 6, h);
-    g.fillStyle = '#c9cdd0'; g.fillRect(0, h - 22, w, 22); g.fillStyle = 'rgba(0,0,0,.15)'; g.fillRect(0, h - 22, w, 3);
-  }) },
-  // Medina: weiß/creme mit Rundbogenfenstern und hölzernen Gittern (Maschrabiyya-Andeutung)
-  medina: { bay: [3.4, 3.3], tex: () => canvasTex(128, 128, (g, w, h) => {
-    g.fillStyle = '#f2ede3'; g.fillRect(0, 0, w, h);
-    archPath(g, 28, 30, 72, 86); g.save(); g.clip(); glassGrad(g, 20, 10, 90, 110, '#6d7f88', '#33414a');
-    g.strokeStyle = 'rgba(120,80,40,.55)'; g.lineWidth = 3; for (let x = 20; x < 110; x += 10) { g.beginPath(); g.moveTo(x, 60); g.lineTo(x, 118); g.stroke(); } for (let y = 64; y < 118; y += 10) { g.beginPath(); g.moveTo(20, y); g.lineTo(110, y); g.stroke(); }
-    g.restore(); g.fillStyle = 'rgba(150,130,100,.25)'; g.fillRect(0, h - 8, w, 8);
+  // Medina: weiß/creme mit Rundbogenfenstern, hölzernen Gittern und grünen Fliesen
+  medina: { bay: [3.4, 3.3], tex: () => canvasTex(256, 256, (g, w, h) => {
+    stoneBlocks(g, w, h, '#f4efe4', 'rgba(150,130,100,.13)');
+    arabWindow(g, 74, 48, 108, 160, '#fbf8f0', false, '#5d6e76', '#86603a');
+    tileBand(g, 0, h - 28, w, 20, '#3f8f6a'); g.fillStyle = '#e6dccb'; g.fillRect(0, h - 8, w, 8);
   }) },
   // Erdgeschoss: Arkaden mit beleuchteten Läden (eine Kachel = 6 m breit, ganze Höhe 8 m)
   podium: { bay: [6, 8], tex: () => canvasTex(256, 340, (g, w, h) => shopFront(g, w, h, '#d6c7a8', '#bfae8a', true), { repeat: false }) },
   medinaPodium: { bay: [6, 8], tex: () => canvasTex(256, 340, (g, w, h) => shopFront(g, w, h, '#efe9de', '#d8cdb8', false), { repeat: false }) },
-  // Abschluss oben: kleines Bogenband mit Goldlinie
-  crown: { bay: [2.4, 6], tex: () => canvasTex(64, 160, (g, w, h) => {
-    g.fillStyle = '#e4d8c0'; g.fillRect(0, 0, w, h);
-    archPath(g, 14, 50, 36, 90); g.fillStyle = '#7d6a4d'; g.fill();
-    g.fillStyle = '#c9a24e'; g.fillRect(0, 18, w, 6);
+  // Abschluss oben: Zinnenkranz über einem Bogenband mit türkisem Fliesenfries
+  crown: { bay: [2.6, 6], tex: () => canvasTex(128, 300, (g, w, h) => {
+    g.fillStyle = '#ecdcbc'; g.fillRect(0, 0, w, h);
+    g.fillStyle = '#ecdcbc'; // Zinnen (gestufte arabische Merlons) oben
+    g.clearRect(0, 0, w, 0);
+    g.fillStyle = '#d8c49c'; g.fillRect(0, 48, w, 6);
+    for (const x of [0, w / 2]) { g.fillStyle = '#ecdcbc'; g.fillRect(x + 10, 0, w / 2 - 20, 20); g.fillRect(x + 4, 20, w / 2 - 8, 28); }
+    g.fillStyle = '#8a7656'; for (const x of [0, w / 2]) { g.fillRect(x, 0, 10, 20); g.fillRect(x + w / 2 - 10, 0, 10, 20); g.fillRect(x, 0, 4, 48); }
+    tileBand(g, 0, 60, w, 26);
+    archPath(g, 24, 112, 80, 160); g.fillStyle = '#6e5a40'; g.fill(); archPath(g, 32, 124, 64, 148); g.save(); g.clip(); glassGrad(g, 32, 110, 64, 160, '#5a6b74', '#2a343b'); g.restore();
+    g.fillStyle = '#c9a24e'; g.fillRect(0, 96, w, 5); g.fillRect(0, h - 10, w, 10);
   }, { repeat: false }) },
 };
+
+FACADES.tower = FACADES.glass; // frühere Glastürme: jetzt osmanischer Stil
 
 // Material mit Fassade in Metern (Instanz-Skalierung aus der Matrix), Dach flach eingefärbt
 // Nacht (0…1) für alle Fassaden: Fenster leuchten unregelmäßig warm, Läden hell (von der Station aus der Spieluhr gesetzt)
 export const cityNight = { value: 0 };
 function facadeMat(style, { roof = 0xcfc4ae, rough = 0.75 } = {}) {
   const f = FACADES[style];
-  const shiny = style === 'glass' || style === 'tower';
+  const shiny = false; // Naturstein statt Spiegelglas (Wunsch: einladender, arabisch-osmanisch)
   const m = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: shiny ? 0.18 : rough, metalness: shiny ? 0.45 : 0.05, envMapIntensity: shiny ? 1.3 : 1 }); // Glas spiegelt Himmel und Umgebung
   const tex = f.tex(), bay = new THREE.Vector2(...f.bay), rc = new THREE.Color(roof);
   m.onBeforeCompile = (sh) => {
@@ -103,9 +116,9 @@ function facadeMat(style, { roof = 0xcfc4ae, rough = 0.75 } = {}) {
           vec3 fc = texture2D(tFac, vec2(vFac.x / uBay.x, vFac.y / uBay.y)).rgb; diffuseColor.rgb *= fc;
           float lum = dot(fc, vec3(0.3, 0.55, 0.15));
           vec2 cellId = floor(vec2(vFac.x / uBay.x, vFac.y / uBay.y));
-          vec2 grp = vec2(floor(cellId.x / 3.0), cellId.y); float lit = step(0.66, fract(sin(dot(grp, vec2(12.9898, 78.233))) * 43758.5453)) * step(0.2, fract(sin(dot(cellId, vec2(39.3468, 11.135))) * 24634.6345)); // Wohnungen in Gruppen, ca. ein Viertel hell
+          vec2 grp = vec2(floor(cellId.x / 3.0), cellId.y); float lit = step(0.55, fract(sin(dot(grp, vec2(12.9898, 78.233))) * 43758.5453)) * step(0.2, fract(sin(dot(cellId, vec2(39.3468, 11.135))) * 24634.6345)); // Wohnungen in Gruppen, ca. ein Viertel hell
           if (uShop > 0.5) facGlow = fc * smoothstep(0.45, 0.75, lum) * uNight * 0.9;            // Läden: Schaufenster hell
-          else facGlow = vec3(1.0, 0.76, 0.42) * (1.0 - smoothstep(0.12, 0.3, lum)) * lit * uNight * 0.75; // Fenster: manche hell
+          else facGlow = vec3(1.0, 0.72, 0.38) * (1.0 - smoothstep(0.14, 0.3, lum)) * lit * uNight * 0.85; // Fenster: manche warm hell (nur das Glas)
         }`).replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\n        totalEmissiveRadiance += facGlow;');
   };
   m.customProgramCacheKey = () => 'facade-' + style;
@@ -114,6 +127,14 @@ function facadeMat(style, { roof = 0xcfc4ae, rough = 0.75 } = {}) {
 
 // ---------- Hochhäuser ----------
 // add(x, z, w, d, h, { style, podium, ry }) – Turm mit Sockel (Läden), Schaft, Abschluss; build() erzeugt die Instanzen.
+// warme Steintöne je Gebäude (Sand, Rosé, Ocker, Creme); Medina hell
+const WARM = [0xffffff, 0xfff1dc, 0xffe6cc, 0xf6e2c0, 0xffeedd, 0xf2dcc4].map((c) => new THREE.Color(c));
+const WHITE = [0xffffff, 0xfffaf0, 0xf8f3ea].map((c) => new THREE.Color(c));
+function tintOf(style, b, col) {
+  if (!['mecca', 'glass', 'tower', 'medina'].includes(style)) return col.setScalar(b.tint);
+  const k = Math.abs(Math.floor(b.x * 7.31 + b.z * 3.17)) % 6, pal = style === 'medina' ? WHITE : WARM;
+  return col.copy(pal[k % pal.length]).multiplyScalar(Math.min(1, 0.92 + (b.tint - 0.9) * 0.6));
+}
 export function createTowers(world, { podiumStyle = 'podium' } = {}) {
   const L = {}; // Stil → [Matrizen, Farben]
   const push = (style, x, y, z, w, h, d, ry, tint) => {
@@ -133,15 +154,18 @@ export function createTowers(world, { podiumStyle = 'podium' } = {}) {
     deco('ring', x, top - 1.2, z, w + 0.7, 1.2, d + 0.7, ry); // Lichtkranz oben
   }
   // Höhe des Aufsatzes über der Krone (für Landen/Kollision): Stufe 6 m, Pyramide, Stufen 10 m
-  const crownExtra = (hv, w, d) => (hv < 0.3 ? 6 : hv < 0.62 ? Math.min(w, d) * 0.55 : 10);
+  const crownExtra = (hv, w, d) => { const m = Math.min(w, d); return hv < 0.3 ? 2 + m * 0.45 + 5 : hv < 0.62 ? m * 0.42 + 5 : 10 + m * 0.3 + 5; };
   function crownOf(x, z, w, d, top, ry, hv) {
     topPart = true; try { crownParts(x, z, w, d, top, ry, hv); } finally { topPart = false; }
   }
-  function crownParts(x, z, w, d, top, ry, hv) {
-    if (hv < 0.3) { deco('band', x, top, z, w * 0.7, 6, d * 0.7, ry); deco('spire', x, top + 6, z, 1.2, Math.min(60, top * 0.22), 1.2, 0); } // Aufsatz mit Spitze
-    else if (hv < 0.62) { deco('pyr', x, top, z, w * 0.72, Math.min(w, d) * 0.55, d * 0.72, ry); deco('spire', x, top + Math.min(w, d) * 0.5, z, 0.6, 14, 0.6, 0); } // Glaspyramide
-    else { deco('band', x, top, z, w * 0.8, 5, d * 0.8, ry); deco('band', x, top + 5, z, w * 0.55, 5, d * 0.55, ry); deco('ring', x, top + 9, z, w * 0.58, 1, d * 0.58, ry); deco('spire', x, top + 10, z, 0.5, 22, 0.5, 0); } // Stufen + Antenne
+  function crownParts(x, z, w, d, top, ry, hv) { // osmanische Abschlüsse: Kuppeln mit goldener Spitze, Eckkuppeln, Stufen
+    const m = Math.min(w, d), c = Math.cos(ry), s2 = Math.sin(ry), at = (lx, lz) => [x + lx * c + lz * s2, z - lx * s2 + lz * c];
+    if (hv < 0.3) { deco('band', x, top, z, w * 0.75, 2, d * 0.75, ry); deco('pyr', x, top + 2, z, m * 0.62, m * 0.45, m * 0.62, ry); deco('spire', x, top + 2 + m * 0.45, z, 0.35, 5, 0.35, 0); }
+    else if (hv < 0.62) { deco('pyr', x, top, z, m * 0.55, m * 0.42, m * 0.55, ry); deco('spire', x, top + m * 0.42, z, 0.35, 5, 0.35, 0);
+      for (const [sx, sz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) { const [px, pz] = at(sx * w * 0.38, sz * d * 0.38); deco('band', px, top, pz, m * 0.16, 2.2, m * 0.16, ry); deco('pyr', px, top + 2.2, pz, m * 0.16, m * 0.13, m * 0.16, ry); } }
+    else { deco('band', x, top, z, w * 0.8, 5, d * 0.8, ry); deco('band', x, top + 5, z, w * 0.55, 5, d * 0.55, ry); deco('pyr', x, top + 10, z, m * 0.45, m * 0.3, m * 0.45, ry); deco('spire', x, top + 10 + m * 0.3, z, 0.35, 5, 0.35, 0); }
   }
+
   return {
     footprints: foot,
     add(x, z, w, d, h, { style = 'mecca', podium = 8, ry = 0, tint = 1, crown = true } = {}) {
@@ -171,19 +195,21 @@ export function createTowers(world, { podiumStyle = 'podium' } = {}) {
       for (const [style, list] of Object.entries(L)) {
         const im = new THREE.InstancedMesh(box, facadeMat(style, { roof: style === 'crown' ? 0xc9a24e : 0xcfc4ae, rough: style === 'glass' ? 0.35 : 0.8 }), list.length);
         const col = new THREE.Color();
-        list.forEach((b, i) => { dm.position.set(b.x, b.y, b.z); dm.rotation.set(0, b.ry, 0); dm.scale.set(b.w, b.h, b.d); dm.updateMatrix(); im.setMatrixAt(i, dm.matrix); im.setColorAt(i, col.setScalar(b.tint)); });
+        list.forEach((b, i) => { dm.position.set(b.x, b.y, b.z); dm.rotation.set(0, b.ry, 0); dm.scale.set(b.w, b.h, b.d); dm.updateMatrix(); im.setMatrixAt(i, dm.matrix); im.setColorAt(i, tintOf(style, b, col)); });
         im.castShadow = false; im.receiveShadow = true; world.add(im); meshes.push(im);
       }
       // Schmuck: Gold/Stein-Bänder, goldene Spitzen, Glaspyramiden, Lichtkränze (nachts warm leuchtend)
       const night = (m, k) => { m.onBeforeCompile = (sh) => { sh.uniforms.uNight = cityNight; sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform float uNight;').replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>\ntotalEmissiveRadiance += vec3(1.0, 0.78, 0.45) * uNight * ${k.toFixed(2)};`); }; m.customProgramCacheKey = () => 'deco' + k; return m; };
-      const G = { band: box, spire: new THREE.CylinderGeometry(0.15, 0.5, 1, 8).translate(0, 0.5, 0), pyr: new THREE.ConeGeometry(0.71, 1, 4).rotateY(Math.PI / 4).translate(0, 0.5, 0), ring: box };
+      const G = { band: box, spire: new THREE.CylinderGeometry(0.15, 0.5, 1, 8).translate(0, 0.5, 0), pyr: new THREE.SphereGeometry(0.5, 20, 10, 0, Math.PI * 2, 0, Math.PI / 2).scale(1, 2, 1) /* Kuppel */, ring: box };
       const MT = { band: night(new THREE.MeshStandardMaterial({ color: 0xd8c39a, roughness: 0.5, metalness: 0.3 }), 0.12), spire: night(new THREE.MeshStandardMaterial({ color: 0xd4af37, roughness: 0.3, metalness: 0.9 }), 0.5),
-        pyr: night(new THREE.MeshStandardMaterial({ color: 0x9fc2d6, roughness: 0.12, metalness: 0.6, envMapIntensity: 1.4 }), 0.35), ring: night(new THREE.MeshStandardMaterial({ color: 0xf0d79a, roughness: 0.4, metalness: 0.4 }), 1.6) };
+        pyr: night(new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.35, metalness: 0.35 }), 0.08), ring: night(new THREE.MeshStandardMaterial({ color: 0xf0d79a, roughness: 0.4, metalness: 0.4 }), 0.9) };
+      const DOME = [0x4aa59a, 0xd4af37, 0xefe4cc, 0x3f8f7a].map((c) => new THREE.Color(c));
       for (const [k, list] of Object.entries(X)) {
         if (!list.length) continue;
         const keep = list.filter((b) => !(b.top && b.f?.deck)); if (!keep.length) continue;
         const im = new THREE.InstancedMesh(G[k], MT[k], keep.length);
-        keep.forEach((b, i) => { dm.position.set(b.x, b.y, b.z); dm.rotation.set(0, b.ry, 0); dm.scale.set(b.w, b.h, b.d); dm.updateMatrix(); im.setMatrixAt(i, dm.matrix); });
+        keep.forEach((b, i) => { dm.position.set(b.x, b.y, b.z); dm.rotation.set(0, b.ry, 0); dm.scale.set(b.w, b.h, b.d); dm.updateMatrix(); im.setMatrixAt(i, dm.matrix);
+          if (k === 'pyr') im.setColorAt(i, DOME[Math.abs(Math.floor((b.f?.x || 0) * 1.7 + (b.f?.z || 0) * 2.3)) % DOME.length]); }); // Kuppelfarbe je Turm: Türkis, Gold, Creme, Grün
         im.receiveShadow = true; world.add(im); meshes.push(im);
       }
       return meshes;
