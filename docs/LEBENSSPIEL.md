@@ -280,3 +280,9 @@ Ballon: ▲ Steigen / ▼ Sinken (Leertaste/C) schnell, sonst schweben; Joystick
 der leere Helikopter sinkt langsam zu Boden) und aus dem Ballon (über der Stadt → `ctx.paraStart`, man fällt in den Straßen von Mekka/Medina).
 Freier Fall → „Schirm öffnen“ (automatisch bei 70 m) → gleiten (Joystick: lenken, vor = schneller, zurück = bremsen) → Landung. Über noLand-Orten
 hält der Schirm die Höhe. Mitspieler sehen den Schirm (Zustand `pc`).
+
+### Wildnis (Berge rund um Mekka/Medina)
+`src/life/offroad.js`: Bogen im Radius 1050 m (Winkel 3,3–4,5) mit 12 goldenen Ringen und 11 Schanzen (Teil des Bodens über `rampH`),
+Bestzeit `hp-parkour-wildnis-<stadt>`, 🏁 auf der Karte, Ziel „Berg-Parkours“ beim automatischen Fahren. In `borrow.js` (opts.offroad):
+im Gelände halbe Schwerkraft, Sprünge schon an kleinen Kuppen, weiche Landung, Knopf ⤒ HÜPFEN (Taste J). Figur übernimmt die volle Neigung
+des Fahrzeugs (kein Kopf/Füße außerhalb beim Springen).

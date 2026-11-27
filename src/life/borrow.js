@@ -48,7 +48,7 @@ export function createBorrow(ctx, opts) {
   const { engine, ui, input } = ctx;
   const world = engine.world;
   const { player, interact, traffic = null, people = () => [], destinations = [], route = (a, b) => [b], map = null, where = 'mecca',
-    colliders = [], ground = () => 0, noLand = () => null, avoid = () => false } = opts;
+    colliders = [], ground = () => 0, noLand = () => null, avoid = () => false, offroad = () => false } = opts;
   // ---------- Fahrbedienung wie in Handy-Rennspielen: zwei Daumen ----------
   // Linker Daumen: Lenkfläche (Daumen hin und her schieben, weiter außen = stärker lenken).
   // Gas automatisch (Auto-Gas, abschaltbar → dann GAS-Pedal). Rechter Daumen: BREMSE/DRIFT (bei Tempo in der Kurve = Drift,
@@ -62,7 +62,7 @@ export function createBorrow(ctx, opts) {
   const pad = document.createElement('div'); pad.id = 'driveCtl'; pad.hidden = true;
   pad.innerHTML = '<div class="dc-l"><div class="dc-speed" role="button" aria-label="Tacho"><b>0</b><span>km/h</span><em></em><i class="dc-gear">⚙</i></div>'
     + '<div class="dc-wheel" aria-label="Lenken: Daumen nach links oder rechts schieben"><i class="a l">‹</i><i class="knob"></i><i class="a r">›</i></div></div>'
-    + '<div class="dc-r"><div class="dc-top"><button data-k="ag" class="ag" aria-label="Auto-Gas an oder aus"></button><button data-k="n" class="nitro" aria-label="Nitro"><span>⚡</span><small>NITRO</small></button>'
+    + '<div class="dc-r"><div class="dc-top"><button data-k="ag" class="ag" aria-label="Auto-Gas an oder aus"></button><button data-k="n" class="nitro" aria-label="Nitro"><span>⚡</span><small>NITRO</small></button><button data-k="hop" class="hop" aria-label="Hüpfen"><span>⤒</span><small>HÜPFEN</small></button>'
     + '<button data-k="u" class="air" aria-label="Hoch">▲ HOCH</button><button data-k="d" class="air" aria-label="Runter">▼ RUNTER</button></div>'
     + '<div class="dc-pedals"><button data-k="b" class="pedal brake" aria-label="Bremse, Drift und rückwärts"><span>BREMSE</span><small>Kurve = Drift</small></button>'
     + '<button data-k="g" class="pedal gas" aria-label="Gas"><span>GAS</span></button></div></div>';
@@ -112,6 +112,7 @@ export function createBorrow(ctx, opts) {
     const b = e.target.closest('button[data-k]'); if (!b) return; e.preventDefault(); const k = b.dataset.k;
     if (k === 'ag') { if (on) { autoGas = !autoGas; try { localStorage.setItem('hp-autogas', autoGas ? '1' : '0'); } catch { /* egal */ } showAG(); applyDS(); } return; }
     if (k === 'n') { if (on) fireNitro(); return; }
+    if (k === 'hop') { if (on) hop(); return; }
     ctl[k] = on ? 1 : 0; b.classList.toggle('on', on); if (on) { started = true; try { b.setPointerCapture(e.pointerId); } catch { /* egal */ } }
   };
   // Helikopter-Akrobatik: Looping (Nase hoch, einmal rundherum), Rolle (um die Längsachse), Drehung (Pirouette auf der Stelle)
@@ -136,6 +137,8 @@ export function createBorrow(ctx, opts) {
     else if (!flick.xu && Math.abs(mx) > 0.95 && xFast) { flick.xu = true; sideStunt(mx > 0); }
     flick.px = mx; flick.py = my;
   }
+  // Wildnis: Auto hüpft (nur im Gelände, nur vom Boden aus)
+  function hop() { const D = drive; if (!D || D.spec.air || D.air) return; D.air = true; D.vy = 8.5 + Math.min(4, Math.abs(D.v) * 0.08); D.y += 0.05; D.vyG = null; started = true; }
   function fireNitro() { if (nitroCool > 0 || !drive || drive.spec.air) return; nitroT = 4.5; nitroCool = 7; started = true; }
   pad.addEventListener('pointerdown', (e) => press(e, true));
   for (const ev of ['pointerup', 'pointercancel', 'lostpointercapture']) pad.addEventListener(ev, (e) => press(e, false));
@@ -145,6 +148,7 @@ export function createBorrow(ctx, opts) {
     if (!drive) return; const v = on ? 1 : 0;
     if (e.code === 'Space') { if (drive.spec.air) ctl.u = v; else ctl.b = v; e.preventDefault(); }
     if (e.code === 'KeyC') ctl.d = v;
+    if (e.code === 'KeyJ' && on && drive.wild) hop();
     if ((e.code === 'ShiftLeft' || e.code === 'ShiftRight') && on) fireNitro();
     // Akrobatik am Laptop: Umschalt + Pfeil/WASD (zurück = Looping, links/rechts = Rolle, im Schweben = Drehung)
     if (on && drive.spec.air && e.shiftKey) {
@@ -205,7 +209,7 @@ export function createBorrow(ctx, opts) {
 
   let drive = null, pending = null, mode = 'self', autoPts = null, autoName = '', lastKey = '';
   const cam = engine.camera, camPos = new THREE.Vector3(), camLook = new THREE.Vector3(), tmp = new THREE.Vector3();
-  let first = true, yaw0 = 0, seenInfo = false, seenStunt = false;
+  let first = true, yaw0 = 0, seenInfo = false, seenStunt = false, seenWild = false;
 
   function hail(vh) { // anhalten → Fahrer steigt aus → fragen → einsteigen
     traffic.hold(vh, true); pending = { vh, t: 0, step: 0 }; ui.prompt(null);
@@ -239,7 +243,7 @@ export function createBorrow(ctx, opts) {
     if (crew.length) multi?.send?.('ride', { a: 'out', to: '*' }); // Mitfahrer steigen auch aus
     crew.length = 0; crewSeat.clear(); asks.clear(); ctx.myVehicle = null; ctx.vehPose = null;
     setup.hidden = true; engine.setViewShift?.(null);
-    pad.hidden = true; for (const k of Object.keys(ctl)) ctl[k] = 0; steerOff(); nitroT = 0; pad.querySelectorAll('button.on').forEach((b) => b.classList.remove('on')); cam.fov = 62; cam.updateProjectionMatrix(); document.body.classList.remove('driving'); ui.el.stick.classList.remove('off'); D.veh.rotor = 0;
+    pad.hidden = true; pad.classList.remove('wild'); for (const k of Object.keys(ctl)) ctl[k] = 0; steerOff(); nitroT = 0; pad.querySelectorAll('button.on').forEach((b) => b.classList.remove('on')); cam.fov = 62; cam.updateProjectionMatrix(); document.body.classList.remove('driving'); ui.el.stick.classList.remove('off'); D.veh.rotor = 0;
     // neben dem Fahrzeug aussteigen (links)
     const side = D.spec.wid / 2 + 0.8; player.teleport(D.x + Math.cos(D.h) * side, D.z - Math.sin(D.h) * side, D.h);
     P.x = D.x; P.z = D.z; P.h = D.h; P.parked = true;
@@ -377,10 +381,13 @@ export function createBorrow(ctx, opts) {
     D.x = q.x; D.z = q.z;
     if (!S.air) { // Boden folgen; über Kuppen und Rampen abheben (Sprung), weich landen
       const g = ground(D.x, D.z);
-      if (D.air) { D.vy -= 22 * dt; D.y += D.vy * dt; if (D.y <= g) { D.y = g; D.air = false; if (D.vy < -7) { D.v *= 0.92; } D.vy = 0; } }
+      // Wildnis (Berge, Dünen, Schanzen): weniger Schwerkraft, höhere Sprünge, Hüpf-Knopf – man gleitet weiter
+      const wild = offroad(D.x, D.z) || (D.air && D.wild);
+      if (wild !== !!D.wild) { D.wild = wild; pad.classList.toggle('wild', wild); if (wild && !seenWild) { seenWild = true; ui.toast('🏔️ Wildnis: höhere Sprünge, du gleitest weiter – ⤒ HÜPFEN, Schanzen und goldene Ringe (🏁 auf der Karte)', 4500); } }
+      if (D.air) { D.vy -= (wild ? 10 : 22) * dt; D.y += D.vy * dt; if (D.y <= g) { D.y = g; D.air = false; if (D.vy < -7) { D.v *= wild ? 0.97 : 0.92; } D.vy = 0; } }
       else {
         const gv = Math.max(-25, Math.min(25, (g - D.y) / Math.max(dt, 1e-3))); // Steiggeschwindigkeit des Bodens unter dem Fahrzeug
-        if (D.vyG != null && gv < D.vyG - 7 && D.vyG > 2 && Math.abs(D.v) > 12) { D.air = true; D.vy = Math.min(11, D.vyG) * 0.85; D.y += D.vy * dt; } // Kuppe/Schanze → Sprung (begrenzt)
+        if (D.vyG != null && Math.abs(D.v) > (wild ? 8 : 12) && (wild ? gv < D.vyG - 3.5 && D.vyG > 1.2 : gv < D.vyG - 7 && D.vyG > 2)) { D.air = true; D.vy = wild ? Math.min(20, D.vyG * 1.05) : Math.min(11, D.vyG) * 0.85; D.y += D.vy * dt; } // Kuppe/Schanze → Sprung (begrenzt)
         else { D.y = g; D.vyG = D.vyG == null ? gv : D.vyG + (gv - D.vyG) * Math.min(1, dt * 12); }
       }
       if (D.air) D.vyG = null;
@@ -399,7 +406,7 @@ export function createBorrow(ctx, opts) {
     D.veh.roll(D.v, dt, D.steer);
     // Figur sitzt im Fahrzeug
     D.veh.seat(tmp); player.fig.root.position.copy(tmp);
-    if (S.air) player.fig.root.quaternion.copy(R.quaternion); else { player.fig.root.rotation.set(0, D.h, 0); }
+    player.fig.root.quaternion.copy(R.quaternion); // Figur macht jede Neigung des Fahrzeugs mit (sonst ragen Kopf/Füße beim Springen heraus)
     player.fig.update(dt, 0);
     player.pos.set(D.x, D.y, D.z); player.heading = D.h;
     // Kamera hinter dem Fahrzeug (wischen = umschauen, kehrt langsam zurück)

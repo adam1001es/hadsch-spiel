@@ -21,6 +21,7 @@ import { showMinimap } from '../life/minimap.js';
 import { createInteract, boxClosest, circleClosest } from '../life/interact.js';
 import { tunnelPortal } from '../world/tunnel.js';
 import { createBorrow } from '../life/borrow.js';
+import { offroadRamps, buildOffroad } from '../life/offroad.js';
 import { BORROW } from '../content/life.js';
 import * as sfx from '../core/sfx.js';
 import { skinBalloon } from '../world/balloonSkin.js';
@@ -256,7 +257,9 @@ export function create(ctx, { from, where = 'mecca' } = {}) {
   }, { speed: 1.1, clear: clearView });
 
   // ---------- Spielfigur ----------
-  const groundH = (x, z) => Math.max(0, h(x, z) - 0.08); // Wüste und Berge sind begehbar und befahrbar
+  // Wildnis: Schanzen und Ring-Parkours in den Bergen westlich/nördlich der Stadt (src/life/offroad.js)
+  const wild = offroadRamps(h, { r: 1050, a0: 3.3, a1: 4.5 });
+  const groundH = (x, z) => Math.max(0, h(x, z) - 0.08, wild.rampH(x, z)); // Wüste und Berge sind begehbar und befahrbar
   for (const c of mosqueCols) c.h = 35;
   const colliders = [
     // keine unsichtbaren Wände: nur Gebäude halten auf (Hotels, Uhrturm, Moscheen, Haram/Nabawi); h = Höhe für den Helikopter
@@ -310,6 +313,7 @@ export function create(ctx, { from, where = 'mecca' } = {}) {
     pois: [...SPOTS.filter((sp) => poiIcon[sp.key]).map((sp) => ({ x: sp.x, z: sp.z, icon: poiIcon[sp.key], label: poiName[sp.key] })),
       ...L.mosques.map((m) => ({ x: m.spot[0], z: m.spot[1], icon: '🕌', label: m.name })), { x: L.mats[0], z: L.mats[1], icon: '🧎', label: 'Gebetsplatz' },
       { x: (medina ? -40 : -72) + 3, z: (medina ? 461 : 501) - 3, icon: '🚕', label: 'Taxi & Verleih' },
+      { x: wild.ringPts[0].x, z: wild.ringPts[0].z, icon: '🏁', label: 'Berg-Parkours' },
       { x: 1190, z: RZ + 10, icon: '🛣️', label: medina ? 'Tunnel → Mekka' : 'Tunnel → Medina' }],
   });
 
@@ -327,6 +331,7 @@ export function create(ctx, { from, where = 'mecca' } = {}) {
     pts.push(b); return pts;
   };
   const destinations = [
+    { label: '🏁 Berg-Parkours (Wildnis)', x: wild.ringPts[0].x - Math.sin(wild.ringPts[0].h) * 40, z: wild.ringPts[0].z - Math.cos(wild.ringPts[0].h) * 40 },
     { label: medina ? 'Prophetenmoschee' : 'Haram-Platz', x: L.gate[0], z: L.gate[1] + 14 },
     { label: 'Südplatz', x: BUx - 15, z: BUz + 14 },
     ...L.mosques.map((m) => ({ label: m.name, x: m.spot[0], z: m.spot[1] })),
@@ -346,7 +351,7 @@ export function create(ctx, { from, where = 'mecca' } = {}) {
   const inBox = (x, z, cx, cz, hw, hd) => Math.abs(x - cx) < hw && Math.abs(z - cz) < hd;
   const noLand = (x, z) => (medina ? (inBox(x, z, 0, 0, 155, 115) ? BORROW.noLandNabawi : null) : (inBox(x, z, 115, -7, 228, 210) ? BORROW.noLandKaaba : null))
     || (L.mosques.some((m) => Math.hypot(x - m.x, z - m.z) < 14) ? BORROW.noLandMosque : null);
-  const borrow = createBorrow(ctx, { player, interact, traffic, stands, colliders, ground: groundH, noLand, destinations, route: vroute, map, where, baseActions,
+  const borrow = createBorrow(ctx, { player, interact, traffic, stands, colliders, ground: groundH, noLand, destinations, offroad: (x, z) => h(x, z) > 1.5 || wild.rampH(x, z) > -1e8, route: vroute, map, where, baseActions,
     avoid: (x, z) => (z > RZ - 1 && z < RZ + 21) || Math.hypot(x - HP[0], z - HP[1]) < 16 || Math.hypot(x - ST[0] - 4, z - ST[1]) < 12,
     people: () => { const out = agents ? agents.list.slice() : []; for (const o of ctx.multi?.status?.().others || []) if (o.x != null && o.s === ctx.stationIndex) out.push(o); return out; } });
   ctx.debugLife = { borrow, traffic }; // für automatische Tests
@@ -386,10 +391,13 @@ export function create(ctx, { from, where = 'mecca' } = {}) {
     borrow.parachute.start(x, groundH(x, z) + Math.max(40, ps.y), z, ps.h);
   }
 
+  const course = buildOffroad(world, ui, wild, groundH, { id: 'wildnis-' + where, name: 'Berg-Parkours' });
+
   return {
     update(dt) {
       prayer.update(dt);
       player.update(dt);
+      course.update(borrow.drive, dt);
       const night = clock.night; cityNight.value = night;
       for (const m of glowLamps) m.emissiveIntensity = 0.4 + night * 2.2;
       for (const m of glowMosque) m.emissiveIntensity = night * 1.6;
