@@ -151,7 +151,7 @@ export function createTowers(world, { podiumStyle = 'podium' } = {}) {
     const c = Math.cos(ry), s2 = Math.sin(ry), at = (lx, lz) => [x + lx * c + lz * s2, z - lx * s2 + lz * c];
     for (let y = base + 36; y < top - 10; y += hv > 0.5 ? 36 : 48) deco('band', x, y, z, w + 0.5, 0.9, d + 0.5, ry); // umlaufende Zierbänder
     if (glassy || hv > 0.6) for (const [sx, sz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) { const [px, pz] = at(sx * (w / 2), sz * (d / 2)); deco('band', px, base, pz, 1.1, H, 1.1, ry); } // Eckpfeiler
-    deco('ring', x, top - 1.2, z, w + 0.7, 1.2, d + 0.7, ry); // Lichtkranz oben
+    deco('ring', x, top - 1.6, z, w + 0.7, 1.2, d + 0.7, ry); // Oberkante unter dem Dach (sonst flackert es, gleiche Höhe wie die Dachfläche) // Lichtkranz oben
   }
   // Höhe des Aufsatzes über der Krone (für Landen/Kollision): Stufe 6 m, Pyramide, Stufen 10 m
   const crownExtra = (hv, w, d) => { const m = Math.min(w, d); return hv < 0.3 ? 2 + m * 0.45 + 5 : hv < 0.62 ? m * 0.42 + 5 : 10 + m * 0.3 + 5; };

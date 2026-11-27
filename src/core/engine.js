@@ -19,7 +19,7 @@ export function createEngine(canvas) {
   renderer.shadowMap.type = perf.mobile || perf.low ? THREE.PCFShadowMap : THREE.PCFSoftShadowMap; // weiche Schatten nur am Laptop
 
   const scene = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera(62, 1, 0.1, 5000);
+  const camera = new THREE.PerspectiveCamera(62, 1, 0.2, 5000);
   let world = new THREE.Group();
   scene.add(world);
 

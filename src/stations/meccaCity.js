@@ -447,6 +447,9 @@ export function create(ctx, { from, where = 'mecca' } = {}) {
       prayer.update(dt);
       player.update(dt);
       course.update(borrow.drive, dt); shops.update(dt); jobs.update(dt);
+      { // Tiefenpuffer genauer, wenn man hoch über der Stadt ist (sonst flackern ferne Hochhäuser auf dem Handy)
+        const cam = engine.camera, high = borrow.drive?.spec.air || borrow.parachute.active || player.pos.y > 25, n = high ? 1.2 : 0.2;
+        if (cam.near !== n) { cam.near = n; cam.updateProjectionMatrix(); } }
       if (onRoof && (borrow.driving || borrow.parachute.active || borrow.passenger)) { onRoof = null; if (groundColliders) player.colliders = groundColliders; groundColliders = null; ui.actions(baseActions); }
       if (onRoof && !roofBtn) { roofBtn = true; ui.actions([...baseActions, { label: '🪂 Abspringen', kind: 'primary', onClick: () => { const f = onRoof, P = player.pos, h0 = player.heading; onRoof = null; player.colliders = groundColliders; groundColliders = null; roofBtn = false; const tx = P.x + Math.sin(h0) * (f.w / 2 + 3), tz = P.z + Math.cos(h0) * (f.w / 2 + 3); borrow.parachute.start(P.x, P.y, P.z, h0, (tx - P.x) * 0.6, (tz - P.z) * 0.6); } }]); }
       if (!onRoof && roofBtn) roofBtn = false;
@@ -481,6 +484,6 @@ export function create(ctx, { from, where = 'mecca' } = {}) {
       }
       pigeons.instanceMatrix.needsUpdate = true;
     },
-    dispose() { jobs.dispose(); wallet.show(false); borrow.dispose(); prayer.dispose(); map.dispose(); interact.dispose(); cityNight.value = 0; ui.prompt(null); ui.goal(null); },
+    dispose() { engine.camera.near = 0.2; engine.camera.updateProjectionMatrix(); jobs.dispose(); wallet.show(false); borrow.dispose(); prayer.dispose(); map.dispose(); interact.dispose(); cityNight.value = 0; ui.prompt(null); ui.goal(null); },
   };
 }
