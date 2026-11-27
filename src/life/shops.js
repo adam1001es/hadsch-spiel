@@ -34,7 +34,7 @@ function poster(kind, title) {
   });
 }
 
-export function createShops(ctx, { world, player, interact, fronts, onTestDrive, travel }) {
+export function createShops(ctx, { world, player, interact, fronts, onTestDrive, travel, prices = null }) {
   const { ui, engine } = ctx;
   const rooms = [];
   const light = new THREE.PointLight(0xfff1dc, 0, 30, 1.1); world.add(light);
@@ -86,7 +86,8 @@ export function createShops(ctx, { world, player, interact, fronts, onTestDrive,
         cyl(g, 2.6, 2.7, 0.18, std(0x2a2e33, 0.3, { metalness: 0.5 }), x, 0.09, -2.5, 40);
         const v = makeVehicle(g, kind, lv ? { livery: true } : {}); v.root.position.set(x, 0.18, -2.5); R.spin.push(v.root);
         solid(x, -2.5, 2.4, 2.4);
-        spot(x, 0.6, '🚗 ' + T.testDrive(v.name), () => { leave(); onTestDrive?.(kind, lv); });
+        spot(x, 0.2, '🚗 ' + T.testDrive(v.name), () => { leave(); onTestDrive?.(kind, lv); });
+        (R.cars ||= []).push({ kind, lv, x, name: v.name });
       }
       counter(-3.5, 5.2, 2.6); seller(-3.5, 4.4, Math.PI);
       const banner = canvasTex(1024, 160, (c, w, h) => { c.fillStyle = '#c9a45a'; c.fillRect(0, 0, w, h); c.fillStyle = '#14251f'; c.font = '700 70px Figtree, sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(T.carBanner, w / 2, h / 2); });
@@ -131,17 +132,50 @@ export function createShops(ctx, { world, player, interact, fronts, onTestDrive,
       im.count = n; im.castShadow = true; g.add(im);
       counter(0, -5, 3); seller(0, -5.8, 0);
       spot(0, -2.2, '🌴 ' + T.taste, () => ui.toast(T.tastes[(Math.random() * T.tastes.length) | 0], 2600), 'green');
+    } else if (type === 'buero') {
+      // Büro im Hochhaus: Schreibtische mit Bildschirmen, Aktenschrank, Fenster mit Aussicht
+      R.desks = [];
+      for (const [x, z] of [[-4, -4], [0, -4], [4, -4], [-4, 1], [4, 1]]) {
+        box(g, 2, 0.06, 1, std(0xe8e2d6, 0.5), x, 0.75, z); for (const dx of [-0.9, 0.9]) box(g, 0.05, 0.75, 0.9, M.metal, x + dx, 0.37, z);
+        box(g, 0.9, 0.55, 0.05, std(0x111418, 0.3), x, 1.12, z - 0.3); box(g, 0.82, 0.46, 0.01, new THREE.MeshStandardMaterial({ color: 0x9fd0ff, emissive: 0x5aa8ff, emissiveIntensity: 0.6 }), x, 1.12, z - 0.27);
+        box(g, 0.5, 0.5, 0.5, M.dark, x, 0.25, z + 0.8); box(g, 0.3, 0.06, 0.4, std(0xf6f2ea, 0.9), x + 0.6, 0.8, z + 0.1);
+        solid(x, z, 1.05, 0.55); R.desks.push({ x, z: z + 1.3 });
+      }
+      for (let k = 0; k < 3; k++) box(g, 1, 2, 0.5, std(0x6a7078, 0.5, { metalness: 0.3 }), -6.3, 1, 4 - k * 1.1); solid(-6.3, 2.9, 0.5, 1.7);
+      const win = canvasTex(512, 256, (c, w, h) => { const gr = c.getContext ? null : null; const sky = c.createLinearGradient(0, 0, 0, h); sky.addColorStop(0, '#8cc4ec'); sky.addColorStop(1, '#f2dcae'); c.fillStyle = sky; c.fillRect(0, 0, w, h); c.fillStyle = '#d9cdb5'; for (let i = 0; i < 18; i++) c.fillRect(i * 30, h - 40 - (i * 37) % 90, 24, 200); c.fillStyle = '#2b2f34'; for (let i = 1; i < 4; i++) c.fillRect(i * w / 4 - 3, 0, 6, h); });
+      const wn = new THREE.Mesh(new THREE.PlaneGeometry(W - 1, 2.4), new THREE.MeshBasicMaterial({ map: win })); wn.position.set(0, 2.2, -D / 2 + 0.03); g.add(wn);
     } else { // buecher
       const bk = new THREE.BoxGeometry(0.06, 0.3, 0.22), im = new THREE.InstancedMesh(bk, std(0xffffff, 0.8), 600), dm = new THREE.Object3D(), cc = new THREE.Color(); let n = 0;
       for (const side of [-1, 1]) for (let s2 = 0; s2 < 5; s2++) { box(g, 0.35, 0.03, 10, M.wood, side * (W / 2 - 0.25), 0.4 + s2 * 0.45, 0); for (let k = 0; k < 55 && n < 600; k++) { dm.position.set(side * (W / 2 - 0.25), 0.57 + s2 * 0.45, -4.8 + k * 0.175); dm.updateMatrix(); im.setMatrixAt(n, dm.matrix); im.setColorAt(n++, cc.setHSL([0.33, 0.6, 0.08, 0.12][k % 4], 0.5, 0.3 + (k % 3) * 0.08)); } solid(side * (W / 2 - 0.25), 0, 0.3, 5.1); }
       im.count = n; g.add(im); counter(0, -4.5, 3); seller(0, -5.3, 0);
       spot(0, -3.3, '📚 ' + T.browse, () => ui.toast(T.browsed, 2400), 'green');
     }
+    if (prices) applyPrices(R, type);
     // Ausgang
     spot(0, D / 2 - 1.2, '🚪 ' + T.exit, () => leave(), 'blue');
     // Leuchtpunkte (Interact) für alle Stellen im Raum
-    for (const s of R.spots) interact.add({ objs: [], color: s.color, radius: 3, near: 1.5, x: R.x + s.x, z: s.z, key: 'shop-' + i + '-' + s.label, label: s.label, run: s.run, when: () => inRoom === R });
+    for (const s of R.spots) interact.add({ objs: [], color: s.color, radius: 3, near: 1.5, x: R.x + s.x, z: s.z, key: 'shop-' + i + '-' + (s.key || s.label), label: s.label, run: s.run, when: () => inRoom === R });
     rooms.push(R); return R;
+  }
+
+  // Preise (Geldbörse): Spots mit Kaufen-Funktion umbauen. prices = { wallet, T: Texte }
+  function applyPrices(R, type) {
+    const { wallet, P } = prices;
+    const buy = (cost, ok) => { if (!wallet.spend(cost)) { ui.toast(P.noMoney(cost, wallet.sar), 2600); return; } ok(); };
+    for (const s of R.spots) {
+      const run = s.run, lab = s.label; s.key = lab;
+      if (type === 'kleidung') { const name = lab.replace(/^👕 /, '').replace(/^.*?: /, ''), id = 'outfit:' + name;
+        s.label = () => (wallet.owns(id) ? lab : `👕 ${P.buy(name, P.outfit)}`); s.run = () => (wallet.owns(id) ? run() : buy(P.outfit, () => { wallet.own(id); run(); })); }
+      else if (type === 'doener') s.run = () => buy(P.doener, run), s.label = `${lab} (${P.doener} SAR)`;
+      else if (type === 'parfum') s.run = () => buy(P.parfum, run), s.label = `🌸 ${P.buyPlain(P.parfum)}`;
+      else if (type === 'datteln') s.run = () => buy(P.datteln, run), s.label = `${lab} (${P.datteln} SAR)`;
+      else if (type === 'buecher') s.run = () => buy(P.buch, () => ui.toast(P.bookBought, 2400)), s.label = `📚 ${P.buyPlain(P.buch)}`;
+    }
+    if (type === 'autos') for (const c of R.cars || []) {
+      const id = 'car:' + c.kind;
+      R.spots.push({ x: c.x, z: 1.6, key: 'buy-' + c.kind, color: 'green', label: () => (wallet.owns(id) ? `🔑 ${P.carOwned}` : `💰 ${P.buy(c.name, P.cars[c.kind])}`),
+        run: () => { if (wallet.owns(id)) { leave(); onTestDrive?.(c.kind, c.lv); return; } buy(P.cars[c.kind], () => { wallet.own(id); ui.toast(P.carBought(c.name), 3500); }); } });
+    }
   }
 
   // ---------- Ladentüren in der Stadt ----------
@@ -172,7 +206,7 @@ export function createShops(ctx, { world, player, interact, fronts, onTestDrive,
   }
 
   // ---------- Aussichtsplattform auf einem Hochhaus ----------
-  let deck = null;
+  let deck = null, towerOut = null;
   function addTower(tw) {
     if (!tw) return;
     const { x, z, w, d, h } = tw, inset = Math.min(4, Math.min(w, d) * 0.12), bw = w - inset * 2, bd = d - inset * 2, hv = Math.abs(Math.sin(x * 12.9898 + z * 78.233)) % 1;
@@ -187,12 +221,14 @@ export function createShops(ctx, { world, player, interact, fronts, onTestDrive,
     const side = tw.door; // { x, z, ry }
     const ld = new THREE.Group(); ld.position.set(side.x, 0, side.z); ld.rotation.y = side.ry; world.add(ld);
     box(ld, 3.2, 3.2, 0.1, doorMat, 0, 1.6, 0); box(ld, 3.6, 0.25, 0.3, M.gold, 0, 3.3, 0.1);
-    const out = { x: side.x + Math.sin(side.ry) * 2, z: side.z + Math.cos(side.ry) * 2, h: side.ry };
-    interact.add({ obj: ld, color: 'blue', radius: 8, near: 2.6, x: out.x, z: out.z, key: 'tower-up', label: '🛗 ' + T.elevatorUp(Math.round(y)), when: () => !inRoom && !roof, run: () => { back = out; roof = deck; player.teleport(x, z + 2, 0); ui.toast(T.onTop(Math.round(y)), 2600); } });
+    const out = { x: side.x + Math.sin(side.ry) * 2, z: side.z + Math.cos(side.ry) * 2, h: side.ry }; towerOut = out;
+    interact.add({ obj: ld, color: 'blue', radius: 8, near: 2.6, x: out.x, z: out.z, key: 'tower-up', label: '🛗 ' + T.elevatorUp(Math.round(y)), when: () => !inRoom && !roof && !api.towerBusy, run: () => { back = out; roof = deck; player.teleport(x, z + 2, 0); ui.toast(T.onTop(Math.round(y)), 2600); } });
     interact.add({ objs: [], color: 'blue', radius: 4, near: 2.2, x, z: z + 1.6, key: 'tower-down', label: '🛗 ' + T.elevatorDown, when: () => roof === deck, run: () => { roof = null; if (back) player.teleport(back.x, back.z, back.h); } });
   }
 
-  return {
+  const api = {
+    towerBusy: false,
+    makeRoom(type, door) { const R = room(rooms.length, type); R.door = door; return R; }, get towerDoor() { return towerOut; },
     get inside() { return inRoom || roof; }, get lastDoor() { return lastDoor; }, rooms, enter,
     addTower,
     // Boden: im Laden 0, auf der Plattform Plattformhöhe; sonst null (normaler Boden)
@@ -216,4 +252,5 @@ export function createShops(ctx, { world, player, interact, fronts, onTestDrive,
       }
     },
   };
+  return api;
 }

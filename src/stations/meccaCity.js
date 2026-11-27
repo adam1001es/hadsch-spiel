@@ -23,7 +23,9 @@ import { tunnelPortal } from '../world/tunnel.js';
 import { createBorrow } from '../life/borrow.js';
 import { offroadRamps, buildOffroad } from '../life/offroad.js';
 import { createShops } from '../life/shops.js';
-import { SHOPS } from '../content/life.js';
+import { createJobs } from '../life/jobs.js';
+import { wallet } from '../life/wallet.js';
+import { SHOPS, PRICES, JOBS } from '../content/life.js';
 import { BORROW } from '../content/life.js';
 import * as sfx from '../core/sfx.js';
 import { skinBalloon } from '../world/balloonSkin.js';
@@ -343,7 +345,7 @@ export function create(ctx, { from, where = 'mecca' } = {}) {
     ...L.mosques.map((m) => ({ label: m.name, x: m.spot[0], z: m.spot[1] })),
     { label: medina ? 'Nach Mekka (Autobahn)' : 'Nach Medina (Autobahn)', intercity: other },
   ];
-  const baseActions = [{ label: T.cert, onClick: () => ctx.backToEnding?.() }];
+  const baseActions = [{ label: T.cert, onClick: () => ctx.backToEnding?.() }]; baseActions.base = baseActions.slice();
   // Helikopter-Landeplatz auf dem Südplatz
   const HP = medina ? [-100, 480] : [-122, 522];
   { const c = document.createElement('canvas'); c.width = c.height = 256; const g = c.getContext('2d');
@@ -361,14 +363,22 @@ export function create(ctx, { from, where = 'mecca' } = {}) {
     avoid: (x, z) => (z > RZ - 1 && z < RZ + 21) || Math.hypot(x - HP[0], z - HP[1]) < 16 || Math.hypot(x - ST[0] - 4, z - ST[1]) < 12,
     people: () => { const out = agents ? agents.list.slice() : []; for (const o of ctx.multi?.status?.().others || []) if (o.x != null && o.s === ctx.stationIndex) out.push(o); return out; } });
   // Läden zum Betreten und Aussichtsplattform auf dem höchsten Hochhaus am Boulevard
-  shops = createShops(ctx, { world, player, interact, fronts: shopList,
+  shops = createShops(ctx, { world, player, interact, fronts: shopList, prices: { wallet, P: PRICES },
     onTestDrive: (kind, lv) => { const b = shops.lastDoor; borrow.rent(kind, b.x + Math.sin(b.h) * 4, b.z + Math.cos(b.h) * 4, b.h + Math.PI / 2, lv); },
     travel: (id) => { shops.leave(); if (id === 'medina' || id === 'mecca') ctx.city?.(null, id); else if (id === 'road') ctx.roadtrip?.(where, other, { vehicle: 'sport' }); else if (ctx.coast) ctx.coast(where); else ui.toast(SHOPS.soon, 2200); } });
   player.colliders.push(shops.collider);
   { const edge = bx - BW, cand = towers.footprints.filter((f) => Math.abs(f.x + f.w / 2 - edge) < 1.5 && f.h > 40).sort((a, b) => b.h - a.h)[0];
     if (cand) { let dz = 0; for (const t of [0, 9, -9, 14, -14]) if (!shopList.some((f) => Math.abs(f.x - edge) < 2 && Math.abs(f.z - (cand.z + t)) < 7)) { dz = t; break; }
       shops.addTower({ ...cand, door: { x: edge + 0.06, z: cand.z + dz, ry: Math.PI / 2 } }); } }
-  ctx.debugLife = { borrow, traffic, shops }; // für automatische Tests
+  // Jobs und Geld: Jobbörse am Taxistand, Knopf „💼 Jobs“ unten, Geldbörse oben rechts
+  const jobPlaces = [...destinations.filter((d) => !d.intercity && !/Parkours/.test(d.label)), ...L.mosques.map((m) => ({ label: m.name, x: m.spot[0], z: m.spot[1] })),
+    { label: 'Ballon', x: BXb + 6, z: BZb + 8 }, { label: 'Bushaltestelle', x: BUx - 3, z: BUz + 6 }];
+  const dn = shops.rooms.find((r) => r.type === 'doener')?.door || { x: L.gate[0], z: L.gate[1] + 20 };
+  const jobs = createJobs(ctx, { world, player, interact, borrow, map, shops, places: jobPlaces, gate: { x: L.gate[0], z: L.gate[1] + 6 }, doener: { x: dn.x, z: dn.z }, baseActions });
+  { const jx = ST[0] + 14, jz = ST[1] - 3.5; const sg = sign(world, jx, jz, 0, JOBS.board, { w: 2.8, h: 0.9, y: 2.6 });
+    interact.add({ obj: sg, color: 'green', radius: 7, near: 2.4, x: jx, z: jz + 1.6, key: 'jobboard', label: JOBS.boardDo, run: () => jobs.openBoard() }); }
+  wallet.show(true);
+  ctx.debugLife = { borrow, traffic, shops, jobs }; // für automatische Tests
   // ---------- Autobahn nach Medina bzw. Mekka: die Querstraße führt nach Osten aus der Stadt (vereinfachte Lage) ----------
   const HW0 = 420, HW1 = 1200, HWZ = RZ + 10;
   { const asph = new THREE.Mesh(new THREE.PlaneGeometry(HW1 - HW0, 20).rotateX(-Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0x55565a, roughness: 0.95 }));
@@ -396,7 +406,7 @@ export function create(ctx, { from, where = 'mecca' } = {}) {
 
   if (!ctx.cityIntroSeen) { ctx.cityIntroSeen = true; ui.el.panel.classList.remove('collapsed'); } else ui.el.panel.classList.add('collapsed'); // Willkommenstext nur beim ersten Mal offen
   ui.info(`<p>${medina ? T.introMedina : T.intro}</p><p class="small">🗺️ Karte oben rechts antippen. ${U.note}</p>`);
-  ui.actions([{ label: T.cert, onClick: () => ctx.backToEnding?.() }]);
+  ui.actions(baseActions);
   // aus dem Heißluftballon abgesprungen: Fallschirm über der Stadt (innerhalb der Stadtgrenzen)
   if (ctx.paraStart) {
     const ps = ctx.paraStart; ctx.paraStart = null; const B = L.bounds;
@@ -411,7 +421,7 @@ export function create(ctx, { from, where = 'mecca' } = {}) {
     update(dt) {
       prayer.update(dt);
       player.update(dt);
-      course.update(borrow.drive, dt); shops.update(dt);
+      course.update(borrow.drive, dt); shops.update(dt); jobs.update(dt);
       const night = clock.night; cityNight.value = night;
       for (const m of glowLamps) m.emissiveIntensity = 0.4 + night * 2.2;
       for (const m of glowMosque) m.emissiveIntensity = night * 1.6;
@@ -443,6 +453,6 @@ export function create(ctx, { from, where = 'mecca' } = {}) {
       }
       pigeons.instanceMatrix.needsUpdate = true;
     },
-    dispose() { borrow.dispose(); prayer.dispose(); map.dispose(); interact.dispose(); cityNight.value = 0; ui.prompt(null); ui.goal(null); },
+    dispose() { jobs.dispose(); wallet.show(false); borrow.dispose(); prayer.dispose(); map.dispose(); interact.dispose(); cityNight.value = 0; ui.prompt(null); ui.goal(null); },
   };
 }

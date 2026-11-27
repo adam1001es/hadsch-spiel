@@ -581,3 +581,19 @@ body.driving #counter { visibility: hidden; }
 #driveCtl .hop span { font-size: 19px; letter-spacing: 0; } #driveCtl .hop small { font-size: 7px; }
 #driveCtl.wild:not(.air) .hop { display: flex; }
 #driveCtl.wild .ag { display: none; }
+/* Geldbörse (Lebensspiel) */
+#wallet { position: fixed; z-index: 8; top: calc(env(safe-area-inset-top, 0px) + 66px + 112px); right: var(--sr); padding: 3px 10px; border-radius: 999px; background: rgba(20,37,31,.88); border: 1px solid #e6c46e; color: #f5efe0; font: 600 12px Figtree, system-ui, sans-serif; white-space: nowrap; }
+#wallet b { color: #e6c46e; }
+#wallet i { position: absolute; right: 8px; top: 100%; font-style: normal; font-weight: 700; animation: walletUp 1.6s ease-out forwards; }
+#wallet i.plus { color: #7be38f; } #wallet i.minus { color: #ff9a85; }
+@keyframes walletUp { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(14px); } }
+@media (max-width: 700px) { #wallet { top: calc(env(safe-area-inset-top, 0px) + 66px + 100px); } body:has(#panel:not(.collapsed):not(.empty)) #wallet { display: none; } }
+#jobPop { position: fixed; inset: 0; z-index: 30; display: grid; place-items: center; padding: 12px var(--sr) 12px var(--sl); background: rgba(8,16,26,.55); }
+#jobPop[hidden] { display: none; }
+#jobPop .jb-card { width: min(460px, 100%); max-height: calc(100dvh - 24px); overflow: auto; background: #f5efe0; color: #14251f; border: 1.5px solid #e6c46e; border-radius: 18px; padding: 14px 16px 16px; box-shadow: 0 8px 30px rgba(0,0,0,.45); }
+#jobPop .jb-head { display: flex; justify-content: space-between; align-items: center; font: 600 19px Marcellus, serif; }
+#jobPop .jb-x { width: 38px; height: 38px; border-radius: 50%; border: 1.5px solid #2c4a3e; background: transparent; font-size: 15px; }
+#jobPop p.jb-sub { margin: 4px 0 10px; font-size: 13px; opacity: .8; }
+#jobPop .jb-list { display: grid; gap: 8px; }
+#jobPop .jb-list button { display: grid; grid-template-columns: 34px 1fr auto; gap: 8px; align-items: center; text-align: left; padding: 10px 12px; border-radius: 12px; border: 1px solid rgba(44,74,62,.35); background: #fff; color: #14251f; font: 500 13px Figtree, system-ui, sans-serif; }
+#jobPop .jb-list button span.i { font-size: 24px; } #jobPop .jb-list button b { display: block; font-size: 14px; } #jobPop .jb-list button em { font-style: normal; font-weight: 700; color: #2f7a4a; }

@@ -286,3 +286,11 @@ hält der Schirm die Höhe. Mitspieler sehen den Schirm (Zustand `pc`).
 Bestzeit `hp-parkour-wildnis-<stadt>`, 🏁 auf der Karte, Ziel „Berg-Parkours“ beim automatischen Fahren. In `borrow.js` (opts.offroad):
 im Gelände halbe Schwerkraft, Sprünge schon an kleinen Kuppen, weiche Landung, Knopf ⤒ HÜPFEN (Taste J). Figur übernimmt die volle Neigung
 des Fahrzeugs (kein Kopf/Füße außerhalb beim Springen).
+
+### Läden, Geld und Jobs
+- `src/life/shops.js`: betretbare Läden an den Ladenfronten des Boulevards (Kleidung, Autogalerie, Reisebüro, Döner, Parfüm, Datteln, Bücher;
+  Innenräume bei x ≥ 2900, ein wanderndes Licht), Aussichtsplattform auf dem höchsten Hochhaus am Boulevard (Aufzug), Büro-Raum für den Büro-Job.
+- `src/life/wallet.js`: Geldbörse in SAR (Start 50), Anzeige unter der Karte, `hp-wallet`. Preise in `PRICES` (life.js): Kleidung 60, Döner 12,
+  Parfüm 35, Datteln 8, Buch 20, Autos 2500–4000 (gekauftes Auto: Knopf „🔑 Mein Auto“). Probefahrt und Reisen kostenlos.
+- `src/life/jobs.js`: Jobbörse (Schild am Taxistand, Knopf „💼 Jobs“): Taxi (30–90), Lieferdienst (25/40), Pilger helfen (20 + gute Tat),
+  Büro (60). Ziel mit Leitpfeilen, Karte und Zielzeile; ein Job zur Zeit, abbrechbar.

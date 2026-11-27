@@ -219,6 +219,7 @@ export const SHOPS = {
     doener: { name: 'Döner · Shawarma', sign: ['شاورما', 'Döner · Shawarma'], colors: ['#c9b48e', '#b59e78', '#f3e6cc', '#7a3b1e'], awning: 0xb5402a },
     parfum: { name: 'Parfüm · Oud', sign: ['عطور', 'Parfüm · Oud'], colors: ['#efe6d6', '#e0d3bd', '#f6f0e4', '#5a2e4a'], awning: 0x5a2e4a },
     datteln: { name: 'Datteln & Süßes', sign: ['تمور', 'Datteln & Süßes'], colors: ['#d9c39a', '#c8ae82', '#f4ead6', '#6b4426'], awning: 0x6b4426 },
+    buero: { name: 'Büro · Hochhaus', sign: ['مكتب', 'Büro'], colors: ['#d8dde2', '#c8ced5', '#f2f4f6', '#4a5560'], awning: 0x4a5560 },
     buecher: { name: 'Bücher', sign: ['مكتبة', 'Bücher'], colors: ['#e6dccb', '#d6c9b2', '#f3ede2', '#2f5a3e'], awning: 0x2f5a3e },
   },
   enter: (n) => `Eintreten: ${n}`,
@@ -249,4 +250,39 @@ export const SHOPS = {
   elevatorDown: 'Aufzug nach unten',
   onTop: (m) => `Aussichtsplattform in ${m} m Höhe – schau dich um!`,
   soon: 'Kommt bald!',
+};
+
+// Geld (Saudi-Riyal, SAR) und Preise in den Läden (src/life/wallet.js, src/life/shops.js)
+export const PRICES = {
+  outfit: 60, doener: 12, parfum: 35, datteln: 8, buch: 20,
+  cars: { sport: 4000, suv: 2500, coupe: 3200 },
+  buy: (n, p) => `Kaufen: ${n} (${p} SAR)`,
+  buyPlain: (p) => `Kaufen (${p} SAR)`,
+  noMoney: (p, have) => `Zu wenig Geld: ${p} SAR nötig, du hast ${have} SAR – verdiene mehr mit Jobs (💼)`,
+  bookBought: 'Ein schönes Buch – viel Freude beim Lesen! 📖',
+  carOwned: 'Dein Auto – losfahren',
+  carBought: (n) => `Glückwunsch! Der ${n} gehört dir. Unten „🔑 Mein Auto“ ruft ihn jederzeit.`,
+};
+
+// Jobs (src/life/jobs.js): ehrliche Arbeit für ein Einkommen
+export const JOBS = {
+  title: 'Jobs · Arbeit',
+  sub: 'Verdiene Geld mit kleinen Aufträgen und kaufe dir davon etwas in den Läden.',
+  board: ['وظائف', 'Jobs · Arbeit'],
+  open: '💼 Jobs',
+  myCar: '🔑 Mein Auto',
+  boardDo: '💼 Jobs ansehen',
+  cancel: 'Aktuellen Job abbrechen',
+  cancelled: 'Job abgebrochen',
+  busy: 'Erst den aktuellen Job beenden (oder abbrechen)',
+  list: [
+    { id: 'taxi', icon: '🚕', name: 'Taxifahrer', info: 'Fahrgast abholen und ans Ziel bringen (mit einem Auto)', pay: '30–90 SAR' },
+    { id: 'delivery', icon: '🥙', name: 'Lieferdienst', info: 'Essen beim Döner abholen und schnell liefern', pay: '25–40 SAR' },
+    { id: 'help', icon: '🤝', name: 'Pilger helfen', info: 'Einen Pilger, der sich verlaufen hat, zur Moschee begleiten', pay: '20 SAR + gute Tat' },
+    { id: 'office', icon: '💼', name: 'Büro-Job', info: 'Im Hochhaus fünf Akten am Computer bearbeiten', pay: '60 SAR' },
+  ],
+  taxi: { start: 'Taxi-Job: Hol den Fahrgast ab (Ziel auf der Karte). Du brauchst ein Auto – z. B. am Taxistand.', pick: 'Fahrgast abholen', drop: (n) => `Fahrgast nach „${n}“ bringen`, inCar: 'Mit einem Auto abholen – steig zuerst ein', aboard: 'Fahrgast eingestiegen: „As-salamu alaikum!“', done: (p) => `Angekommen! „Jazak Allahu khairan“ – ${p} SAR verdient 🚕` },
+  delivery: { start: 'Lieferdienst: Hol das Essen beim Döner-Laden ab.', pick: 'Essen beim Döner abholen', got: 'Essen abgeholt 🥡 – schnell liefern!', drop: (n) => `Essen liefern: ${n}`, done: (p, fast) => `Geliefert${fast ? ' – super schnell!' : ''} ${p} SAR verdient 🥙` },
+  help: { start: 'Ein Pilger hat sich verlaufen – finde ihn (Ziel auf der Karte).', find: 'Pilger finden', follow: 'Der Pilger folgt dir – bring ihn zur Moschee', goal: 'Pilger zur Moschee begleiten', thanks: '„Möge Allah dich belohnen!“ – 20 SAR und eine gute Tat 🤝' },
+  office: { start: 'Büro-Job: Geh zum Hochhaus am Boulevard (Ziel auf der Karte).', go: 'Zum Büro im Hochhaus', enter: '💼 Ins Büro gehen', task: (k) => `Akte ${k}/5 bearbeiten (leuchtender Schreibtisch)`, file: '📄 Akte bearbeiten', fileDone: (k) => `Akte ${k}/5 erledigt ✔`, done: 'Feierabend! 60 SAR verdient 💼' },
 };
