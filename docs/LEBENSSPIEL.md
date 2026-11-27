@@ -272,7 +272,7 @@ Position wird vorausberechnet. Eigene geparkte Fahrzeuge werden ausgeblendet, we
 Noch nicht: gemeinsam über die Autobahn in die andere Stadt (Mitfahrer steigen dann aus).
 
 ### Helikopter-Akrobatik und Ballon
-Helikopter bis 340 km/h, schnelleres Steigen/Sinken, Schräglage in Kurven; Knöpfe LOOPING / ROLLE / DREHUNG (Tastatur F, Q/E, R), Looping ab 22 m Höhe.
+Helikopter bis 340 km/h, schnelleres Steigen/Sinken, Schräglage in Kurven. Akrobatik mit dem Joystick (Wunsch des Nutzers, keine Extra-Knöpfe): schnell ganz nach hinten schnippen = Looping (ab 22 m), schnell zur Seite = Rolle (im Schwebeflug = Drehung); langsames Lenken bleibt normal. Laptop: Umschalt + S/↓ bzw. A/D/←/→.
 Ballon: ▲ Steigen / ▼ Sinken (Leertaste/C) schnell, sonst schweben; Joystick in jede Richtung bis ~170 km/h.
 
 ### Fallschirm

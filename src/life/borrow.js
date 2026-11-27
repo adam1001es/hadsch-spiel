@@ -64,7 +64,6 @@ export function createBorrow(ctx, opts) {
     + '<div class="dc-wheel" aria-label="Lenken: Daumen nach links oder rechts schieben"><i class="a l">‹</i><i class="knob"></i><i class="a r">›</i></div></div>'
     + '<div class="dc-r"><div class="dc-top"><button data-k="ag" class="ag" aria-label="Auto-Gas an oder aus"></button><button data-k="n" class="nitro" aria-label="Nitro"><span>⚡</span><small>NITRO</small></button>'
     + '<button data-k="u" class="air" aria-label="Hoch">▲ HOCH</button><button data-k="d" class="air" aria-label="Runter">▼ RUNTER</button></div>'
-    + '<div class="dc-stunts"><button data-k="lp" class="air stunt" aria-label="Looping">⟲<small>LOOPING</small></button><button data-k="rl" class="air stunt" aria-label="Rolle">↻<small>ROLLE</small></button><button data-k="sp" class="air stunt" aria-label="Pirouette">🌀<small>DREHUNG</small></button></div>'
     + '<div class="dc-pedals"><button data-k="b" class="pedal brake" aria-label="Bremse, Drift und rückwärts"><span>BREMSE</span><small>Kurve = Drift</small></button>'
     + '<button data-k="g" class="pedal gas" aria-label="Gas"><span>GAS</span></button></div></div>';
   document.body.appendChild(pad);
@@ -113,7 +112,6 @@ export function createBorrow(ctx, opts) {
     const b = e.target.closest('button[data-k]'); if (!b) return; e.preventDefault(); const k = b.dataset.k;
     if (k === 'ag') { if (on) { autoGas = !autoGas; try { localStorage.setItem('hp-autogas', autoGas ? '1' : '0'); } catch { /* egal */ } showAG(); applyDS(); } return; }
     if (k === 'n') { if (on) fireNitro(); return; }
-    if (k === 'lp' || k === 'rl' || k === 'sp') { if (on) stunt(k); return; }
     ctl[k] = on ? 1 : 0; b.classList.toggle('on', on); if (on) { started = true; try { b.setPointerCapture(e.pointerId); } catch { /* egal */ } }
   };
   // Helikopter-Akrobatik: Looping (Nase hoch, einmal rundherum), Rolle (um die Längsachse), Drehung (Pirouette auf der Stelle)
@@ -123,6 +121,20 @@ export function createBorrow(ctx, opts) {
     if (D.veh.rotor < 0.8 || D.y < gy + (type === 'lp' ? 22 : 10)) { ui.toast(type === 'lp' ? 'Für einen Looping höher fliegen (über 22 m)' : 'Erst abheben und etwas höher fliegen', 2000); return; }
     D.stunt = { type, t: 0, dur: type === 'lp' ? 2.4 : type === 'rl' ? 1.3 : 1.6, dir: dir ?? (D.steer > 0.1 ? 1 : D.steer < -0.1 ? -1 : (Math.random() < 0.5 ? 1 : -1)), sp: Math.max(Math.abs(D.v), 24) };
     sfx.bus?.(); started = true;
+  }
+  // zur Seite: im Vorwärtsflug eine Rolle, im Schwebeflug eine Drehung auf der Stelle
+  const sideStunt = (right) => (Math.abs(drive?.v || 0) > 8 ? stunt('rl', right ? 1 : -1) : stunt('sp', right ? -1 : 1)); // Rolle: +z = nach rechts; Drehung: −h = nach rechts
+  // Joystick „schnippen“: aus der Mitte schnell ganz an den Rand (< 0,22 s) → Akrobatik; langsames Lenken bleibt normales Fliegen
+  const flick = { xc: 0, yc: 0, xu: false, yu: false };
+  function flickCheck() {
+    if (!input.stickOn) { flick.xc = flick.yc = -1e9; flick.xu = flick.yu = false; flick.px = flick.py = null; return; }
+    const now = performance.now(), mx = input.move.x, my = input.move.y;
+    const xFast = now - flick.xc < 220 || Math.abs(flick.px ?? 1) < 0.3, yFast = now - flick.yc < 220 || Math.abs(flick.py ?? 1) < 0.3; // schnell = in 0,22 s oder von einem Bild aufs nächste
+    if (Math.abs(mx) < 0.3) { flick.xc = now; flick.xu = false; }
+    if (Math.abs(my) < 0.3) { flick.yc = now; flick.yu = false; }
+    if (!flick.yu && my > 0.95 && yFast) { flick.yu = true; stunt('lp'); }
+    else if (!flick.xu && Math.abs(mx) > 0.95 && xFast) { flick.xu = true; sideStunt(mx > 0); }
+    flick.px = mx; flick.py = my;
   }
   function fireNitro() { if (nitroCool > 0 || !drive || drive.spec.air) return; nitroT = 4.5; nitroCool = 7; started = true; }
   pad.addEventListener('pointerdown', (e) => press(e, true));
@@ -134,7 +146,12 @@ export function createBorrow(ctx, opts) {
     if (e.code === 'Space') { if (drive.spec.air) ctl.u = v; else ctl.b = v; e.preventDefault(); }
     if (e.code === 'KeyC') ctl.d = v;
     if ((e.code === 'ShiftLeft' || e.code === 'ShiftRight') && on) fireNitro();
-    if (on && drive.spec.air) { if (e.code === 'KeyF') stunt('lp'); if (e.code === 'KeyQ') stunt('rl', 1); if (e.code === 'KeyE') stunt('rl', -1); if (e.code === 'KeyR') stunt('sp'); }
+    // Akrobatik am Laptop: Umschalt + Pfeil/WASD (zurück = Looping, links/rechts = Rolle, im Schweben = Drehung)
+    if (on && drive.spec.air && e.shiftKey) {
+      if (e.code === 'KeyS' || e.code === 'ArrowDown') stunt('lp');
+      if (e.code === 'KeyA' || e.code === 'ArrowLeft') sideStunt(false);
+      if (e.code === 'KeyD' || e.code === 'ArrowRight') sideStunt(true);
+    }
     if (on && /Key[WASD]|Arrow/.test(e.code)) started = true;
   };
   const kd = (e) => keys(e, true), ku = (e) => keys(e, false);
@@ -188,7 +205,7 @@ export function createBorrow(ctx, opts) {
 
   let drive = null, pending = null, mode = 'self', autoPts = null, autoName = '', lastKey = '';
   const cam = engine.camera, camPos = new THREE.Vector3(), camLook = new THREE.Vector3(), tmp = new THREE.Vector3();
-  let first = true, yaw0 = 0, seenInfo = false;
+  let first = true, yaw0 = 0, seenInfo = false, seenStunt = false;
 
   function hail(vh) { // anhalten → Fahrer steigt aus → fragen → einsteigen
     traffic.hold(vh, true); pending = { vh, t: 0, step: 0 }; ui.prompt(null);
@@ -211,6 +228,7 @@ export function createBorrow(ctx, opts) {
     ctx.myVehicle = drive.veh; ctx.vehPose = { vp: 0, vr: 0, u: 0, lv: !!P.lv }; crew.length = 0; crewSeat.clear(); asks.clear();
     sfx.bus?.();
     ui.el.panel.classList.add('collapsed'); // beim Fahren nichts verdecken
+    if (drive.spec.air && !seenStunt) { seenStunt = true; setTimeout(() => ui.toast('Akrobatik: Joystick schnell ganz nach hinten schnippen = Looping, schnell zur Seite = Rolle (im Schweben: Drehung)', 5000), 1500); }
     if (!seenInfo) { seenInfo = true; ui.info(`<p>${T.info}</p>`); } // einmal erklären (Karte bleibt zu, „i“ zeigt einen Punkt)
   }
   function exit(giveBack = false) {
@@ -276,7 +294,7 @@ export function createBorrow(ctx, opts) {
     const gas = ctl.g > 0 || input.move.y < -0.3 || (autoGas && started && !S.air);
     let manual = braking ? (drift ? 0.35 : -1) : gas ? 1 : 0;
     let throttle = 0, steer = 0, lift = 0, turbo = nitroT > 0;
-    if (S.air) manual = Math.max(-1, Math.min(1, -input.move.y * 1.2 + ctl.g - ctl.b)); // Joystick: vor/zurück
+    if (S.air) { manual = Math.max(-1, Math.min(1, -input.move.y * 1.2 + ctl.g - ctl.b)); flickCheck(); } // Joystick: vor/zurück (schnippen = Akrobatik)
     if (mode === 'self') {
       throttle = manual; steer = Math.max(-1, Math.min(1, turn)); lift = up;
     } else {
@@ -584,7 +602,7 @@ export function createBorrow(ctx, opts) {
       for (const P of parked) P.owner?.update?.(dt, 0);
       talk.update();
     },
-    get passenger() { return pax; }, handOver, enterPax, leavePax, enter, stunt, jumpOut, parachute: para,
+    get flick() { return flick; }, get passenger() { return pax; }, handOver, enterPax, leavePax, enter, stunt, jumpOut, parachute: para,
     dispose() { para.dispose(); offRide?.(); ctx.crew = null; ctx.ride = null; ctx.myVehicle = null; ctx.vehPose = null; engine.setViewShift?.(null); talk.clear(); pad.remove(); setup.remove(); document.body.classList.remove('driving'); window.removeEventListener('keydown', kd); window.removeEventListener('keyup', ku); if (drive) { player.ride = null; ctx.vehicle = null; } },
   };
 }

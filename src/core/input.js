@@ -8,7 +8,7 @@
 export function createInput(canvas, holdBtn, stickEl) {
   const s = {
     holding: false, yaw: 0, pitch: 0, onTap: null,
-    move: { x: 0, y: 0 }, fast: false, stick: true,
+    move: { x: 0, y: 0 }, fast: false, stick: true, stickOn: false, // stickOn: Daumen liegt gerade auf dem Joystick (Touch)
     mode: 'look', aim: null, onThrow: null,
   };
   const keys = new Set();
@@ -29,7 +29,7 @@ export function createInput(canvas, holdBtn, stickEl) {
   canvas.addEventListener('pointerdown', (e) => {
     const left = e.clientX < window.innerWidth * 0.5 && e.pointerType !== 'mouse'; // Joystick nur bei Touch
     if (left && s.stick && !stick) {
-      stick = { id: e.pointerId, x: e.clientX, y: e.clientY, t: performance.now(), moved: 0 };
+      stick = { id: e.pointerId, x: e.clientX, y: e.clientY, t: performance.now(), moved: 0 }; s.stickOn = true;
       showStick(e.clientX, e.clientY);
     } else if (!look) {
       look = { id: e.pointerId, x: e.clientX, y: e.clientY, sx: e.clientX, sy: e.clientY, t: performance.now() };
@@ -62,7 +62,7 @@ export function createInput(canvas, holdBtn, stickEl) {
     if (stick && stick.id === e.pointerId) {
       // kurzes Tippen auf der Joystick-Seite zählt auch als Tippen (z. B. Stein setzen im Bauhof)
       if (stick.moved < 10 && performance.now() - stick.t < 300 && e.type === 'pointerup') s.onTap?.(e.clientX, e.clientY);
-      stick = null; s.move.x = s.move.y = 0; s.fast = false; hideStick();
+      stick = null; s.stickOn = false; s.move.x = s.move.y = 0; s.fast = false; hideStick();
     } else if (look && look.id === e.pointerId) {
       const moved = Math.hypot(e.clientX - look.sx, e.clientY - look.sy);
       if (s.mode === 'throw' && s.aim && moved > 25 && e.type === 'pointerup') { s.onThrow?.(s.aim); }
@@ -78,7 +78,7 @@ export function createInput(canvas, holdBtn, stickEl) {
   canvas.addEventListener('lostpointercapture', end);
   window.addEventListener('pointerup', end, true);
   window.addEventListener('pointercancel', end, true);
-  const releaseAll = () => { if (stick) { stick = null; s.move.x = s.move.y = 0; s.fast = false; hideStick(); } look = null; s.aim = null; keys.clear(); off(); };
+  const releaseAll = () => { if (stick) { stick = null; s.stickOn = false; s.move.x = s.move.y = 0; s.fast = false; hideStick(); } look = null; s.aim = null; keys.clear(); off(); };
   window.addEventListener('touchend', (e) => { if (e.touches.length === 0 && (stick || look)) releaseAll(); }, true);
   window.addEventListener('touchcancel', releaseAll, true);
   document.addEventListener('visibilitychange', () => { if (document.hidden) releaseAll(); });
