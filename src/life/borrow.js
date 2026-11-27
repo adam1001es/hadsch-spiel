@@ -417,8 +417,18 @@ export function createBorrow(ctx, opts) {
     const wp = tmp.set(D.x + Math.sin(ang) * dist, D.y + hh + input.pitch * 4, D.z + Math.cos(ang) * dist);
     const fovWant = 62 + Math.min(16, Math.abs(D.v) / 6) + (turbo && Math.abs(D.v) > 5 ? 4 : 0); // Tempogefühl if (Math.abs(cam.fov - fovWant) > 0.05) { cam.fov += (fovWant - cam.fov) * Math.min(1, dt * 3); cam.updateProjectionMatrix(); }
     for (const t of [1, 0.75, 0.5, 0.25]) wp.y = Math.max(wp.y, ground(D.x + (wp.x - D.x) * t, D.z + (wp.z - D.z) * t) + 1.2 + (1 - t) * 0.3); // nicht in Hängen/Dünen zwischen Kamera und Fahrzeug stecken
-    const k = first ? 1 : 1 - Math.exp(-dt * 6); first = false;
-    camPos.lerp(wp, k); camLook.lerp(new THREE.Vector3(D.x + fx * 1.2, D.y + (S.air ? 1.1 : 1.3), D.z + fz * 1.2), k); // Fahrer immer in der Bildmitte; die Kamera steht hoch genug, um die Straße davor zu sehen
+    const k = first ? 1 : 1 - Math.exp(-dt * 6);
+    if (S.air) { // Helikopter: Kamera fährt fest mit (kein Hinterherhinken bei hohem Tempo oder beim Steigen) – nur die Blickrichtung schwenkt weich
+      const portrait = innerHeight > innerWidth, dA = S.cam[0] * 0.72 * (0.55 + 0.45 * ds.view) * (portrait ? 0.92 : 0.85), hA = S.cam[1] * (0.5 + 0.35 * ds.view) * (portrait ? 0.85 : 1);
+      tmp.set(Math.sin(ang) * dA, hA + input.pitch * 4, Math.cos(ang) * dA);
+      D.camOff = D.camOff && !first ? D.camOff.lerp(tmp, 1 - Math.exp(-dt * 5)) : tmp.clone();
+      camPos.set(D.x, D.y, D.z).add(D.camOff); camPos.y = Math.max(camPos.y, ground(camPos.x, camPos.z) + 1.5);
+      camLook.set(D.x, D.y + 1.1 + hA * 0.35, D.z); // etwas über den Helikopter schauen → er steht in der Bildmitte, frei von den Knöpfen unten
+      first = false;
+    } else {
+    first = false;
+    camPos.lerp(wp, k); camLook.lerp(new THREE.Vector3(D.x + fx * 1.2, D.y + 1.3, D.z + fz * 1.2), k);
+    } // Fahrer immer in der Bildmitte; die Kamera steht hoch genug, um die Straße davor zu sehen
     cam.position.copy(camPos); cam.lookAt(camLook);
     speedEl.textContent = Math.round(Math.abs(D.v) * 3.6); unitEl.textContent = D.v < -0.3 ? 'km/h · R' : 'km/h';
     infoEl.textContent = S.air ? Math.round(D.y - gy) + ' m Höhe' : mode === 'auto' && autoPts ? '→ ' + autoName : turbo ? 'TURBO' : drift && Math.abs(D.slip) > 0.08 ? 'DRIFT' : '';
