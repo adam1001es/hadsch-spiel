@@ -158,6 +158,7 @@ export function create(ctx, { from, where = 'mecca' } = {}) {
   const deckTower = towers.footprints.filter((f) => Math.abs(f.x + f.w / 2 - (bx - BW)) < 1.5 && f.h > 40).sort((a, b) => b.h - a.h)[0];
   if (deckTower) deckTower.deck = true;
   towers.build();
+  if (deckTower?.crown) deckTower.crown.top = deckTower.roof.y + 6;
   // Häuser auf den Hügeln (Wohnviertel)
   city(world, { h, rIn: 300, rOut: 1300, n: mobile ? 350 : 650, seed: medina ? 5 : 2,
     avoid: (x, z) => (Math.abs(z - RZ - 10) < 45 && x > -500 && x < 1300) || Math.hypot(x, z) < (medina ? 300 : 260) || (x > -420 && x < 420 && z > 100 && z < EZ + 80) });
@@ -270,7 +271,7 @@ export function create(ctx, { from, where = 'mecca' } = {}) {
   // Wildnis: Schanzen und Ring-Parkours in den Bergen westlich/nördlich der Stadt (src/life/offroad.js)
   const wild = offroadRamps(h, { r: 1050, a0: 3.3, a1: 4.5 });
   let shops = null; // Läden/Aussichtsplattform: eigener Boden (siehe unten)
-  const groundH = (x, z) => shops?.ground(x, z) ?? Math.max(0, h(x, z) - 0.08, wild.rampH(x, z)); // Wüste und Berge sind begehbar und befahrbar
+  const groundH = (x, z) => (onRoof ? onRoof.roof.y : null) ?? shops?.ground(x, z) ?? Math.max(0, h(x, z) - 0.08, wild.rampH(x, z)); // Wüste und Berge sind begehbar und befahrbar
   for (const c of mosqueCols) c.h = 35;
   const colliders = [
     // keine unsichtbaren Wände: nur Gebäude halten auf (Hotels, Uhrturm, Moscheen, Haram/Nabawi); h = Höhe für den Helikopter
@@ -281,6 +282,26 @@ export function create(ctx, { from, where = 'mecca' } = {}) {
     ...umbrellaPoles.map(([x, z]) => ({ type: 'circle', x, z, r: 0.5 })), ...mosqueCols,
     ...(medina ? [-150, 0, 150].map((x) => ({ type: 'circle', x, z: 110, r: 5 })) : []), // Minarette an der Südseite der Nabawi
   ];
+  // Dächer (Helikopter landet dort, Figur kann oben herumlaufen): Höhe des Daches unter (x, z), wenn man darüber ist (y)
+  const loc = (f, x, z) => { const c = Math.cos(f.ry || 0), sn = Math.sin(f.ry || 0); return [(x - f.x) * c - (z - f.z) * sn, (x - f.x) * sn + (z - f.z) * c]; };
+  const inR = (l, w, d, m = 0) => Math.abs(l[0]) < w / 2 - m && Math.abs(l[1]) < d / 2 - m;
+  function roofHeight(f, x, z) {
+    if (!f.roof) return null; const l = loc(f, x, z);
+    if (!inR(l, f.w, f.d)) return null;
+    if (f.crown && inR(l, f.crown.w, f.crown.d)) return f.crown.top;
+    if (inR(l, f.roof.w, f.roof.d)) return f.roof.y;
+    if (f.roof.low && inR(l, f.roof.low.w, f.roof.low.d)) return f.roof.low.y;
+    return f.podium ?? 8; // Sockel
+  }
+  const roofAt = (x, z, y) => { let best = null; for (const f of towers.footprints) { if (Math.abs(x - f.x) > f.w + f.d || Math.abs(z - f.z) > f.w + f.d) continue; const r = roofHeight(f, x, z); if (r != null && y >= r - 2 && (best == null || r > best)) best = r; } return best; };
+  // Auf einem Dach laufen (nach der Landung): nur dieses Dach, nicht über die Kante; Krone hält auf
+  let onRoof = null, groundColliders = null, roofBtn = false;
+  const roofCollider = { type: 'fn', fn(p, r) {
+    const f = onRoof; if (!f) return; const c = Math.cos(f.ry || 0), sn = Math.sin(f.ry || 0), l = loc(f, p.x, p.z), top = f.roof;
+    const w = top.w / 2 - r - 0.3, d = top.d / 2 - r - 0.3; l[0] = Math.max(-w, Math.min(w, l[0])); l[1] = Math.max(-d, Math.min(d, l[1]));
+    if (f.crown) { const cw = f.crown.w / 2 + r, cd = f.crown.d / 2 + r; if (Math.abs(l[0]) < cw && Math.abs(l[1]) < cd) { if (cw - Math.abs(l[0]) < cd - Math.abs(l[1])) l[0] = Math.sign(l[0] || 1) * cw; else l[1] = Math.sign(l[1] || 1) * cd; } }
+    p.x = f.x + l[0] * c + l[1] * sn; p.z = f.z - l[0] * sn + l[1] * c;
+  } };
   const start = from === 'haram' || from === 'nabawi' ? { x: L.gate[0], z: L.gate[1] + 7, h: 0 } : from === 'bauhof' ? { x: L.bauhof[0], z: L.bauhof[1] + 4, h: Math.PI } : from === 'balloon' ? { x: BXb + 4, z: BZb + 8, h: Math.PI } : from === 'bus' ? { x: BUx - 2, z: BUz + 5, h: Math.PI } : { x: medina ? -66 : -92, z: medina ? 487 : 521, h: Math.atan2(BXb - (medina ? -66 : -92), BZb - (medina ? 487 : 521)) }; // Start auf dem Südplatz bei Ballon, Taxi und Helikopter
   const player = createPlayer(ctx, { x: start.x, z: start.z, heading: start.h, color: ctx.profile?.gender === 'f' ? 0x2c3a4a : 0x34506a, speed: 2.2, fastSpeed: 4, colliders, ground: groundH, surface: 'stone' });
   const life = createLife(ctx, { kind: 'haram' });
@@ -362,7 +383,8 @@ export function create(ctx, { from, where = 'mecca' } = {}) {
   const inBox = (x, z, cx, cz, hw, hd) => Math.abs(x - cx) < hw && Math.abs(z - cz) < hd;
   const noLand = (x, z) => (medina ? (inBox(x, z, 0, 0, 155, 115) ? BORROW.noLandNabawi : null) : (inBox(x, z, 115, -7, 228, 210) ? BORROW.noLandKaaba : null))
     || (L.mosques.some((m) => Math.hypot(x - m.x, z - m.z) < 14) ? BORROW.noLandMosque : null);
-  const borrow = createBorrow(ctx, { player, interact, traffic, stands, colliders, ground: groundH, noLand, destinations, offroad: (x, z) => h(x, z) > 1.5 || wild.rampH(x, z) > -1e8, route: vroute, map, where, baseActions,
+  const borrow = createBorrow(ctx, { player, interact, traffic, stands, colliders, ground: groundH, noLand, destinations, roof: roofAt,
+    onRoofExit: (D) => { const f = towers.footprints.find((q) => roofHeight(q, D.x, D.z) != null && Math.abs(roofHeight(q, D.x, D.z) - D.y) < 2.5); if (!f || !f.roof) return false; if (f.crown && Math.abs(f.crown.top - D.y) < 2.5 && f !== deckTower) { ui.toast('Auf der Turmspitze kann man nicht aussteigen – auf dem flachen Dach landen', 2600); return 'no'; } onRoof = f.crown && f === deckTower ? { ...f, roof: { ...f.roof, y: f.crown.top, w: f.crown.w, d: f.crown.d }, crown: null } : f; groundColliders = player.colliders; player.colliders = [roofCollider]; ui.toast('Du stehst auf dem Dach – 🪂 Abspringen oder wieder einsteigen', 3000); return true; }, offroad: (x, z) => h(x, z) > 1.5 || wild.rampH(x, z) > -1e8, route: vroute, map, where, baseActions,
     avoid: (x, z) => (z > RZ - 1 && z < RZ + 21) || Math.hypot(x - HP[0], z - HP[1]) < 16 || Math.hypot(x - ST[0] - 4, z - ST[1]) < 12,
     people: () => { const out = agents ? agents.list.slice() : []; for (const o of ctx.multi?.status?.().others || []) if (o.x != null && o.s === ctx.stationIndex) out.push(o); return out; } });
   // Läden zum Betreten und Aussichtsplattform auf dem höchsten Hochhaus am Boulevard
@@ -381,7 +403,7 @@ export function create(ctx, { from, where = 'mecca' } = {}) {
   { const jx = ST[0] + 14, jz = ST[1] - 3.5; const sg = sign(world, jx, jz, 0, JOBS.board, { w: 2.8, h: 0.9, y: 2.6 });
     interact.add({ obj: sg, color: 'green', radius: 7, near: 2.4, x: jx, z: jz + 1.6, key: 'jobboard', label: JOBS.boardDo, run: () => jobs.openBoard() }); }
   wallet.show(true);
-  ctx.debugLife = { borrow, traffic, shops, jobs }; // für automatische Tests
+  ctx.debugLife = { borrow, traffic, shops, jobs, towers, roofAt, get onRoof() { return onRoof; } }; // für automatische Tests
   // ---------- Autobahn nach Medina bzw. Mekka: die Querstraße führt nach Osten aus der Stadt (vereinfachte Lage) ----------
   const HW0 = 420, HW1 = 1200, HWZ = RZ + 10;
   { const asph = new THREE.Mesh(new THREE.PlaneGeometry(HW1 - HW0, 20).rotateX(-Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0x55565a, roughness: 0.95 }));
@@ -425,6 +447,9 @@ export function create(ctx, { from, where = 'mecca' } = {}) {
       prayer.update(dt);
       player.update(dt);
       course.update(borrow.drive, dt); shops.update(dt); jobs.update(dt);
+      if (onRoof && (borrow.driving || borrow.parachute.active || borrow.passenger)) { onRoof = null; if (groundColliders) player.colliders = groundColliders; groundColliders = null; ui.actions(baseActions); }
+      if (onRoof && !roofBtn) { roofBtn = true; ui.actions([...baseActions, { label: '🪂 Abspringen', kind: 'primary', onClick: () => { const f = onRoof, P = player.pos, h0 = player.heading; onRoof = null; player.colliders = groundColliders; groundColliders = null; roofBtn = false; const tx = P.x + Math.sin(h0) * (f.w / 2 + 3), tz = P.z + Math.cos(h0) * (f.w / 2 + 3); borrow.parachute.start(P.x, P.y, P.z, h0, (tx - P.x) * 0.6, (tz - P.z) * 0.6); } }]); }
+      if (!onRoof && roofBtn) roofBtn = false;
       const night = clock.night; cityNight.value = night;
       for (const m of glowLamps) m.emissiveIntensity = 0.4 + night * 2.2;
       for (const m of glowMosque) m.emissiveIntensity = night * 1.6;

@@ -132,6 +132,8 @@ export function createTowers(world, { podiumStyle = 'podium' } = {}) {
     if (glassy || hv > 0.6) for (const [sx, sz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) { const [px, pz] = at(sx * (w / 2), sz * (d / 2)); deco('band', px, base, pz, 1.1, H, 1.1, ry); } // Eckpfeiler
     deco('ring', x, top - 1.2, z, w + 0.7, 1.2, d + 0.7, ry); // Lichtkranz oben
   }
+  // Höhe des Aufsatzes über der Krone (für Landen/Kollision): Stufe 6 m, Pyramide, Stufen 10 m
+  const crownExtra = (hv, w, d) => (hv < 0.3 ? 6 : hv < 0.62 ? Math.min(w, d) * 0.55 : 10);
   function crownOf(x, z, w, d, top, ry, hv) {
     topPart = true; try { crownParts(x, z, w, d, top, ry, hv); } finally { topPart = false; }
   }
@@ -155,11 +157,13 @@ export function createTowers(world, { podiumStyle = 'podium' } = {}) {
         push(style, x, base, z, bw, hs - base, bd, ry, tint);
         push(style, x, hs, z, bw * k, h - hs, bd * k, ry, tint);
         deco('band', x, hs, z, bw + 0.6, 1.4, bd + 0.6, ry); decorate(x, z, bw, bd, base, hs, ry, hv, glassy); decorate(x, z, bw * k, bd * k, hs, h, ry, hv, glassy);
-        if (crown) { push('crown', x, h, z, bw * k * 0.7, 6, bd * k * 0.7, ry, 1); if (h > 60) crownOf(x, z, bw * k * 0.7, bd * k * 0.7, h + 6, ry, hv); }
+        cur.roof = { w: bw * k, d: bd * k, y: h, low: { w: bw, d: bd, y: hs } };
+        if (crown) { push('crown', x, h, z, bw * k * 0.7, 6, bd * k * 0.7, ry, 1); cur.crown = { w: bw * k * 0.7, d: bd * k * 0.7, top: h + 6 + (h > 60 ? crownExtra(hv, bw * k * 0.7, bd * k * 0.7) : 0) }; if (h > 60) crownOf(x, z, bw * k * 0.7, bd * k * 0.7, h + 6, ry, hv); }
       } else {
         push(style, x, base, z, bw, h - base, bd, ry, tint);
         decorate(x, z, bw, bd, base, h, ry, hv, glassy);
-        if (crown && h > 30) { push('crown', x, h, z, bw * 0.7, 6, bd * 0.7, ry, 1); if (h > 60) crownOf(x, z, bw * 0.7, bd * 0.7, h + 6, ry, hv); }
+        cur.roof = { w: bw, d: bd, y: h };
+        if (crown && h > 30) { push('crown', x, h, z, bw * 0.7, 6, bd * 0.7, ry, 1); cur.crown = { w: bw * 0.7, d: bd * 0.7, top: h + 6 + (h > 60 ? crownExtra(hv, bw * 0.7, bd * 0.7) : 0) }; if (h > 60) crownOf(x, z, bw * 0.7, bd * 0.7, h + 6, ry, hv); }
       }
     },
     build() {

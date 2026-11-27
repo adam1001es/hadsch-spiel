@@ -48,7 +48,8 @@ export function createBorrow(ctx, opts) {
   const { engine, ui, input } = ctx;
   const world = engine.world;
   const { player, interact, traffic = null, people = () => [], destinations = [], route = (a, b) => [b], map = null, where = 'mecca',
-    colliders = [], ground = () => 0, noLand = () => null, avoid = () => false, offroad = () => false } = opts;
+    colliders = [], ground = () => 0, noLand = () => null, avoid = () => false, offroad = () => false, roof = () => null, onRoofExit = () => false } = opts;
+  const airGround = (x, z, y) => Math.max(ground(x, z), roof(x, z, y) ?? -1e9); // Helikopter: Dächer und Turmspitzen sind Boden
   // ---------- Fahrbedienung wie in Handy-Rennspielen: zwei Daumen ----------
   // Linker Daumen: Lenkfläche (Daumen hin und her schieben, weiter außen = stärker lenken).
   // Gas automatisch (Auto-Gas, abschaltbar → dann GAS-Pedal). Rechter Daumen: BREMSE/DRIFT (bei Tempo in der Kurve = Drift,
@@ -238,7 +239,11 @@ export function createBorrow(ctx, opts) {
   function exit(giveBack = false) {
     if (!drive) return;
     const D = drive, P = D.P;
-    if (D.spec.air && D.y > ground(D.x, D.z) + 0.6) { ui.toast(T.landFirst, 2200); return; } // erst landen
+    let roofExit = false;
+    if (D.spec.air && D.y > ground(D.x, D.z) + 0.6) { // auf einem Dach gelandet? Dann dort aussteigen
+      if (D.y <= airGround(D.x, D.z, D.y) + 0.6) { const r = onRoofExit(D); if (r === 'no') return; roofExit = !!r; }
+      if (!roofExit) { ui.toast(T.landFirst, 2200); return; } // erst landen
+    }
     drive = null; player.ride = null; player.freeze(false); player.fig.pose('stand'); ctx.vehicle = null; player.fig.root.rotation.set(0, D.h, 0);
     if (crew.length) multi?.send?.('ride', { a: 'out', to: '*' }); // Mitfahrer steigen auch aus
     crew.length = 0; crewSeat.clear(); asks.clear(); ctx.myVehicle = null; ctx.vehPose = null;
@@ -247,7 +252,8 @@ export function createBorrow(ctx, opts) {
     // neben dem Fahrzeug aussteigen (links)
     const side = D.spec.wid / 2 + 0.8; player.teleport(D.x + Math.cos(D.h) * side, D.z - Math.sin(D.h) * side, D.h);
     P.x = D.x; P.z = D.z; P.h = D.h; P.parked = true;
-    { const q = { x: player.pos.x, z: player.pos.z }; resolve(q, 0.4, colliders); player.teleport(q.x, q.z, D.h); }
+    if (roofExit) player.teleport(D.x + Math.cos(D.h) * side, D.z - Math.sin(D.h) * side, D.h); // Dach-Kollision hält die Figur oben
+    else { const q = { x: player.pos.x, z: player.pos.z }; resolve(q, 0.4, colliders); player.teleport(q.x, q.z, D.h); }
     if (giveBack) giveBackNow(P);
     ui.counter(''); ui.actions(opts.baseActions || []);
   }
@@ -321,7 +327,7 @@ export function createBorrow(ctx, opts) {
     }
     const fx = Math.sin(D.h), fz = Math.cos(D.h);
     let limit = 1e9;
-    const gy = ground(D.x, D.z);
+    const gy = S.air ? airGround(D.x, D.z, D.y) : ground(D.x, D.z);
     if (!S.air || D.y < gy + 2) for (const p of people()) { // Fußgänger vor dem Fahrzeug → automatisch bremsen
       const rx = p.x - D.x, rz = p.z - D.z, ahead = rx * fx + rz * fz, side = Math.abs(rx * fz - rz * fx);
       const dirAhead = D.v >= 0 ? ahead : -ahead;
@@ -376,7 +382,7 @@ export function createBorrow(ctx, opts) {
     const mdir = D.h + (D.slip || 0);
     const q = { x: D.x + Math.sin(mdir) * D.v * dt, z: D.z + Math.cos(mdir) * D.v * dt };
     const hit = { x: q.x, z: q.z };
-    resolve(q, S.wid / 2, S.air ? colliders.filter((c) => (c.h ?? 1e9) > D.y - 1) : colliders);
+    resolve(q, S.wid / 2, S.air ? colliders.filter((c) => (c.h ?? 1e9) > D.y + 0.3) : colliders);
     if (Math.hypot(q.x - hit.x, q.z - hit.z) > 0.02) { D.v *= -0.25; D.slip = 0; } // anprallen und leicht zurückfedern
     D.x = q.x; D.z = q.z;
     if (!S.air) { // Boden folgen; über Kuppen und Rampen abheben (Sprung), weich landen
@@ -455,7 +461,7 @@ export function createBorrow(ctx, opts) {
   }
   function sinkUpdate(dt) {
     for (let i = sinking.length - 1; i >= 0; i--) {
-      const o = sinking[i], R = o.P.veh.root, gy = ground(o.P.x, o.P.z);
+      const o = sinking[i], R = o.P.veh.root, gy = airGround(o.P.x, o.P.z, o.y);
       o.y = Math.max(gy, o.y - 6 * dt); R.position.set(o.P.x, o.y, o.P.z); o.P.veh.rotor = o.y > gy ? 0.8 : Math.max(0, o.P.veh.rotor - dt * 0.4); o.P.veh.roll(0, dt);
       if (o.y <= gy && o.P.veh.rotor <= 0) { o.P.parked = true; sinking.splice(i, 1); }
     }
