@@ -22,6 +22,8 @@ import { createInteract, boxClosest, circleClosest } from '../life/interact.js';
 import { tunnelPortal } from '../world/tunnel.js';
 import { createBorrow } from '../life/borrow.js';
 import { offroadRamps, buildOffroad } from '../life/offroad.js';
+import { createShops } from '../life/shops.js';
+import { SHOPS } from '../content/life.js';
 import { BORROW } from '../content/life.js';
 import * as sfx from '../core/sfx.js';
 import { skinBalloon } from '../world/balloonSkin.js';
@@ -146,7 +148,10 @@ export function create(ctx, { from, where = 'mecca' } = {}) {
   row(RZ - 50, RZ - 5, 160, 400, true); row(RZ - 50, RZ - 5, -400, -160, true);
   row(RZ + 20, RZ + 70, square.x1 + 0.1, 400, true); row(RZ + 20, RZ + 70, -400, square.x0 - 0.1, true);
   row(EZ + 10, EZ + 60, square.x0 - 20, square.x1 + 20, true);
-  for (const [x, z, ry] of shopFronts) { const k = (shopFronts.length + Math.round(x * 3 + z)) % C.shops.length; sign(world, x, z, ry, C.shops[(k + 10) % C.shops.length], { w: 5.2, h: 1.3, y: 6.6, wall: true }); }
+  // Läden zum Betreten (src/life/shops.js): jede Ladenfront bekommt eine Art, ein passendes Schild, Tür, Schaufenster und Markise
+  const SHOP_KINDS = ['kleidung', 'autos', 'reise', 'doener', 'parfum', 'datteln', 'buecher'];
+  const shopList = shopFronts.map(([x, z, ry], i) => ({ x, z, ry, type: SHOP_KINDS[(i + (medina ? 3 : 0)) % SHOP_KINDS.length] }));
+  for (const f of shopList) sign(world, f.x, f.z, f.ry, SHOPS.types[f.type].sign, { w: 5.2, h: 1.3, y: 6.6, wall: true });
   towers.build();
   // Häuser auf den Hügeln (Wohnviertel)
   city(world, { h, rIn: 300, rOut: 1300, n: mobile ? 350 : 650, seed: medina ? 5 : 2,
@@ -259,7 +264,8 @@ export function create(ctx, { from, where = 'mecca' } = {}) {
   // ---------- Spielfigur ----------
   // Wildnis: Schanzen und Ring-Parkours in den Bergen westlich/nördlich der Stadt (src/life/offroad.js)
   const wild = offroadRamps(h, { r: 1050, a0: 3.3, a1: 4.5 });
-  const groundH = (x, z) => Math.max(0, h(x, z) - 0.08, wild.rampH(x, z)); // Wüste und Berge sind begehbar und befahrbar
+  let shops = null; // Läden/Aussichtsplattform: eigener Boden (siehe unten)
+  const groundH = (x, z) => shops?.ground(x, z) ?? Math.max(0, h(x, z) - 0.08, wild.rampH(x, z)); // Wüste und Berge sind begehbar und befahrbar
   for (const c of mosqueCols) c.h = 35;
   const colliders = [
     // keine unsichtbaren Wände: nur Gebäude halten auf (Hotels, Uhrturm, Moscheen, Haram/Nabawi); h = Höhe für den Helikopter
@@ -354,7 +360,15 @@ export function create(ctx, { from, where = 'mecca' } = {}) {
   const borrow = createBorrow(ctx, { player, interact, traffic, stands, colliders, ground: groundH, noLand, destinations, offroad: (x, z) => h(x, z) > 1.5 || wild.rampH(x, z) > -1e8, route: vroute, map, where, baseActions,
     avoid: (x, z) => (z > RZ - 1 && z < RZ + 21) || Math.hypot(x - HP[0], z - HP[1]) < 16 || Math.hypot(x - ST[0] - 4, z - ST[1]) < 12,
     people: () => { const out = agents ? agents.list.slice() : []; for (const o of ctx.multi?.status?.().others || []) if (o.x != null && o.s === ctx.stationIndex) out.push(o); return out; } });
-  ctx.debugLife = { borrow, traffic }; // für automatische Tests
+  // Läden zum Betreten und Aussichtsplattform auf dem höchsten Hochhaus am Boulevard
+  shops = createShops(ctx, { world, player, interact, fronts: shopList,
+    onTestDrive: (kind, lv) => { const b = shops.lastDoor; borrow.rent(kind, b.x + Math.sin(b.h) * 4, b.z + Math.cos(b.h) * 4, b.h + Math.PI / 2, lv); },
+    travel: (id) => { shops.leave(); if (id === 'medina' || id === 'mecca') ctx.city?.(null, id); else if (id === 'road') ctx.roadtrip?.(where, other, { vehicle: 'sport' }); else if (ctx.coast) ctx.coast(where); else ui.toast(SHOPS.soon, 2200); } });
+  player.colliders.push(shops.collider);
+  { const edge = bx - BW, cand = towers.footprints.filter((f) => Math.abs(f.x + f.w / 2 - edge) < 1.5 && f.h > 40).sort((a, b) => b.h - a.h)[0];
+    if (cand) { let dz = 0; for (const t of [0, 9, -9, 14, -14]) if (!shopList.some((f) => Math.abs(f.x - edge) < 2 && Math.abs(f.z - (cand.z + t)) < 7)) { dz = t; break; }
+      shops.addTower({ ...cand, door: { x: edge + 0.06, z: cand.z + dz, ry: Math.PI / 2 } }); } }
+  ctx.debugLife = { borrow, traffic, shops }; // für automatische Tests
   // ---------- Autobahn nach Medina bzw. Mekka: die Querstraße führt nach Osten aus der Stadt (vereinfachte Lage) ----------
   const HW0 = 420, HW1 = 1200, HWZ = RZ + 10;
   { const asph = new THREE.Mesh(new THREE.PlaneGeometry(HW1 - HW0, 20).rotateX(-Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0x55565a, roughness: 0.95 }));
@@ -397,7 +411,7 @@ export function create(ctx, { from, where = 'mecca' } = {}) {
     update(dt) {
       prayer.update(dt);
       player.update(dt);
-      course.update(borrow.drive, dt);
+      course.update(borrow.drive, dt); shops.update(dt);
       const night = clock.night; cityNight.value = night;
       for (const m of glowLamps) m.emissiveIntensity = 0.4 + night * 2.2;
       for (const m of glowMosque) m.emissiveIntensity = night * 1.6;
