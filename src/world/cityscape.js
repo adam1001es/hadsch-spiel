@@ -54,6 +54,13 @@ const FACADES = {
     g.fillStyle = '#e6dcc8'; g.fillRect(0, 0, 14, h); g.fillRect(0, h - 12, w, 12);
     g.fillStyle = 'rgba(255,255,255,.12)'; g.fillRect(30, 0, 18, h);
   }) },
+  // moderne Hochhaus-Glasfassade: dunkles Glas, schmale goldene Pfosten, helle Brüstungsbänder
+  tower: { bay: [2.4, 3.6], tex: () => canvasTex(128, 192, (g, w, h) => {
+    glassGrad(g, 0, 0, w, h, '#6f8fa3', '#22343f');
+    g.fillStyle = 'rgba(255,255,255,.10)'; g.fillRect(18, 0, 26, h);
+    g.fillStyle = '#d9c08a'; g.fillRect(0, 0, 6, h);
+    g.fillStyle = '#c9cdd0'; g.fillRect(0, h - 22, w, 22); g.fillStyle = 'rgba(0,0,0,.15)'; g.fillRect(0, h - 22, w, 3);
+  }) },
   // Medina: weiß/creme mit Rundbogenfenstern und hölzernen Gittern (Maschrabiyya-Andeutung)
   medina: { bay: [3.4, 3.3], tex: () => canvasTex(128, 128, (g, w, h) => {
     g.fillStyle = '#f2ede3'; g.fillRect(0, 0, w, h);
@@ -77,7 +84,8 @@ const FACADES = {
 export const cityNight = { value: 0 };
 function facadeMat(style, { roof = 0xcfc4ae, rough = 0.75 } = {}) {
   const f = FACADES[style];
-  const m = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: rough, metalness: 0.05 });
+  const shiny = style === 'glass' || style === 'tower';
+  const m = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: shiny ? 0.18 : rough, metalness: shiny ? 0.45 : 0.05, envMapIntensity: shiny ? 1.3 : 1 }); // Glas spiegelt Himmel und Umgebung
   const tex = f.tex(), bay = new THREE.Vector2(...f.bay), rc = new THREE.Color(roof);
   m.onBeforeCompile = (sh) => {
     sh.uniforms.tFac = { value: tex }; sh.uniforms.uBay = { value: bay }; sh.uniforms.uRoof = { value: rc }; sh.uniforms.uNight = cityNight; sh.uniforms.uShop = { value: /odium/.test(style) ? 1 : 0 };
@@ -95,7 +103,7 @@ function facadeMat(style, { roof = 0xcfc4ae, rough = 0.75 } = {}) {
           vec3 fc = texture2D(tFac, vec2(vFac.x / uBay.x, vFac.y / uBay.y)).rgb; diffuseColor.rgb *= fc;
           float lum = dot(fc, vec3(0.3, 0.55, 0.15));
           vec2 cellId = floor(vec2(vFac.x / uBay.x, vFac.y / uBay.y));
-          float lit = step(0.42, fract(sin(dot(cellId, vec2(12.9898, 78.233))) * 43758.5453));
+          vec2 grp = vec2(floor(cellId.x / 3.0), cellId.y); float lit = step(0.66, fract(sin(dot(grp, vec2(12.9898, 78.233))) * 43758.5453)) * step(0.2, fract(sin(dot(cellId, vec2(39.3468, 11.135))) * 24634.6345)); // Wohnungen in Gruppen, ca. ein Viertel hell
           if (uShop > 0.5) facGlow = fc * smoothstep(0.45, 0.75, lum) * uNight * 0.9;            // Läden: Schaufenster hell
           else facGlow = vec3(1.0, 0.76, 0.42) * (1.0 - smoothstep(0.12, 0.3, lum)) * lit * uNight * 0.75; // Fenster: manche hell
         }`).replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\n        totalEmissiveRadiance += facGlow;');
@@ -113,21 +121,45 @@ export function createTowers(world, { podiumStyle = 'podium' } = {}) {
   };
   const box = new THREE.BoxGeometry(1, 1, 1).translate(0, 0.5, 0);
   const foot = []; // Grundrisse für die Karte
+  // Schmuck für attraktivere Türme: Zierbänder/Eckpfeiler (Kasten), Spitzen (Zylinder), Glaspyramiden, Lichtkränze (leuchten nachts)
+  const X = { band: [], spire: [], pyr: [], ring: [] };
+  let cur = null, topPart = false; // aktueller Grundriss; Teile der Spitze (entfallen bei Türmen mit Aussichtsplattform)
+  const deco = (kind, x, y, z, w, h, d, ry) => X[kind].push({ x, y, z, w, h, d, ry, f: cur, top: topPart });
+  function decorate(x, z, w, d, base, top, ry, hv, glassy) {
+    const H = top - base; if (H < 40) return;
+    const c = Math.cos(ry), s2 = Math.sin(ry), at = (lx, lz) => [x + lx * c + lz * s2, z - lx * s2 + lz * c];
+    for (let y = base + 36; y < top - 10; y += hv > 0.5 ? 36 : 48) deco('band', x, y, z, w + 0.5, 0.9, d + 0.5, ry); // umlaufende Zierbänder
+    if (glassy || hv > 0.6) for (const [sx, sz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) { const [px, pz] = at(sx * (w / 2), sz * (d / 2)); deco('band', px, base, pz, 1.1, H, 1.1, ry); } // Eckpfeiler
+    deco('ring', x, top - 1.2, z, w + 0.7, 1.2, d + 0.7, ry); // Lichtkranz oben
+  }
+  function crownOf(x, z, w, d, top, ry, hv) {
+    topPart = true; try { crownParts(x, z, w, d, top, ry, hv); } finally { topPart = false; }
+  }
+  function crownParts(x, z, w, d, top, ry, hv) {
+    if (hv < 0.3) { deco('band', x, top, z, w * 0.7, 6, d * 0.7, ry); deco('spire', x, top + 6, z, 1.2, Math.min(60, top * 0.22), 1.2, 0); } // Aufsatz mit Spitze
+    else if (hv < 0.62) { deco('pyr', x, top, z, w * 0.72, Math.min(w, d) * 0.55, d * 0.72, ry); deco('spire', x, top + Math.min(w, d) * 0.5, z, 0.6, 14, 0.6, 0); } // Glaspyramide
+    else { deco('band', x, top, z, w * 0.8, 5, d * 0.8, ry); deco('band', x, top + 5, z, w * 0.55, 5, d * 0.55, ry); deco('ring', x, top + 9, z, w * 0.58, 1, d * 0.58, ry); deco('spire', x, top + 10, z, 0.5, 22, 0.5, 0); } // Stufen + Antenne
+  }
   return {
     footprints: foot,
     add(x, z, w, d, h, { style = 'mecca', podium = 8, ry = 0, tint = 1, crown = true } = {}) {
-      foot.push({ x, z, w, d, ry, h });
+      cur = { x, z, w, d, ry, h }; foot.push(cur);
       if (podium) push(podiumStyle, x, 0, z, w, podium, d, ry, 1);
       const inset = Math.min(4, Math.min(w, d) * 0.12), base = podium || 0;
       const bw = w - inset * 2, bd = d - inset * 2, hv = Math.abs(Math.sin(x * 12.9898 + z * 78.233)) % 1; // feste Variante je Ort
+      // hohe Türme bekommen manchmal die moderne Glasfassade (Abwechslung im Stadtbild)
+      if (h > 110 && hv > 0.55 && style !== 'medina') style = 'tower';
+      const glassy = style === 'glass' || style === 'tower';
       if (h > 100 && hv > 0.35) { // Rücksprung: oberer Teil schmaler (wie bei echten Hochhäusern)
         const hs = base + (h - base) * (0.5 + hv * 0.25), k = 0.62 + hv * 0.15;
         push(style, x, base, z, bw, hs - base, bd, ry, tint);
         push(style, x, hs, z, bw * k, h - hs, bd * k, ry, tint);
-        if (crown) push('crown', x, h, z, bw * k * 0.7, 6, bd * k * 0.7, ry, 1);
+        deco('band', x, hs, z, bw + 0.6, 1.4, bd + 0.6, ry); decorate(x, z, bw, bd, base, hs, ry, hv, glassy); decorate(x, z, bw * k, bd * k, hs, h, ry, hv, glassy);
+        if (crown) { push('crown', x, h, z, bw * k * 0.7, 6, bd * k * 0.7, ry, 1); if (h > 60) crownOf(x, z, bw * k * 0.7, bd * k * 0.7, h + 6, ry, hv); }
       } else {
         push(style, x, base, z, bw, h - base, bd, ry, tint);
-        if (crown && h > 30) push('crown', x, h, z, bw * 0.7, 6, bd * 0.7, ry, 1);
+        decorate(x, z, bw, bd, base, h, ry, hv, glassy);
+        if (crown && h > 30) { push('crown', x, h, z, bw * 0.7, 6, bd * 0.7, ry, 1); if (h > 60) crownOf(x, z, bw * 0.7, bd * 0.7, h + 6, ry, hv); }
       }
     },
     build() {
@@ -137,6 +169,18 @@ export function createTowers(world, { podiumStyle = 'podium' } = {}) {
         const col = new THREE.Color();
         list.forEach((b, i) => { dm.position.set(b.x, b.y, b.z); dm.rotation.set(0, b.ry, 0); dm.scale.set(b.w, b.h, b.d); dm.updateMatrix(); im.setMatrixAt(i, dm.matrix); im.setColorAt(i, col.setScalar(b.tint)); });
         im.castShadow = false; im.receiveShadow = true; world.add(im); meshes.push(im);
+      }
+      // Schmuck: Gold/Stein-Bänder, goldene Spitzen, Glaspyramiden, Lichtkränze (nachts warm leuchtend)
+      const night = (m, k) => { m.onBeforeCompile = (sh) => { sh.uniforms.uNight = cityNight; sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform float uNight;').replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>\ntotalEmissiveRadiance += vec3(1.0, 0.78, 0.45) * uNight * ${k.toFixed(2)};`); }; m.customProgramCacheKey = () => 'deco' + k; return m; };
+      const G = { band: box, spire: new THREE.CylinderGeometry(0.15, 0.5, 1, 8).translate(0, 0.5, 0), pyr: new THREE.ConeGeometry(0.71, 1, 4).rotateY(Math.PI / 4).translate(0, 0.5, 0), ring: box };
+      const MT = { band: night(new THREE.MeshStandardMaterial({ color: 0xd8c39a, roughness: 0.5, metalness: 0.3 }), 0.12), spire: night(new THREE.MeshStandardMaterial({ color: 0xd4af37, roughness: 0.3, metalness: 0.9 }), 0.5),
+        pyr: night(new THREE.MeshStandardMaterial({ color: 0x9fc2d6, roughness: 0.12, metalness: 0.6, envMapIntensity: 1.4 }), 0.35), ring: night(new THREE.MeshStandardMaterial({ color: 0xf0d79a, roughness: 0.4, metalness: 0.4 }), 1.6) };
+      for (const [k, list] of Object.entries(X)) {
+        if (!list.length) continue;
+        const keep = list.filter((b) => !(b.top && b.f?.deck)); if (!keep.length) continue;
+        const im = new THREE.InstancedMesh(G[k], MT[k], keep.length);
+        keep.forEach((b, i) => { dm.position.set(b.x, b.y, b.z); dm.rotation.set(0, b.ry, 0); dm.scale.set(b.w, b.h, b.d); dm.updateMatrix(); im.setMatrixAt(i, dm.matrix); });
+        im.receiveShadow = true; world.add(im); meshes.push(im);
       }
       return meshes;
     },

@@ -154,6 +154,9 @@ export function create(ctx, { from, where = 'mecca' } = {}) {
   const SHOP_KINDS = ['kleidung', 'autos', 'reise', 'doener', 'parfum', 'datteln', 'buecher'];
   const shopList = shopFronts.map(([x, z, ry], i) => ({ x, z, ry, type: SHOP_KINDS[(i + (medina ? 3 : 0)) % SHOP_KINDS.length] }));
   for (const f of shopList) sign(world, f.x, f.z, f.ry, SHOPS.types[f.type].sign, { w: 5.2, h: 1.3, y: 6.6, wall: true });
+  // Turm mit Aussichtsplattform (höchster am Boulevard): ohne Spitze, damit man oben stehen kann
+  const deckTower = towers.footprints.filter((f) => Math.abs(f.x + f.w / 2 - (bx - BW)) < 1.5 && f.h > 40).sort((a, b) => b.h - a.h)[0];
+  if (deckTower) deckTower.deck = true;
   towers.build();
   // Häuser auf den Hügeln (Wohnviertel)
   city(world, { h, rIn: 300, rOut: 1300, n: mobile ? 350 : 650, seed: medina ? 5 : 2,
@@ -309,15 +312,15 @@ export function create(ctx, { from, where = 'mecca' } = {}) {
     });
   }
   // Karte
-  const poiIcon = { dates: '🌴', zamzam: '💧', pigeons: '🕊️', balloon: '🎈', bus: '🚌', bauhof: '🧱', 'info-main': '📜', 'info-clock': '📜', gate: medina ? '🕌' : '🕋' };
+  const poiIcon = { dates: '🌴', zamzam: '💧', pigeons: '🕊️', balloon: '🎈', bus: '🚌', bauhof: '🧱', 'info-main': '📜', gate: medina ? '🕌' : '🕋' };
   const poiName = { dates: 'Datteln', zamzam: 'Zamzam', pigeons: 'Tauben', balloon: 'Ballon', bus: medina ? 'Bus nach Mekka' : 'Bus nach Medina', bauhof: 'Sandstein-Bauhof', 'info-main': 'Infotafel', 'info-clock': 'Uhrturm', gate: medina ? 'Prophetenmoschee' : 'Haram (Kaaba)' };
   const map = showMinimap(ctx, {
     title: medina ? 'Karte · Medina' : 'Karte · Mekka', city: where, bounds: L.bounds,
     areas: [...rects, ...(medina ? [{ x0: -230, x1: 230, z0: -190, z1: 190 }] : [])],
     roads: [{ x0: -420, x1: 1200, z0: RZ, z1: RZ + 20 }], // Querstraße + Autobahn nach Osten
-    blocks: [...towers.footprints, ...mosqueFoot],
+    blocks: [...towers.footprints.filter((f) => f.h < 300), ...mosqueFoot], // Uhrturm nicht auf der Karte (Wunsch des Nutzers)
     shapes: medina ? [{ t: 'rect', x0: -150, x1: 150, z0: -110, z1: 110, c: '#efe8da', label: 'Masjid an-Nabawi' }, { t: 'circle', x: -20, z: 80, r: 9, c: '#2f8a4e' }]
-      : [{ t: 'circle', x: 0, z: 0, r: 200, c: '#ece8e0', label: 'Masjid al-Haram' }, { t: 'rect', x0: -6, x1: 6, z0: -5.25, z1: 5.25, c: '#111' }, { t: 'rect', x0: -40, x1: 170, z0: 263, z1: 413, c: '#d8ccb2', label: 'Abraj al-Bait' }],
+      : [{ t: 'circle', x: 0, z: 0, r: 200, c: '#ece8e0', label: 'Masjid al-Haram' }, { t: 'rect', x0: -6, x1: 6, z0: -5.25, z1: 5.25, c: '#111' }],
     pois: [...SPOTS.filter((sp) => poiIcon[sp.key]).map((sp) => ({ x: sp.x, z: sp.z, icon: poiIcon[sp.key], label: poiName[sp.key] })),
       ...L.mosques.map((m) => ({ x: m.spot[0], z: m.spot[1], icon: '🕌', label: m.name })), { x: L.mats[0], z: L.mats[1], icon: '🧎', label: 'Gebetsplatz' },
       { x: (medina ? -40 : -72) + 3, z: (medina ? 461 : 501) - 3, icon: '🚕', label: 'Taxi & Verleih' },
@@ -367,7 +370,7 @@ export function create(ctx, { from, where = 'mecca' } = {}) {
     onTestDrive: (kind, lv) => { const b = shops.lastDoor; borrow.rent(kind, b.x + Math.sin(b.h) * 4, b.z + Math.cos(b.h) * 4, b.h + Math.PI / 2, lv); },
     travel: (id) => { shops.leave(); if (id === 'medina' || id === 'mecca') ctx.city?.(null, id); else if (id === 'road') ctx.roadtrip?.(where, other, { vehicle: 'sport' }); else if (ctx.coast) ctx.coast(where); else ui.toast(SHOPS.soon, 2200); } });
   player.colliders.push(shops.collider);
-  { const edge = bx - BW, cand = towers.footprints.filter((f) => Math.abs(f.x + f.w / 2 - edge) < 1.5 && f.h > 40).sort((a, b) => b.h - a.h)[0];
+  { const edge = bx - BW, cand = deckTower;
     if (cand) { let dz = 0; for (const t of [0, 9, -9, 14, -14]) if (!shopList.some((f) => Math.abs(f.x - edge) < 2 && Math.abs(f.z - (cand.z + t)) < 7)) { dz = t; break; }
       shops.addTower({ ...cand, door: { x: edge + 0.06, z: cand.z + dz, ry: Math.PI / 2 } }); } }
   // Jobs und Geld: Jobbörse am Taxistand, Knopf „💼 Jobs“ unten, Geldbörse oben rechts
