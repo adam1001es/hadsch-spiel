@@ -170,7 +170,7 @@ export function createBorrow(ctx, opts) {
   const parked = []; // { veh, x, z, h, owner, home: {x,z}, src: 'stand'|'traffic'|'away', vh }
   for (const s of opts.stands || []) {
     const veh = makeVehicle(world, s.kind, s.livery ? { livery: true } : {}); veh.root.position.set(s.x, 0, s.z); veh.root.rotation.y = s.ry;
-    const side = specOf(s.kind).wid / 2 + 0.9, ox = Math.cos(s.ry) * side, oz = -Math.sin(s.ry) * side;
+    const side = specOf(s.kind).wid / 2 + 1.7, ox = Math.cos(s.ry) * side, oz = -Math.sin(s.ry) * side;
     const owner = mkDriver(s.x + ox, s.z + oz, s.ry + Math.PI / 2);
     const P = { veh, x: s.x, z: s.z, h: s.ry, owner, home: { x: s.x, z: s.z, h: s.ry }, src: 'stand', lv: !!s.livery };
     parked.push(P);
@@ -388,7 +388,7 @@ export function createBorrow(ctx, opts) {
     if (!S.air) { // Boden folgen; über Kuppen und Rampen abheben (Sprung), weich landen
       const g = ground(D.x, D.z);
       // Wildnis (Berge, Dünen, Schanzen): weniger Schwerkraft, höhere Sprünge, Hüpf-Knopf – man gleitet weiter
-      const wild = offroad(D.x, D.z) || (D.air && D.wild);
+      const wild = !!(offroad(D.x, D.z) || (D.air && D.wild)); // immer true/false (undefined ließ den Knopf jedes Bild umschalten → Flackern)
       if (wild !== !!D.wild) { D.wild = wild; pad.classList.toggle('wild', wild); if (wild && !seenWild) { seenWild = true; ui.toast('🏔️ Wildnis: höhere Sprünge, du gleitest weiter – ⤒ HÜPFEN, Schanzen und goldene Ringe (🏁 auf der Karte)', 4500); } }
       if (D.air) { D.vy -= (wild ? 10 : 22) * dt; D.y += D.vy * dt; if (D.y <= g) { D.y = g; D.air = false; if (D.vy < -7) { D.v *= wild ? 0.97 : 0.92; } D.vy = 0; } }
       else {
